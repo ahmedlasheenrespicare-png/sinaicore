@@ -139,7 +139,7 @@
     if(caption) caption.textContent = CAPTIONS[id] || "";
     if(hudChapter) hudChapter.textContent = NUMS[id] || "";
     if(hudTitle) hudTitle.textContent = TITLES[id] || "";
-    if(callouts) callouts.classList.toggle("show", id==="ch3");
+    if(callouts) callouts.classList.toggle("show", id==="ch2");
     var cta = document.getElementById("stage-cta");
     if(cta) cta.classList.toggle("show", id==="ch5" || id==="end");
     badges.forEach(function(b){

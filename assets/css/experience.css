@@ -381,3 +381,8 @@ main{z-index:2}
 .chapter .specs-table{margin:20px 0}
 .chapter .compare{margin:20px 0}
 .chapter .slider{margin:20px 0}
+
+/* v20: Scene-2 hotspots over the dark 3D panel */
+.callouts .callout{background:#fff;color:var(--col1);border:1px solid #2a4a6b;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.callouts .callout::after{background:#fff}
+.callouts .callout:hover,.callouts .callout.hot{background:#c96a1b;color:#fff;border-color:#c96a1b}
