@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Request Quote | SinaiCore</title>
+<meta name="description" content="Request a quotation for premium Egyptian industrial salt from SinaiCore.">
+<meta name="author" content="SinaiCore Industrial">
+<meta name="theme-color" content="#1A6B9C">
+<link rel="icon" href="favicon.png">
+<link rel="stylesheet" href="assets/css/style.css">
+
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"SinaiCore Industrial","url":"https://sinaicore.com","email":"info@sinaicore.com","address":{"@type":"PostalAddress","addressCountry":"EG","addressRegion":"North Sinai"}}</script>
+</head>
+<body>
+<a class="skip" href="#main-content">Skip to main content</a>
+<header id="site-header">
+  <div class="container nav">
+    <a class="logo" href="index.html" aria-label="SinaiCore home"><img src="assets/img/logo-header.png" alt="SinaiCore Industrial" width="180" height="48"></a>
+    <nav class="nav-links" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="index.html#products">Products</a>
+      <a href="company-profile.html">Company Profile</a>
+      <a href="contact.html">Contact</a>
+      <span class="lang"><a class="active" href="index.html">EN</a><a href="index.html" title="French version available on sinaicore.com/fr">FR</a></span>
+    </nav>
+    <a class="btn btn-primary btn-sm" href="quote.html">Request Quote</a>
+    <button class="menu-btn" id="menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">☰</button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="index.html">Home</a>
+    <a href="index.html#products">Products</a>
+    <a href="company-profile.html">Company Profile</a>
+    <a href="contact.html">Contact</a>
+    <a class="btn btn-primary" href="quote.html">Request Quote</a>
+  </div>
+</header>
+<main id="main-content">
+
+<section class="page-hero">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / Request Quote</div>
+    <span class="eyebrow" style="background:rgba(255,255,255,.14);color:#fff">Request Quote</span>
+    <h1>Get a Quotation &amp; Samples</h1>
+    <p>Share your specifications &amp; quantities. Our team reviews your requirements and provides expert guidance, quotation, and samples with full Certificate of Analysis.</p>
+  </div>
+</section>
+<section class="section">
+  <div class="container" style="max-width:860px">
+    <div class="form-card reveal">
+      <form id="quote-form" novalidate>
+        <div class="form-grid">
+          <div class="field"><label for="q-name">Full Name *</label><input id="q-name" name="Name" required placeholder="Your name"></div>
+          <div class="field"><label for="q-company">Company *</label><input id="q-company" name="Company" required placeholder="Company name"></div>
+          <div class="field"><label for="q-email">Email *</label><input id="q-email" name="Email" type="email" required placeholder="you@company.com"></div>
+          <div class="field"><label for="q-phone">Phone / WhatsApp</label><input id="q-phone" name="Phone" placeholder="+00 000 000 0000"></div>
+          <div class="field"><label for="q-product">Product *</label>
+            <select id="q-product" name="Product" required>
+              <option value="">Select a product…</option>
+              <option value="refined-salt">Premium Refined Salt Solutions</option>
+              <option value="washed-salt">Industrial Washed Salt Solutions</option>
+              <option value="road-salt">Winter Maintenance Solutions</option>
+              <option value="water-softening-salt-tablets">Water Treatment Solutions</option>
+              <option value="raw-multi-purpose-salt">Marine Salt Solutions</option>
+            </select></div>
+          <div class="field"><label for="q-qty">Quantity (MT) *</label><input id="q-qty" name="Quantity (MT)" type="number" min="1" required placeholder="e.g. 500"></div>
+          <div class="field"><label for="q-pack">Packaging</label>
+            <select id="q-pack" name="Packaging"><option>25 kg bags</option><option>50 kg bags</option><option>Jumbo bags (FIBC) 1–1.5 MT</option><option>Sling bags</option><option>Bulk vessel</option></select></div>
+          <div class="field"><label for="q-incoterm">Incoterm / Port</label>
+            <select id="q-incoterm" name="Incoterm / Port"><option>FOB Arish Port</option><option>FOB Suez Port</option><option>FOB Port Said East Al-Tafreaa</option><option>Other (specify in notes)</option></select></div>
+          <div class="field"><label for="q-dest">Destination Port / Country</label><input id="q-dest" name="Destination" placeholder="e.g. Rotterdam, Netherlands"></div>
+          <div class="field"><label for="q-ship">Shipment Type</label>
+            <select id="q-ship" name="Shipment Type"><option>Container (20ft / 40ft)</option><option>Bulk vessel / Charter</option><option>To be decided</option></select></div>
+          <div class="field full"><label for="q-notes">Notes / Specifications</label><textarea id="q-notes" name="Notes" rows="4" placeholder="Purity, particle size, moisture, delivery schedule…"></textarea></div>
+        </div>
+        <button class="btn btn-primary" type="submit" style="width:100%;margin-top:18px">Submit Quote Request →</button>
+        <div class="form-msg" id="quote-form-msg" role="status"></div>
+        <p class="form-note">Submitting opens WhatsApp / email with your request pre-filled — no data is stored on this static site. You can also email <a href="mailto:info@sinaicore.com">info@sinaicore.com</a> or WhatsApp <a href="https://wa.me/201107539914" target="_blank" rel="noopener">+20 110 753 9914</a>.</p>
+      </form>
+    </div>
+    <div class="grid-3" style="margin-top:26px">
+      <div class="card reveal"><div class="num">01</div><h3>Inquiry</h3><p>Share your specifications &amp; quantities.</p></div>
+      <div class="card reveal"><div class="num">02</div><h3>Sampling</h3><p>Quotation &amp; samples with full COA for your evaluation.</p></div>
+      <div class="card reveal"><div class="num">03</div><h3>Logistics</h3><p>Order confirmation &amp; delivery — packaging, documentation, shipping.</p></div>
+    </div>
+  </div>
+</section>
+<script>
+(function(){var q=new URLSearchParams(location.search).get("product");if(q){var s=document.getElementById("q-product");if(s)s.value=q;}})();
+</script>
+</main>
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <img src="assets/img/logo-header.png" alt="SinaiCore Industrial" style="height:48px;background:#fff;border-radius:10px;padding:4px 10px;margin-bottom:16px">
+        <p>SinaiCore for Salts &amp; Minerals — An Egyptian salt exporter coordinating qualified sourcing, quality verification, packaging, documentation, and logistics for global markets.</p>
+        <p style="margin-top:14px"><a href="mailto:info@sinaicore.com">✉ info@sinaicore.com</a><a href="https://wa.me/201107539914" target="_blank" rel="noopener">✆ +20 110 753 9914</a></p>
+      </div>
+      <div>
+        <h4>El Arish Office</h4>
+        <p>Intersection of Assiut Street &amp; Al-Nafoura Street,<br>next to Cargaz Gas Station,<br>El Arish, North Sinai, Egypt</p>
+      </div>
+      <div>
+        <h4>Cairo Office</h4>
+        <p>Villa 167, Ali El-Sebai St., Alyasmeen 4,<br>First Settlement, New Cairo, Egypt</p>
+      </div>
+      <div>
+        <h4>Quick Links</h4>
+        <a href="index.html#products">Product Catalog</a>
+        <a href="quote.html">Request Quotation</a>
+        <a href="contact.html">Contact Us</a>
+        <a href="company-profile.html">Company Profile</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© <span id="year">2026</span> SinaiCore for Salts &amp; Minerals. All rights reserved.</span>
+      <span>www.sinaicore.com</span>
+    </div>
+  </div>
+</footer>
+<a class="whatsapp" href="https://wa.me/201107539914" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">💬</a>
+<button class="to-top" id="to-top" aria-label="Scroll to top">↑</button>
+<div class="modal" id="lab-modal" role="dialog" aria-modal="true" aria-labelledby="lab-modal-title">
+  <div class="modal-box">
+    <button class="modal-close" id="lab-modal-close" aria-label="Close">✕</button>
+    <span class="badge">Intertek Laboratory Report</span>
+    <h3 id="lab-modal-title" style="margin:8px 0 12px">Laboratory Test Report</h3>
+    <div id="lab-modal-body" style="color:var(--muted);font-size:15px"></div>
+    <p style="margin-top:18px"><a class="btn btn-primary" href="quote.html">Request COA &amp; TDS</a></p>
+  </div>
+</div>
+<script src="assets/js/main.js"></script>
+</body>
+</html>
