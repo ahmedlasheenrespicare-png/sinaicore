@@ -82,19 +82,33 @@
       <button class="tool-btn" id="reset-view" type="button">⟲ Reset View</button>
       <span class="tool-btn" style="cursor:default">◈ Drag to Rotate</span>
     </div>
+    <div class="stage-hud" aria-hidden="true">
+      <div class="hud-box"><span class="hud-chapter" id="hud-chapter">00 / 05</span><br><span id="hud-title">Cover</span></div>
+      <div class="hud-box">ROT <b id="hud-rot">0°</b> · EXPLODE <b id="hud-explode">0%</b></div>
+    </div>
+    <div class="particles" aria-hidden="true">
+      <span class="particle" style="top:18%;left:12%;animation-delay:0s"></span>
+      <span class="particle" style="top:30%;right:14%;animation-delay:1.2s"></span>
+      <span class="particle" style="top:62%;left:8%;animation-delay:2s"></span>
+      <span class="particle" style="top:74%;right:10%;animation-delay:.6s"></span>
+      <span class="particle" style="top:48%;left:20%;animation-delay:2.8s"></span>
+      <span class="particle" style="top:22%;right:26%;animation-delay:1.7s"></span>
+    </div>
     <div class="scene" id="scene" aria-label="Interactive 3D model of an export salt bag. Drag to rotate.">
       <div class="bag3d" id="bag3d">
         <div class="stitch"></div>
+        <div class="gusset gusset-left" id="gusset-left"></div>
+        <div class="gusset gusset-right" id="gusset-right"></div>
         <div class="layer layer-back"><small>Layer 04</small><strong>Outer Shell</strong><span>Woven PP fabric — strength &amp; handling</span></div>
         <div class="layer layer-liner"><small>Layer 03</small><strong>PE Liner</strong><span>Moisture barrier for maritime transport</span></div>
         <div class="layer layer-salt"><div class="crystals">◆ ◆ ◆</div><small>Layer 02 · The Product</small><strong>Salt Core</strong><span>NaCl ≥ 99.5% · Solar-evaporated marine salt</span></div>
         <div class="layer layer-front"><img src="assets/img/logo-header.png" alt="SinaiCore"><small>Layer 04 · Printed Face</small><strong>SinaiCore</strong><span>Industrial Sea Salt · Product of Egypt</span></div>
         <div class="layer layer-label"><small>Net Weight</small><div class="net">50 kg</div><span>Export Grade · Batch Traceable</span></div>
         <div class="callouts" id="callouts">
-          <span class="callout left" style="top:18%">Printed PP Shell</span>
-          <span class="callout right" style="top:36%">PE Moisture Liner</span>
-          <span class="callout left" style="top:56%">Salt Core · NaCl ≥ 99.5%</span>
-          <span class="callout right" style="top:74%">Batch Label &amp; Stitching</span>
+          <span class="callout left" data-layer="3" style="top:18%">Printed PP Shell</span>
+          <span class="callout right" data-layer="1" style="top:36%">PE Moisture Liner</span>
+          <span class="callout left" data-layer="2" style="top:56%">Salt Core · NaCl ≥ 99.5%</span>
+          <span class="callout right" data-layer="4" style="top:74%">Batch Label &amp; Stitching</span>
         </div>
         <span class="float-badge" data-stage="ch2" style="top:6%;left:-4%">💧 Moisture ≤ 0.2%</span>
         <span class="float-badge" data-stage="ch2" style="bottom:10%;right:-4%">🧪 Lab Verified</span>
@@ -105,6 +119,7 @@
     <div class="shadow-ellipse"></div>
     <p class="stage-caption" id="stage-caption">Fig. 0 — The export bag, assembled. Scroll to begin the story.</p>
     <p class="stage-hint">Scroll = rotate &amp; explode · Drag = free spin · Double-click = reset</p>
+    <p class="kbd-hint"><kbd>↑</kbd> <kbd>↓</kbd> chapters · <kbd>F</kbd> fullscreen · <kbd>R</kbd> reset view</p>
   </div>
 
   <div class="chapters">
@@ -115,9 +130,9 @@
       <h2>The White Gold of North Sinai</h2>
       <p>On the Mediterranean coast of North Sinai, seawater is invited to do the work. Shallow evaporation fields turn sun and wind into crystals — a process older than any factory, refined by SinaiCore into an export-grade product. What you see in the 3D model beside this text is the final form of that journey: a single bag, engineered to survive a sea voyage.<span class="footnote-ref">[1]</span></p>
       <div class="stat-row">
-        <div class="stat-box"><strong>≥ 99.5%</strong><span>NaCl Purity (Refined)</span></div>
-        <div class="stat-box"><strong>Solar</strong><span>Evaporation Process</span></div>
-        <div class="stat-box"><strong>North Sinai</strong><span>Qualified Producers</span></div>
+        <div class="stat-box"><strong data-count="99.5" data-prefix="≥ " data-suffix="%">≥ 0%</strong><span>NaCl Purity (Refined)</span></div>
+        <div class="stat-box"><strong data-count="100" data-suffix="%">0%</strong><span>Solar Evaporation</span></div>
+        <div class="stat-box"><strong data-count="5" data-suffix="">0</strong><span>Product Lines</span></div>
       </div>
       <div class="side-note"><b>Field Note — Why North Sinai?</b>The region's climate and coastline make it a natural home for marine salt production — and SinaiCore coordinates supply exclusively from qualified producers there, so every batch starts with a known source.<span class="footnote-ref">[2]</span></div>
       <p>SinaiCore does not simply sell salt. It coordinates the entire chain — sourcing, testing, packaging, documentation, and shipping — so an industrial buyer anywhere in the world receives a product that matches its specification, batch after batch.</p>
@@ -185,6 +200,15 @@
         <div class="handle"></div>
       </div>
       <p class="compare-hint">↔ Drag left / right to compare</p>
+      <h3>Product Specifications at a Glance</h3>
+      <table class="specs-table">
+        <tr><th>Product</th><th>NaCl</th><th>Moisture</th><th>Main Use</th></tr>
+        <tr><td>Premium Refined Salt</td><td>≥ 99.5%</td><td>≤ 0.2%</td><td>Industrial / Food</td></tr>
+        <tr><td>Industrial Washed Salt</td><td>≥ 98.5%</td><td>≤ 3%</td><td>Industrial</td></tr>
+        <tr><td>Winter Maintenance</td><td>≥ 98.0%</td><td>—</td><td>Road de-icing</td></tr>
+        <tr><td>Water Treatment Tablets</td><td>≥ 99.5%</td><td>—</td><td>Water softening</td></tr>
+        <tr><td>Marine Salt</td><td>≥ 97.0%</td><td>≤ 4%</td><td>Industrial / Commercial</td></tr>
+      </table>
       <div class="side-note"><b>Editor's Note</b>The 3D model shows the bag; the gallery and comparison show what the bag cannot — texture, colour, and scale. Together they complete the picture.</div>
     </article>
 
@@ -200,6 +224,13 @@
         <li>✓ Flexible Incoterms per the latest ICC rules</li>
         <li>✓ Samples provided with full Certificate of Analysis</li>
       </ul>
+      <div class="timeline" aria-label="Shipment timeline">
+        <div><b>01</b>Source<br>North Sinai</div>
+        <div><b>02</b>Processing<br>Wash · Grade</div>
+        <div><b>03</b>Packaging<br>Bag · FIBC · Bulk</div>
+        <div><b>04</b>Port<br>FOB Arish / Suez</div>
+        <div><b>05</b>World<br>Your Market</div>
+      </div>
       <div class="final-cta">
         <h3 style="font-family:var(--serif);color:#fff">Start your own shipment</h3>
         <p>Share your specifications and quantities — our team will respond with a quotation and samples.</p>
