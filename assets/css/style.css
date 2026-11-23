@@ -41,6 +41,8 @@ header.scrolled{box-shadow:var(--shadow)}
 .btn-outline:hover{border-color:var(--primary);color:var(--primary)}
 .btn-white{background:#fff;color:var(--dark)}
 .btn-dark{background:var(--dark);color:#fff}
+.btn-3d{background:linear-gradient(120deg,var(--dark),var(--primary));color:#fff;box-shadow:0 8px 20px rgba(14,26,43,.25)}
+.btn-3d:hover{transform:translateY(-1px);filter:brightness(1.15)}
 .btn-sm{padding:10px 18px;font-size:14px}
 .menu-btn{display:none;background:none;border:0;font-size:28px;cursor:pointer;color:var(--dark);padding:8px}
 .mobile-menu{display:none;border-top:1px solid var(--line);background:#fff;padding:14px 20px 20px}

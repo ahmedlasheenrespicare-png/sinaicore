@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inside the Bag — 3D Experience | SinaiCore</title>
+<meta name="description" content="A scroll-driven 3D editorial story: how SinaiCore export salt bags are sourced in North Sinai, protected, assembled, and shipped worldwide.">
+<meta name="author" content="SinaiCore Industrial">
+<meta name="theme-color" content="#1A6B9C">
+<link rel="icon" href="favicon.png">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/experience.css">
+</head>
+<body>
+<a class="skip" href="#main-content">Skip to main content</a>
+<header id="site-header">
+  <div class="container nav">
+    <a class="logo" href="index.html" aria-label="SinaiCore home"><img src="assets/img/logo-header.png" alt="SinaiCore Industrial" width="180" height="48"></a>
+    <nav class="nav-links" aria-label="Main navigation">
+      <a class="active" href="index.html">Home</a>
+      <a href="index.html#products">Products</a>
+      <a href="company-profile.html">Company Profile</a>
+      <a href="contact.html">Contact</a>
+      <span class="lang"><span class="active" aria-current="true">EN</span></span>
+    </nav>
+    <a class="btn btn-3d btn-sm active" href="experience.html" aria-current="page">◈ 3D Experience</a>
+    <a class="btn btn-primary btn-sm" href="quote.html">Request Quote</a>
+    <button class="menu-btn" id="menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">☰</button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+    <a class="active" href="index.html">Home</a>
+    <a href="index.html#products">Products</a>
+    <a href="company-profile.html">Company Profile</a>
+    <a href="contact.html">Contact</a>
+    <a href="experience.html">◈ 3D Experience — New Design</a>
+    <a class="btn btn-primary" href="quote.html">Request Quote</a>
+  </div>
+</header>
+<main id="main-content">
+
+<div class="progress-bar" id="progress-bar"></div>
+
+<!-- Chapter side rail -->
+<nav class="chapter-rail" aria-label="Chapters">
+  <a href="#cover"><b>00</b><span class="rail-label">Cover</span></a>
+  <a href="#ch1"><b>01</b><span class="rail-label">Introduction</span></a>
+  <a href="#ch2"><b>02</b><span class="rail-label">The Challenge</span></a>
+  <a href="#ch3"><b>03</b><span class="rail-label">Internal Components</span></a>
+  <a href="#ch4"><b>04</b><span class="rail-label">External Design</span></a>
+  <a href="#ch5"><b>05</b><span class="rail-label">Final Result</span></a>
+</nav>
+
+<!-- COVER -->
+<section class="cover" id="cover">
+  <div class="container cover-grid">
+    <div>
+      <span class="eyebrow">Interactive Editorial · New Design</span>
+      <h1>Inside the Bag:<br><em>From North Sinai to the World</em></h1>
+      <p class="lead">A scroll-driven 3D story about one export salt bag — how it is sourced, protected, assembled, and shipped across the sea. Scroll down and watch the bag rotate, open, and reveal what is inside.</p>
+      <div class="cover-meta">
+        <span>◈ 3D Scroll Animation</span><span>5 Numbered Chapters</span><span>Exploded View</span><span>Desktop-First</span>
+      </div>
+      <div class="cover-actions">
+        <a class="btn btn-primary" href="#ch1">Start the Story ↓</a>
+        <button class="btn btn-outline" id="fullscreen-btn" type="button">⛶ Fullscreen</button>
+      </div>
+      <p class="cover-note">🖥️ Best experienced on a desktop or laptop in landscape. Drag the bag to spin it · Double-click to reset the view.</p>
+    </div>
+    <div class="cover-card">
+      <img src="assets/img/hero-salt-field.jpg" alt="North Sinai salt landscape with crystalline salt deposits">
+      <h3>Chapter Zero — The Landscape</h3>
+      <p>Natural solar evaporation fields in North Sinai, where every SinaiCore shipment begins long before it reaches a bag.</p>
+    </div>
+  </div>
+</section>
+
+<!-- STORY: sticky 3D stage + chapters -->
+<div class="container story">
+  <div class="stage-wrap">
+    <div class="stage-toolbar">
+      <button class="tool-btn" id="fullscreen-btn-2" type="button">⛶ Fullscreen</button>
+      <button class="tool-btn" id="reset-view" type="button">⟲ Reset View</button>
+      <span class="tool-btn" style="cursor:default">◈ Drag to Rotate</span>
+    </div>
+    <div class="scene" id="scene" aria-label="Interactive 3D model of an export salt bag. Drag to rotate.">
+      <div class="bag3d" id="bag3d">
+        <div class="stitch"></div>
+        <div class="layer layer-back"><small>Layer 04</small><strong>Outer Shell</strong><span>Woven PP fabric — strength &amp; handling</span></div>
+        <div class="layer layer-liner"><small>Layer 03</small><strong>PE Liner</strong><span>Moisture barrier for maritime transport</span></div>
+        <div class="layer layer-salt"><div class="crystals">◆ ◆ ◆</div><small>Layer 02 · The Product</small><strong>Salt Core</strong><span>NaCl ≥ 99.5% · Solar-evaporated marine salt</span></div>
+        <div class="layer layer-front"><img src="assets/img/logo-header.png" alt="SinaiCore"><small>Layer 04 · Printed Face</small><strong>SinaiCore</strong><span>Industrial Sea Salt · Product of Egypt</span></div>
+        <div class="layer layer-label"><small>Net Weight</small><div class="net">50 kg</div><span>Export Grade · Batch Traceable</span></div>
+        <div class="callouts" id="callouts">
+          <span class="callout left" style="top:18%">Printed PP Shell</span>
+          <span class="callout right" style="top:36%">PE Moisture Liner</span>
+          <span class="callout left" style="top:56%">Salt Core · NaCl ≥ 99.5%</span>
+          <span class="callout right" style="top:74%">Batch Label &amp; Stitching</span>
+        </div>
+        <span class="float-badge" data-stage="ch2" style="top:6%;left:-4%">💧 Moisture ≤ 0.2%</span>
+        <span class="float-badge" data-stage="ch2" style="bottom:10%;right:-4%">🧪 Lab Verified</span>
+        <span class="float-badge" data-stage="ch5" style="top:10%;right:-2%">🚢 FOB Arish · Suez · Port Said</span>
+        <span class="float-badge" data-stage="ch5" style="bottom:8%;left:-2%">📄 COA &amp; TDS Ready</span>
+      </div>
+    </div>
+    <div class="shadow-ellipse"></div>
+    <p class="stage-caption" id="stage-caption">Fig. 0 — The export bag, assembled. Scroll to begin the story.</p>
+    <p class="stage-hint">Scroll = rotate &amp; explode · Drag = free spin · Double-click = reset</p>
+  </div>
+
+  <div class="chapters">
+    <!-- CHAPTER 01 -->
+    <article class="chapter" id="ch1">
+      <div class="chapter-num">01</div>
+      <span class="eyebrow">Chapter One · Introduction</span>
+      <h2>The White Gold of North Sinai</h2>
+      <p>On the Mediterranean coast of North Sinai, seawater is invited to do the work. Shallow evaporation fields turn sun and wind into crystals — a process older than any factory, refined by SinaiCore into an export-grade product. What you see in the 3D model beside this text is the final form of that journey: a single bag, engineered to survive a sea voyage.<span class="footnote-ref">[1]</span></p>
+      <div class="stat-row">
+        <div class="stat-box"><strong>≥ 99.5%</strong><span>NaCl Purity (Refined)</span></div>
+        <div class="stat-box"><strong>Solar</strong><span>Evaporation Process</span></div>
+        <div class="stat-box"><strong>North Sinai</strong><span>Qualified Producers</span></div>
+      </div>
+      <div class="side-note"><b>Field Note — Why North Sinai?</b>The region's climate and coastline make it a natural home for marine salt production — and SinaiCore coordinates supply exclusively from qualified producers there, so every batch starts with a known source.<span class="footnote-ref">[2]</span></div>
+      <p>SinaiCore does not simply sell salt. It coordinates the entire chain — sourcing, testing, packaging, documentation, and shipping — so an industrial buyer anywhere in the world receives a product that matches its specification, batch after batch.</p>
+    </article>
+
+    <!-- CHAPTER 02 -->
+    <article class="chapter" id="ch2">
+      <div class="chapter-num">02</div>
+      <span class="eyebrow">Chapter Two · The Challenge</span>
+      <h2>Purity Is Only Half the Story</h2>
+      <p>A salt crystal can be chemically perfect in the field and still fail at sea. Humidity, contamination, inconsistent particle size, and missing paperwork are the quiet enemies of every bulk shipment. The challenge, therefore, is not only to make salt — it is to protect it, prove it, and move it.<span class="footnote-ref">[3]</span></p>
+      <div class="challenge-grid">
+        <div class="challenge"><b>💧 Moisture &amp; Caking</b><p>Strict humidity control keeps the product stable during storage and maritime transport — down to ≤ 0.2% moisture for refined grades.</p></div>
+        <div class="challenge"><b>📏 Particle Size</b><p>Granulometry and sieve analysis match each grade to its application: industrial, water treatment, or road de-icing.</p></div>
+        <div class="challenge"><b>🧪 Proof of Quality</b><p>Batch testing with independent third-party laboratory verification — a Certificate of Analysis (COA) and TDS for every shipment on request.</p></div>
+      </div>
+      <div class="pull-quote">“From extraction to final export loading, every batch is monitored — because trust is built at the source, not at the port.”</div>
+      <p>Watch the model: the badges around the bag are the three promises SinaiCore makes on every order — dry, consistent, and verified.</p>
+    </article>
+
+    <!-- CHAPTER 03 -->
+    <article class="chapter" id="ch3">
+      <div class="chapter-num">03</div>
+      <span class="eyebrow">Chapter Three · Internal Components</span>
+      <h2>Anatomy of an Export Bag — Exploded View</h2>
+      <p>Scroll here and the bag comes apart. Four layers separate in space so you can see what stands between the sea and the ship. This is the exploded view — the same way engineers study a machine, applied to a bag of salt.<span class="footnote-ref">[4]</span></p>
+      <h3>Layer by Layer</h3>
+      <ul>
+        <li><b>Salt Core (Layer 02)</b> — the product itself: solar-evaporated marine salt, washed, screened, and graded to specification.</li>
+        <li><b>PE Liner (Layer 03)</b> — a moisture barrier that protects the core during storage and maritime transport.</li>
+        <li><b>Woven PP Shell (Layer 04)</b> — heavy-duty polypropylene fabric that carries the load, printed with the SinaiCore identity.</li>
+        <li><b>Stitching &amp; Label</b> — the sealed top and the batch label that make every bag traceable from source to shipment.</li>
+      </ul>
+      <div class="side-note"><b>Margin Note — Traceability</b>Each production batch is tracked from the qualified supplier source through processing, packaging, and documentation, to vessel or container loading. If a customer asks “which batch is this?”, the answer is never a guess.</div>
+      <p>Drag the exploded bag to inspect it from any angle. When you are ready, keep scrolling — the layers will come back together.</p>
+    </article>
+
+    <!-- CHAPTER 04 -->
+    <article class="chapter" id="ch4">
+      <div class="chapter-num">04</div>
+      <span class="eyebrow">Chapter Four · External Design</span>
+      <h2>Formats for Every Market</h2>
+      <p>Not every buyer wants the same bag. SinaiCore's packaging programme covers the full range — from retail-ready 25 kg bags to bulk vessel loading — each format engineered for its own logistics chain.<span class="footnote-ref">[5]</span></p>
+
+      <h3>Packaging Gallery</h3>
+      <figure class="slider" aria-label="Packaging formats gallery">
+        <div class="slider-track" id="slider-track">
+          <div class="slide"><img src="assets/img/bag-50kg.png" alt="25 kg / 50 kg Bags"><figcaption><b>25 kg / 50 kg Bags</b>Heavy-duty PP/PE export-grade bags for containerized shipments.</figcaption></div>
+          <div class="slide"><img src="assets/img/jumbo-bag.png" alt="Jumbo Bags (FIBC) – 1MT to 1.5MT"><figcaption><b>Jumbo Bags (FIBC) – 1MT to 1.5MT</b>Reinforced lifting loops and bottom discharge spouts.</figcaption></div>
+          <div class="slide"><img src="assets/img/bulk-vessel.png" alt="Bulk Vessel Loading"><figcaption><b>Bulk Vessel Loading</b>High-volume orders, subject to port and vessel arrangements.</figcaption></div>
+          <div class="slide"><img src="assets/img/raw-salt.jpg" alt="Bulk raw salt pile"><figcaption><b>Bulk &amp; Sling Bags</b>Charter vessel loading using sling bags, tailored per customer.</figcaption></div>
+        </div>
+        <button class="slider-btn prev" id="slider-prev" aria-label="Previous slide">‹</button>
+        <button class="slider-btn next" id="slider-next" aria-label="Next slide">›</button>
+        <div class="slider-dots" id="slider-dots"></div>
+      </figure>
+
+      <h3>Before / After — Raw vs. Refined</h3>
+      <p>Drag the handle to compare natural marine salt with the refined grade. The difference is not only visual: refining lifts NaCl purity to ≥ 99.5% and moisture down to ≤ 0.2%.</p>
+      <div class="compare" id="compare" aria-label="Interactive before and after comparison: raw salt versus refined salt. Drag to compare.">
+        <img src="assets/img/raw-salt.jpg" alt="Raw marine salt — before refining">
+        <div class="after"><img src="assets/img/refined-salt.png" alt="Refined salt — after refining"></div>
+        <span class="tag before">Before · Raw</span>
+        <span class="tag after-tag">After · Refined ≥ 99.5%</span>
+        <div class="handle"></div>
+      </div>
+      <p class="compare-hint">↔ Drag left / right to compare</p>
+      <div class="side-note"><b>Editor's Note</b>The 3D model shows the bag; the gallery and comparison show what the bag cannot — texture, colour, and scale. Together they complete the picture.</div>
+    </article>
+
+    <!-- CHAPTER 05 -->
+    <article class="chapter" id="ch5">
+      <div class="chapter-num">05</div>
+      <span class="eyebrow">Chapter Five · Final Result</span>
+      <h2>Sealed, Documented, Ready for the World</h2>
+      <p>The story ends where it should: at the port. Bags are sealed, batches are documented, and shipments leave Egypt under clear Incoterms — FOB Arish Port for bulk and charter vessels, or FOB Suez / Port Said East for containerized cargo.<span class="footnote-ref">[6]</span></p>
+      <ul>
+        <li>✓ Quality verified — COA &amp; TDS available on request</li>
+        <li>✓ Fully traceable batches, source to shipment</li>
+        <li>✓ Flexible Incoterms per the latest ICC rules</li>
+        <li>✓ Samples provided with full Certificate of Analysis</li>
+      </ul>
+      <div class="final-cta">
+        <h3 style="font-family:var(--serif);color:#fff">Start your own shipment</h3>
+        <p>Share your specifications and quantities — our team will respond with a quotation and samples.</p>
+        <a class="btn btn-white" href="quote.html">Request a Quote →</a>
+        <a class="btn btn-dark" href="index.html#products" style="margin-left:8px">View Products</a>
+      </div>
+    </article>
+  </div>
+</div>
+
+<!-- FOOTNOTES -->
+<section class="footnotes">
+  <div class="container">
+    <h3>Notes &amp; References</h3>
+    <ol>
+      <li>SinaiCore coordinates supply from qualified marine salt producers in North Sinai; products are selected, processed, tested, and documented per customer requirements.</li>
+      <li>Typical specifications: Refined NaCl ≥ 99.5% (moisture ≤ 0.2%) · Washed NaCl ≥ 98.5% (moisture ≤ 3%) · Winter Maintenance NaCl ≥ 98.0% · Water Treatment NaCl ≥ 99.5% · Marine NaCl ≥ 97.0% (moisture ≤ 4%).</li>
+      <li>Quality procedures align with ISO compliant procedures and, where applicable, BS / ASTM / EN standards.</li>
+      <li>Packaging: 25 kg / 50 kg PP/PE bags, Jumbo Bags (FIBC) 1–1.5 MT, sling bags, and bulk vessel loading.</li>
+      <li>Shipping terms: FOB Arish Port (bulk/charter) · FOB Suez Port or Port Said East Al-Tafreaa (containerized 20ft &amp; 40ft). Incoterms per latest ICC rules.</li>
+      <li>Contact: info@sinaicore.com · +20 110 753 9914 · El Arish &amp; New Cairo, Egypt.</li>
+    </ol>
+  </div>
+</section>
+
+</main>
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <img src="assets/img/logo-header.png" alt="SinaiCore Industrial" style="height:48px;background:#fff;border-radius:10px;padding:4px 10px;margin-bottom:16px">
+        <p>SinaiCore for Salts &amp; Minerals — An Egyptian salt exporter coordinating qualified sourcing, quality verification, packaging, documentation, and logistics for global markets.</p>
+        <p style="margin-top:14px"><a href="mailto:info@sinaicore.com">✉ info@sinaicore.com</a><a href="https://wa.me/201107539914" target="_blank" rel="noopener">✆ +20 110 753 9914</a></p>
+      </div>
+      <div>
+        <h4>El Arish Office</h4>
+        <p>Intersection of Assiut Street &amp; Al-Nafoura Street,<br>next to Cargaz Gas Station,<br>El Arish, North Sinai, Egypt</p>
+      </div>
+      <div>
+        <h4>Cairo Office</h4>
+        <p>Villa 167, Ali El-Sebai St., Alyasmeen 4,<br>First Settlement, New Cairo, Egypt</p>
+      </div>
+      <div>
+        <h4>Quick Links</h4>
+        <a href="index.html#products">Product Catalog</a>
+        <a href="quote.html">Request Quotation</a>
+        <a href="contact.html">Contact Us</a>
+        <a href="company-profile.html">Company Profile</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© <span id="year">2026</span> SinaiCore for Salts &amp; Minerals. All rights reserved.</span>
+      <span>www.sinaicore.com</span>
+    </div>
+  </div>
+</footer>
+<a class="whatsapp" href="https://wa.me/201107539914" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">💬</a>
+<button class="to-top" id="to-top" aria-label="Scroll to top">↑</button>
+<div class="modal" id="lab-modal" role="dialog" aria-modal="true" aria-labelledby="lab-modal-title">
+  <div class="modal-box">
+    <button class="modal-close" id="lab-modal-close" aria-label="Close">✕</button>
+    <span class="badge">Intertek Laboratory Report</span>
+    <h3 id="lab-modal-title" style="margin:8px 0 12px">Laboratory Test Report</h3>
+    <div id="lab-modal-body" style="color:var(--muted);font-size:15px"></div>
+    <p style="margin-top:18px"><a class="btn btn-primary" href="quote.html">Request COA &amp; TDS</a></p>
+  </div>
+</div>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/experience.js"></script>
+</body>
+</html>

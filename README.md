@@ -13,6 +13,7 @@ images from the original site are included under `assets/img/`.
 
 ```
 index.html                  Home — hero, pillars, products, quality, logistics, global reach, how it works
+experience.html               NEW 3D Experience — scroll-driven 3D bag, exploded view, numbered chapters, editorial layout, packaging slider, before/after comparison, fullscreen (desktop-first)
 products/
   refined-salt.html                 Premium Refined Salt Solutions (NaCl ≥ 99.5%)
   washed-salt.html                  Industrial Washed Salt Solutions (NaCl ≥ 98.5%)
@@ -24,7 +25,9 @@ contact.html                Contact details + message form
 quote.html                  Request-a-quote form (product, quantity, packaging, port)
 assets/
   css/style.css             All styles (responsive, no framework)
+  css/experience.css        3D Experience page styles (editorial + 3D scene)
   js/main.js                Mobile menu, scroll effects, product filter, lab-report modal, forms
+  js/experience.js          3D scroll animation, drag-to-rotate, chapter rail, slider, before/after, fullscreen
   img/                      Product, packaging, hero, logo & world-map images
 favicon.png
 ```
