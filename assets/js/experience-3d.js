@@ -199,13 +199,13 @@
     ["pointerup","pointercancel"].forEach(function(ev){ canvas.addEventListener(ev, function(){ dragging=false; }); });
     canvas.addEventListener("dblclick", function(){ dragRy=0; dragRx=0; });
 
-    var cur = {ry:-18, rx:8, rz:0, explode:1, s:1, x:0, y:0, camZ:9.5};
+    var cur = {ry:45, rx:10, rz:0, explode:1, s:1, x:0, y:0, camZ:9.5, light:1.35};
     function lerp(a,b,t){ return a+(b-a)*t; }
     var clock = new THREE.Clock();
     function animate(){
       requestAnimationFrame(animate);
       if(document.hidden) return;
-      var t = window.__bagTarget || {ry:-18, rx:8, rz:0, explode:1, s:1, x:0, y:0, camZ:9.5};
+      var t = window.__bagTarget || {ry:45, rx:10, rz:0, explode:1, s:1, x:0, y:0, camZ:9.5, light:1.35};
       cur.ry = lerp(cur.ry, t.ry, .06);
       cur.rx = lerp(cur.rx, t.rx, .06);
       cur.explode = lerp(cur.explode, t.explode, .06);
@@ -214,6 +214,7 @@
       cur.y = lerp(cur.y, t.y||0, .06);
       cur.rz = lerp(cur.rz, t.rz||0, .06);
       cur.camZ = lerp(cur.camZ, t.camZ||9.5, .06);
+      cur.light = lerp(cur.light, t.light||1.2, .06);
       var time = clock.getElapsedTime();
       bag.rotation.y = THREE.MathUtils.degToRad(cur.ry + dragRy);
       bag.rotation.x = THREE.MathUtils.degToRad(cur.rx + dragRx);
@@ -224,6 +225,7 @@
       bag.position.y = cur.y + Math.sin(time*.9)*.08;
       bag.scale.setScalar(cur.s);
       camera.position.z = cur.camZ;
+      key.intensity = 1.35 * cur.light; rim.intensity = .7 * cur.light; /* per-chapter lighting */
       var mx = (window.__mouse && window.__mouse.x) || 0;
       var my = (window.__mouse && window.__mouse.y) || 0;
       camera.position.x = bag.position.x * .55 + mx * .35;
@@ -234,8 +236,8 @@
       back.position.z = -D*.37*e;  back.position.y = -.35*fan;  back.rotation.x = -.18*fan;
       liner.position.z = -D*.12*e; liner.position.y = -.12*fan;
       salt.position.z = 0;
-      front.position.z = D*.37*e;  front.position.y = .18*fan;  front.rotation.x = .18*fan;
-      label.position.z = D*.37*e + D*.13 + .012; label.position.y = .42*fan; label.rotation.x = .3*fan;
+      front.position.z = D*.37*e;  front.position.y = .65*fan;  front.rotation.x = .18*fan; /* cover rises up */
+      label.position.z = D*.37*e + D*.13 + .012; label.position.y = 1.0*fan; label.rotation.x = .3*fan;
       gusL.position.x = -W/2-.02 - .5*fan; gusR.position.x = W/2+.02 + .5*fan;
       topFold.position.y = H/2+.06 + .55*fan; botFold.position.y = -H/2-.04 - .55*fan;
       stitch.position.y = H/2+.2 + .8*fan;

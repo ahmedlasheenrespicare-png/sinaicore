@@ -39,27 +39,34 @@
      model to the side opposite the text, explodes it for the "surgery"
      chapter, reassembles it, then spins it out at the end.
      x: left(-) / right(+) across screen · y: up/down · rz: tilt · s: zoom */
+  /* Choreography per spec table:
+     1 Hero: centre, 45deg, slow auto-rotate, bright light
+     2 First feature: Pan Left, Rotate to right side, Zoom In, text right
+     3 Internal: centre, Exploded (cover rises), Hotspots
+     4 Durability: Pan Right, Reassemble + 360deg to back, material light
+     5 Conclusion: centre, Zoom Out, attractive base pose, buy button */
   var STAGES = {
-    hero: {ry:-18, rx:8,  rz:0,  explode:1,   s:1,    x:0,    y:0,    camZ:9.5},
-    ch1:  {ry:-320,rx:6,  rz:0,  explode:1,   s:.92,  x:-3.1, y:-.15, camZ:10.5},
-    ch2:  {ry:-30, rx:16, rz:-12,explode:1.15, s:1.18, x:3.1,  y:.1,  camZ:7.2},
-    ch3:  {ry:120, rx:10, rz:0,  explode:2.6,  s:1.3,  x:.6,   y:.25, camZ:8.2},
-    ch4:  {ry:-25, rx:8,  rz:0,  explode:1,   s:1.12, x:3.1,  y:.1,  camZ:7.0},
-    ch5:  {ry:70,  rx:6,  rz:6,  explode:1,   s:.95,  x:-3.1, y:-.1, camZ:10.2},
-    end:  {ry:340, rx:8,  rz:10, explode:1,   s:1,    x:2.8,  y:0,    camZ:9.5}
+    hero: {ry:45,  rx:10, rz:0,  explode:1,   s:1,    x:0,    y:0,    camZ:9.5,  light:1.35},
+    ch1:  {ry:-70, rx:8,  rz:0,  explode:1,   s:1.15, x:-3.1, y:0,    camZ:7.4,  light:1.0},
+    ch2:  {ry:-30, rx:16, rz:-12,explode:1.15, s:1.18, x:3.1,  y:.1,  camZ:7.2,  light:1.1},
+    ch3:  {ry:120, rx:10, rz:0,  explode:2.6,  s:1.3,  x:0,    y:.25, camZ:8.2,  light:1.2},
+    ch4:  {ry:480, rx:8,  rz:0,  explode:1,   s:1.05, x:3.1,  y:.1,  camZ:9.0,  light:1.5},
+    ch5:  {ry:45,  rx:10, rz:0,  explode:1,   s:1,    x:0,    y:0,    camZ:11.0, light:1.35},
+    end:  {ry:45,  rx:10, rz:0,  explode:1,   s:1,    x:0,    y:0,    camZ:11.0, light:1.35}
   };
   var TITLES = {hero:"Welcome",ch1:"Introduction",ch2:"The Challenge",ch3:"Inside the Bag",ch4:"Packaging",ch5:"Final Result",end:"The End"};
   var NUMS = {hero:"00 / 05",ch1:"01 / 05",ch2:"02 / 05",ch3:"03 / 05",ch4:"04 / 05",ch5:"05 / 05",end:"05 / 05"};
   var CAPTIONS = {
-    hero:"Fig. 0 — Front view, centred. Scroll: the bag flies left and spins — the source side.",
-    ch1:"Fig. 1 — Bag crossed the screen spinning (ry -320°). Text right, bag left: the source.",
+    hero:"Fig. 0 — Hero: centre, 45° angle, slow auto-rotate, bright light.",
+    ch1:"Fig. 1 — Pan Left + Rotate to right side + Zoom In. Text on the right.",
     ch2:"Fig. 2 — Bag crosses back right, tilts and zooms in — the challenge, close up.",
     ch3:"Fig. 3 — Surgery: bag centres, zooms and explodes — four layers separate in space.",
-    ch4:"Fig. 4 — Reassembly: layers fly back together, front label close-up — exterior design.",
-    ch5:"Fig. 5 — Bag crosses left, side view — sealed and ready for the port.",
-    end:"Fig. 6 — Final spin (ry 340°) and exit right — The End."
+    ch4:"Fig. 4 — Pan Right + Reassemble + 360° spin to the back. Material light on.",
+    ch5:"Fig. 5 — Conclusion: centre, Zoom Out, base pose. Request a Quote below.",
+    end:"Fig. 5 — Conclusion: centre, Zoom Out, base pose. Request a Quote below."
   };
-  var cur = {ry:-18, rx:8, rz:0, explode:1, s:1, x:0, y:0, camZ:9.5};
+  var cur = {ry:45, rx:10, rz:0, explode:1, s:1, x:0, y:0, camZ:9.5, light:1.35};
+  var autoRy = 0;
   var target = STAGES.hero;
   var dragRy = 0, dragRx = 0;
   var lastScroll = Date.now();
@@ -81,7 +88,8 @@
   function lerp(a,b,t){ return a + (b-a)*t; }
   var dragging = false;
   function tick(){
-    /* No idle spin: rotation is purely scrub (scroll) + drag orbit */
+    /* Hero only: very slow auto-rotate (spec table §1) */
+    if(currentStage==="hero" && !dragging && !reduced) autoRy += .05;
     cur.ry = lerp(cur.ry, target.ry, .06);
     cur.rx = lerp(cur.rx, target.rx, .06);
     cur.rz = lerp(cur.rz, target.rz||0, .06);
@@ -90,7 +98,8 @@
     cur.x = lerp(cur.x, target.x||0, .06);
     cur.y = lerp(cur.y, target.y||0, .06);
     cur.camZ = lerp(cur.camZ, target.camZ||9.5, .06);
-    var totalRy = cur.ry + dragRy;
+    cur.light = lerp(cur.light, target.light||1.2, .06);
+    var totalRy = cur.ry + dragRy + autoRy;
     if(bag) bag.style.transform = "translateX("+(cur.x*110)+"px) translateY("+(cur.y*90)+"px) rotateX("+(cur.rx+dragRx)+"deg) rotateY("+totalRy+"deg) rotateZ("+cur.rz+"deg) scale("+cur.s+")";
     layers.forEach(function(el,i){
       var z = LAYER_Z[i] * cur.explode;
@@ -115,6 +124,8 @@
     if(hudChapter) hudChapter.textContent = NUMS[id] || "";
     if(hudTitle) hudTitle.textContent = TITLES[id] || "";
     if(callouts) callouts.classList.toggle("show", id==="ch3");
+    var cta = document.getElementById("stage-cta");
+    if(cta) cta.classList.toggle("show", id==="ch5" || id==="end");
     badges.forEach(function(b){
       b.classList.toggle("show", (id==="ch2" && b.dataset.stage==="ch2") || (id==="ch5" && b.dataset.stage==="ch5"));
     });
@@ -171,7 +182,7 @@
     var t = 0;
     if(centers[i+1] > centers[i]) t = Math.max(0, Math.min(1, (mid - centers[i])/(centers[i+1]-centers[i])));
     var panScale = window.innerWidth < 1100 ? 0.3 : 1; /* phones: bag stays near centre */
-    target = {ry: lerp(a.ry,b.ry,t), rx: lerp(a.rx,b.rx,t), rz: lerp(a.rz||0,b.rz||0,t), explode: lerp(a.explode,b.explode,t), s: lerp(a.s,b.s,t), x: lerp(a.x||0,b.x||0,t)*panScale, y: lerp(a.y||0,b.y||0,t), camZ: lerp(a.camZ||9.5,b.camZ||9.5,t)};
+    target = {ry: lerp(a.ry,b.ry,t), rx: lerp(a.rx,b.rx,t), rz: lerp(a.rz||0,b.rz||0,t), explode: lerp(a.explode,b.explode,t), s: lerp(a.s,b.s,t), x: lerp(a.x||0,b.x||0,t)*panScale, y: lerp(a.y||0,b.y||0,t), camZ: lerp(a.camZ||9.5,b.camZ||9.5,t), light: lerp(a.light||1.2,b.light||1.2,t)};
     window.__bagTarget = target;
     setStage(t > .5 ? ORDER[i+1] : ORDER[i]);
     /* Nav progress: fill each link as its section passes */
@@ -220,7 +231,7 @@
     ["pointerup","pointercancel"].forEach(function(ev){
       scene.addEventListener(ev, function(){ dragging=false; lastScroll=Date.now(); });
     });
-    scene.addEventListener("dblclick", function(){ dragRy=0; dragRx=0; });
+    scene.addEventListener("dblclick", function(){ dragRy=0; dragRx=0; autoRy=0; });
   }
 
   /* ---------- Hotspots ---------- */
@@ -289,7 +300,7 @@
       if(el){ if(lenis) lenis.scrollTo(el); else el.scrollIntoView({behavior: reduced ? "auto" : "smooth"}); }
       e.preventDefault();
     } else if(e.key==="f" || e.key==="F"){ toggleFs(); }
-    else if(e.key==="r" || e.key==="R"){ dragRy=0; dragRx=0; }
+    else if(e.key==="r" || e.key==="R"){ dragRy=0; dragRx=0; autoRy=0; }
   });
 
   /* ---------- Portrait overlay (reference style) ---------- */
