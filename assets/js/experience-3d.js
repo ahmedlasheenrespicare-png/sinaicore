@@ -134,22 +134,25 @@
     canvas.addEventListener("dblclick", function(){ dragRy=0; dragRx=0; });
 
     /* --- Animate: lerp to scroll target from experience.js --- */
-    var cur = {ry:-18, rx:8, explode:1, s:1, x:0};
+    var cur = {ry:-18, rx:8, rz:0, explode:1, s:1, x:0, y:0};
     function lerp(a,b,t){ return a+(b-a)*t; }
     var clock = new THREE.Clock();
     function animate(){
       requestAnimationFrame(animate);
-      var t = window.__bagTarget || {ry:-18, rx:8, explode:1, s:1, x:0};
+      var t = window.__bagTarget || {ry:-18, rx:8, rz:0, explode:1, s:1, x:0, y:0};
       cur.ry = lerp(cur.ry, t.ry, .06);
       cur.rx = lerp(cur.rx, t.rx, .06);
       cur.explode = lerp(cur.explode, t.explode, .06);
       cur.s = lerp(cur.s, t.s, .06);
       cur.x = lerp(cur.x, t.x||0, .06);
+      cur.y = lerp(cur.y, t.y||0, .06);
+      cur.rz = lerp(cur.rz, t.rz||0, .06);
       var time = clock.getElapsedTime();
       bag.rotation.y = THREE.MathUtils.degToRad(cur.ry + dragRy + time*4);
       bag.rotation.x = THREE.MathUtils.degToRad(cur.rx + dragRx);
+      bag.rotation.z = THREE.MathUtils.degToRad(cur.rz);
       bag.position.x = cur.x;
-      bag.position.y = Math.sin(time*.9)*.08;
+      bag.position.y = cur.y + Math.sin(time*.9)*.08;
       bag.scale.setScalar(cur.s);
       var e = cur.explode;
       back.position.z = -D*.36 * e;

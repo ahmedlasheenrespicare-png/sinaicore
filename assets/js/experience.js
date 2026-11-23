@@ -15,27 +15,31 @@
 
   /* ---------- Stage keyframes (continuous scroll interpolation) ---------- */
   var ORDER = ["hero","ch1","ch2","ch3","ch4","ch5","end"];
+  /* Reference choreography (84-24): each chapter flies/turns/zooms the
+     model to the side opposite the text, explodes it for the "surgery"
+     chapter, reassembles it, then spins it out at the end.
+     x: left(-) / right(+) across screen · y: up/down · rz: tilt · s: zoom */
   var STAGES = {
-    hero: {ry:-18, rx:8,  explode:1,   s:1, x:0},
-    ch1:  {ry:-24, rx:6,  explode:1,   s:1, x:0},
-    ch2:  {ry:38,  rx:10, explode:1.15, s:.92, x:1.1},
-    ch3:  {ry:22,  rx:4,  explode:2.6,  s:.95, x:0},
-    ch4:  {ry:-38, rx:8,  explode:1,   s:1, x:-1.1},
-    ch5:  {ry:14,  rx:5,  explode:1,   s:1.04, x:0},
-    end:  {ry:14,  rx:5,  explode:1,   s:1.04, x:0}
+    hero: {ry:-18, rx:8,  rz:0,  explode:1,   s:1,    x:0,    y:0},
+    ch1:  {ry:-320,rx:6,  rz:0,  explode:1,   s:.92,  x:-1.25, y:-.15},
+    ch2:  {ry:-30, rx:16, rz:-12,explode:1.15, s:1.18, x:1.25,  y:.1},
+    ch3:  {ry:120, rx:10, rz:0,  explode:2.6,  s:1.3,  x:.4,   y:.25},
+    ch4:  {ry:-25, rx:8,  rz:0,  explode:1,   s:1.12, x:1.25,  y:.1},
+    ch5:  {ry:70,  rx:6,  rz:6,  explode:1,   s:.95,  x:-1.25, y:-.1},
+    end:  {ry:340, rx:8,  rz:10, explode:1,   s:1,    x:1.2,  y:0}
   };
   var TITLES = {hero:"Welcome",ch1:"Introduction",ch2:"The Challenge",ch3:"Inside the Bag",ch4:"Packaging",ch5:"Final Result",end:"The End"};
   var NUMS = {hero:"00 / 05",ch1:"01 / 05",ch2:"02 / 05",ch3:"03 / 05",ch4:"04 / 05",ch5:"05 / 05",end:"05 / 05"};
   var CAPTIONS = {
-    hero:"Fig. 0 — The export bag, assembled. Scroll to begin the story.",
-    ch1:"Fig. 1 — Solar evaporation in North Sinai. The journey begins.",
-    ch2:"Fig. 2 — The challenge: purity, moisture, and maritime transport.",
-    ch3:"Fig. 3 — Exploded view: four layers between the sea and the ship.",
-    ch4:"Fig. 4 — The finished exterior: printed, stitched, export-ready.",
-    ch5:"Fig. 5 — Sealed, documented, and ready for FOB shipment.",
-    end:"Fig. 5 — Sealed, documented, and ready for FOB shipment."
+    hero:"Fig. 0 — Front view, centred. Scroll: the bag flies left and spins — the source side.",
+    ch1:"Fig. 1 — Bag crossed the screen spinning (ry -320°). Text right, bag left: the source.",
+    ch2:"Fig. 2 — Bag crosses back right, tilts and zooms in — the challenge, close up.",
+    ch3:"Fig. 3 — Surgery: bag centres, zooms and explodes — four layers separate in space.",
+    ch4:"Fig. 4 — Reassembly: layers fly back together, front label close-up — exterior design.",
+    ch5:"Fig. 5 — Bag crosses left, side view — sealed and ready for the port.",
+    end:"Fig. 6 — Final spin (ry 340°) and exit right — The End."
   };
-  var cur = {ry:-18, rx:8, explode:1, s:1};
+  var cur = {ry:-18, rx:8, rz:0, explode:1, s:1, x:0, y:0};
   var target = STAGES.hero;
   var dragRy = 0, dragRx = 0, autoRy = 0;
   var lastScroll = Date.now();
@@ -60,10 +64,13 @@
     if(idle && !reduced) autoRy += .12;
     cur.ry = lerp(cur.ry, target.ry, .06);
     cur.rx = lerp(cur.rx, target.rx, .06);
+    cur.rz = lerp(cur.rz, target.rz||0, .06);
     cur.explode = lerp(cur.explode, target.explode, .06);
     cur.s = lerp(cur.s, target.s, .06);
+    cur.x = lerp(cur.x, target.x||0, .06);
+    cur.y = lerp(cur.y, target.y||0, .06);
     var totalRy = cur.ry + dragRy + autoRy;
-    if(bag) bag.style.transform = "rotateX("+(cur.rx+dragRx)+"deg) rotateY("+totalRy+"deg) scale("+cur.s+")";
+    if(bag) bag.style.transform = "translateX("+(cur.x*150)+"px) translateY("+(cur.y*90)+"px) rotateX("+(cur.rx+dragRx)+"deg) rotateY("+totalRy+"deg) rotateZ("+cur.rz+"deg) scale("+cur.s+")";
     layers.forEach(function(el,i){
       var z = LAYER_Z[i] * cur.explode;
       var y = (i-2) * 10 * (cur.explode-1);
@@ -141,7 +148,7 @@
     var a = STAGES[ORDER[i]], b = STAGES[ORDER[i+1]];
     var t = 0;
     if(centers[i+1] > centers[i]) t = Math.max(0, Math.min(1, (mid - centers[i])/(centers[i+1]-centers[i])));
-    target = {ry: lerp(a.ry,b.ry,t), rx: lerp(a.rx,b.rx,t), explode: lerp(a.explode,b.explode,t), s: lerp(a.s,b.s,t), x: lerp(a.x||0,b.x||0,t)};
+    target = {ry: lerp(a.ry,b.ry,t), rx: lerp(a.rx,b.rx,t), rz: lerp(a.rz||0,b.rz||0,t), explode: lerp(a.explode,b.explode,t), s: lerp(a.s,b.s,t), x: lerp(a.x||0,b.x||0,t), y: lerp(a.y||0,b.y||0,t)};
     window.__bagTarget = target;
     setStage(t > .5 ? ORDER[i+1] : ORDER[i]);
     updateQuote();
