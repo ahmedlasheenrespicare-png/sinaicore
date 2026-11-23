@@ -14,7 +14,7 @@
     renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
     var scene = new THREE.Scene();
     var camera = new THREE.PerspectiveCamera(38, 1, .1, 100);
-    camera.position.set(0, .4, 7.2);
+    camera.position.set(0, .4, 9.5);
     camera.lookAt(0,0,0);
 
     scene.add(new THREE.AmbientLight(0xffffff, .75));
@@ -116,7 +116,7 @@
 
     /* --- Sizing --- */
     function resize(){
-      var w = wrap.clientWidth || 460, h = wrap.clientHeight || 520;
+      var w = wrap.clientWidth || window.innerWidth, h = wrap.clientHeight || window.innerHeight;
       renderer.setSize(w, h, false);
       camera.aspect = w/h; camera.updateProjectionMatrix();
     }

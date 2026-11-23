@@ -11,6 +11,11 @@
     if(intro) intro.classList.add("hide");
   }
   if(introBtn) introBtn.addEventListener("click", startExperience);
+  if(intro){
+    intro.addEventListener("click", startExperience);
+    window.addEventListener("wheel", function(){ if(document.body.classList.contains("locked")) startExperience(); }, {passive:true});
+    window.addEventListener("touchstart", function(){ if(document.body.classList.contains("locked")) startExperience(); }, {passive:true});
+  }
   if(reduced) startExperience();
 
   /* ---------- Stage keyframes (continuous scroll interpolation) ---------- */
@@ -21,12 +26,12 @@
      x: left(-) / right(+) across screen · y: up/down · rz: tilt · s: zoom */
   var STAGES = {
     hero: {ry:-18, rx:8,  rz:0,  explode:1,   s:1,    x:0,    y:0},
-    ch1:  {ry:-320,rx:6,  rz:0,  explode:1,   s:.92,  x:-1.25, y:-.15},
-    ch2:  {ry:-30, rx:16, rz:-12,explode:1.15, s:1.18, x:1.25,  y:.1},
-    ch3:  {ry:120, rx:10, rz:0,  explode:2.6,  s:1.3,  x:.4,   y:.25},
-    ch4:  {ry:-25, rx:8,  rz:0,  explode:1,   s:1.12, x:1.25,  y:.1},
-    ch5:  {ry:70,  rx:6,  rz:6,  explode:1,   s:.95,  x:-1.25, y:-.1},
-    end:  {ry:340, rx:8,  rz:10, explode:1,   s:1,    x:1.2,  y:0}
+    ch1:  {ry:-320,rx:6,  rz:0,  explode:1,   s:.92,  x:-3.1, y:-.15},
+    ch2:  {ry:-30, rx:16, rz:-12,explode:1.15, s:1.18, x:3.1,  y:.1},
+    ch3:  {ry:120, rx:10, rz:0,  explode:2.6,  s:1.3,  x:.6,   y:.25},
+    ch4:  {ry:-25, rx:8,  rz:0,  explode:1,   s:1.12, x:3.1,  y:.1},
+    ch5:  {ry:70,  rx:6,  rz:6,  explode:1,   s:.95,  x:-3.1, y:-.1},
+    end:  {ry:340, rx:8,  rz:10, explode:1,   s:1,    x:2.8,  y:0}
   };
   var TITLES = {hero:"Welcome",ch1:"Introduction",ch2:"The Challenge",ch3:"Inside the Bag",ch4:"Packaging",ch5:"Final Result",end:"The End"};
   var NUMS = {hero:"00 / 05",ch1:"01 / 05",ch2:"02 / 05",ch3:"03 / 05",ch4:"04 / 05",ch5:"05 / 05",end:"05 / 05"};
@@ -70,7 +75,7 @@
     cur.x = lerp(cur.x, target.x||0, .06);
     cur.y = lerp(cur.y, target.y||0, .06);
     var totalRy = cur.ry + dragRy + autoRy;
-    if(bag) bag.style.transform = "translateX("+(cur.x*150)+"px) translateY("+(cur.y*90)+"px) rotateX("+(cur.rx+dragRx)+"deg) rotateY("+totalRy+"deg) rotateZ("+cur.rz+"deg) scale("+cur.s+")";
+    if(bag) bag.style.transform = "translateX("+(cur.x*110)+"px) translateY("+(cur.y*90)+"px) rotateX("+(cur.rx+dragRx)+"deg) rotateY("+totalRy+"deg) rotateZ("+cur.rz+"deg) scale("+cur.s+")";
     layers.forEach(function(el,i){
       var z = LAYER_Z[i] * cur.explode;
       var y = (i-2) * 10 * (cur.explode-1);

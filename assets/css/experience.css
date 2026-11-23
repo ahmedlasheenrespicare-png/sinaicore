@@ -233,3 +233,24 @@ h2 .w.on{opacity:1}
 @media(max-width:1100px){
   .chapter.align-left .wrap,.chapter.align-right .wrap{margin:0 auto}
 }
+
+/* ===== v6: full-screen canvas — bag travels across the whole screen,
+   text sits in a column on the opposite side (reference layout) ===== */
+.stage-fixed{display:block;padding-top:0}
+#webgl-wrap{position:fixed;inset:0;width:100vw;height:100vh;margin:0;z-index:1}
+#webgl{width:100vw;height:100vh}
+.stage-fixed .scene{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1}
+.chapter{background:transparent;border:0;backdrop-filter:none}
+.chapter .wrap{background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border:1px solid rgba(227,234,240,.9);border-radius:16px;padding:36px 38px;box-shadow:0 18px 50px rgba(14,26,43,.10)}
+.end,.footnotes{background:rgba(255,255,255,.94)}
+@media(max-width:1100px){
+  #webgl-wrap{position:sticky;top:72px;height:52vh;width:100%}
+  #webgl{height:52vh}
+  .stage-fixed .scene{position:static;transform:none}
+  .chapter .wrap{padding:26px 22px}
+}
+.stage-caption{position:fixed;left:50%;transform:translateX(-50%);bottom:64px;z-index:2;width:min(680px,86vw)}
+.stage-hint{position:fixed;left:50%;transform:translateX(-50%);bottom:38px;z-index:2;width:min(680px,86vw)}
+@media(max-width:1100px){
+  .stage-caption,.stage-hint{position:static;transform:none;width:auto;margin:8px auto 0}
+}
