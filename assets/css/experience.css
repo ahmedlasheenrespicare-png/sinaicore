@@ -333,3 +333,16 @@ main{margin-left:50vw;width:50vw;position:relative;z-index:2;background:var(--co
   .stage-hud{display:none}
   .keyboard-bar{display:none}
 }
+
+/* ===== v16: dark bag panel — white bag must pop, not blend into white ===== */
+.stage-fixed{background:radial-gradient(700px 500px at 50% 42%,#1d3a56 0%,#0E1A2B 72%);border-right:1px solid #1d3a56}
+.stage-fixed .stage-caption{color:#cfe2ee}
+.stage-fixed .stage-hint{color:#8fa6bd}
+.stage-hud{background:rgba(14,26,43,.82);border-color:#2a4a6b;color:#8fa6bd}
+.stage-hud b{color:#fff}
+.stage-hud .hud-chapter{color:#7ec3e8}
+.callout{background:#fff;color:var(--col1);border:1px solid #2a4a6b}
+.callout::after{background:#fff}
+.callout:hover,.callout.hot{background:#c96a1b;color:#fff;border-color:#c96a1b}
+.float-badge{background:rgba(255,255,255,.95)}
+.shadow-ellipse{background:radial-gradient(ellipse at center,rgba(0,0,0,.5),transparent 70%)}
