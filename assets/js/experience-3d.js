@@ -134,12 +134,12 @@
     canvas.addEventListener("dblclick", function(){ dragRy=0; dragRx=0; });
 
     /* --- Animate: lerp to scroll target from experience.js --- */
-    var cur = {ry:-18, rx:8, rz:0, explode:1, s:1, x:0, y:0};
+    var cur = {ry:-18, rx:8, rz:0, explode:1, s:1, x:0, y:0, camZ:9.5};
     function lerp(a,b,t){ return a+(b-a)*t; }
     var clock = new THREE.Clock();
     function animate(){
       requestAnimationFrame(animate);
-      var t = window.__bagTarget || {ry:-18, rx:8, rz:0, explode:1, s:1, x:0, y:0};
+      var t = window.__bagTarget || {ry:-18, rx:8, rz:0, explode:1, s:1, x:0, y:0, camZ:9.5};
       cur.ry = lerp(cur.ry, t.ry, .06);
       cur.rx = lerp(cur.rx, t.rx, .06);
       cur.explode = lerp(cur.explode, t.explode, .06);
@@ -147,19 +147,21 @@
       cur.x = lerp(cur.x, t.x||0, .06);
       cur.y = lerp(cur.y, t.y||0, .06);
       cur.rz = lerp(cur.rz, t.rz||0, .06);
+      cur.camZ = lerp(cur.camZ, t.camZ||9.5, .06);
       var time = clock.getElapsedTime();
-      bag.rotation.y = THREE.MathUtils.degToRad(cur.ry + dragRy + time*4);
+      bag.rotation.y = THREE.MathUtils.degToRad(cur.ry + dragRy); /* scrub + drag orbit only */
       bag.rotation.x = THREE.MathUtils.degToRad(cur.rx + dragRx);
       bag.rotation.z = THREE.MathUtils.degToRad(cur.rz);
       bag.position.x = cur.x;
       bag.position.y = cur.y + Math.sin(time*.9)*.08;
+      camera.position.z = cur.camZ; /* Zoom In/Out: camera dolly */
       bag.scale.setScalar(cur.s);
-      var e = cur.explode;
-      back.position.z = -D*.36 * e;
-      liner.position.z = -D*.12 * e;
-      salt.position.z = 0;
-      front.position.z = D*.36 * e;
-      label.position.z = D*.36 * e + D*.14 + .01;
+      var e = cur.explode, fan = (e-1);
+      back.position.z = -D*.36 * e;  back.position.y = -.35*fan;
+      liner.position.z = -D*.12 * e; liner.position.y = -.12*fan;
+      salt.position.z = 0;           salt.position.y = 0;
+      front.position.z = D*.36 * e;  front.position.y = .18*fan;
+      label.position.z = D*.36 * e + D*.14 + .01; label.position.y = .42*fan;
       stitch.position.y = H/2+.05 + (e-1)*.35;
       crystals.forEach(function(m){
         m.rotation.y = time*m.userData.sp + m.userData.s;

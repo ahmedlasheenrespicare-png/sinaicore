@@ -25,13 +25,13 @@
      chapter, reassembles it, then spins it out at the end.
      x: left(-) / right(+) across screen · y: up/down · rz: tilt · s: zoom */
   var STAGES = {
-    hero: {ry:-18, rx:8,  rz:0,  explode:1,   s:1,    x:0,    y:0},
-    ch1:  {ry:-320,rx:6,  rz:0,  explode:1,   s:.92,  x:-3.1, y:-.15},
-    ch2:  {ry:-30, rx:16, rz:-12,explode:1.15, s:1.18, x:3.1,  y:.1},
-    ch3:  {ry:120, rx:10, rz:0,  explode:2.6,  s:1.3,  x:.6,   y:.25},
-    ch4:  {ry:-25, rx:8,  rz:0,  explode:1,   s:1.12, x:3.1,  y:.1},
-    ch5:  {ry:70,  rx:6,  rz:6,  explode:1,   s:.95,  x:-3.1, y:-.1},
-    end:  {ry:340, rx:8,  rz:10, explode:1,   s:1,    x:2.8,  y:0}
+    hero: {ry:-18, rx:8,  rz:0,  explode:1,   s:1,    x:0,    y:0,    camZ:9.5},
+    ch1:  {ry:-320,rx:6,  rz:0,  explode:1,   s:.92,  x:-3.1, y:-.15, camZ:10.5},
+    ch2:  {ry:-30, rx:16, rz:-12,explode:1.15, s:1.18, x:3.1,  y:.1,  camZ:7.2},
+    ch3:  {ry:120, rx:10, rz:0,  explode:2.6,  s:1.3,  x:.6,   y:.25, camZ:8.2},
+    ch4:  {ry:-25, rx:8,  rz:0,  explode:1,   s:1.12, x:3.1,  y:.1,  camZ:7.0},
+    ch5:  {ry:70,  rx:6,  rz:6,  explode:1,   s:.95,  x:-3.1, y:-.1, camZ:10.2},
+    end:  {ry:340, rx:8,  rz:10, explode:1,   s:1,    x:2.8,  y:0,    camZ:9.5}
   };
   var TITLES = {hero:"Welcome",ch1:"Introduction",ch2:"The Challenge",ch3:"Inside the Bag",ch4:"Packaging",ch5:"Final Result",end:"The End"};
   var NUMS = {hero:"00 / 05",ch1:"01 / 05",ch2:"02 / 05",ch3:"03 / 05",ch4:"04 / 05",ch5:"05 / 05",end:"05 / 05"};
@@ -44,9 +44,9 @@
     ch5:"Fig. 5 — Bag crosses left, side view — sealed and ready for the port.",
     end:"Fig. 6 — Final spin (ry 340°) and exit right — The End."
   };
-  var cur = {ry:-18, rx:8, rz:0, explode:1, s:1, x:0, y:0};
+  var cur = {ry:-18, rx:8, rz:0, explode:1, s:1, x:0, y:0, camZ:9.5};
   var target = STAGES.hero;
-  var dragRy = 0, dragRx = 0, autoRy = 0;
+  var dragRy = 0, dragRx = 0;
   var lastScroll = Date.now();
   var bag = document.getElementById("bag3d");
   var scene = document.getElementById("scene");
@@ -58,6 +58,7 @@
   var LAYER_Z = [-110, -55, 0, 55, 110];
   var hudRot = document.getElementById("hud-rot");
   var hudExplode = document.getElementById("hud-explode");
+  var hudZoom = document.getElementById("hud-zoom");
   var hudChapter = document.getElementById("hud-chapter");
   var hudTitle = document.getElementById("hud-title");
   var progress = document.getElementById("progress-bar");
@@ -65,8 +66,7 @@
   function lerp(a,b,t){ return a + (b-a)*t; }
   var dragging = false;
   function tick(){
-    var idle = (Date.now() - lastScroll > 2600) && !dragging;
-    if(idle && !reduced) autoRy += .12;
+    /* No idle spin: rotation is purely scrub (scroll) + drag orbit */
     cur.ry = lerp(cur.ry, target.ry, .06);
     cur.rx = lerp(cur.rx, target.rx, .06);
     cur.rz = lerp(cur.rz, target.rz||0, .06);
@@ -74,7 +74,8 @@
     cur.s = lerp(cur.s, target.s, .06);
     cur.x = lerp(cur.x, target.x||0, .06);
     cur.y = lerp(cur.y, target.y||0, .06);
-    var totalRy = cur.ry + dragRy + autoRy;
+    cur.camZ = lerp(cur.camZ, target.camZ||9.5, .06);
+    var totalRy = cur.ry + dragRy;
     if(bag) bag.style.transform = "translateX("+(cur.x*110)+"px) translateY("+(cur.y*90)+"px) rotateX("+(cur.rx+dragRx)+"deg) rotateY("+totalRy+"deg) rotateZ("+cur.rz+"deg) scale("+cur.s+")";
     layers.forEach(function(el,i){
       var z = LAYER_Z[i] * cur.explode;
@@ -84,6 +85,7 @@
     gussets.forEach(function(g){ g.style.opacity = cur.explode > 1.6 ? ".25" : "1"; });
     if(hudRot) hudRot.textContent = Math.round(((totalRy%360)+360)%360) + "°";
     if(hudExplode) hudExplode.textContent = Math.round(Math.max(0,(cur.explode-1)/1.6)*100) + "%";
+    if(hudZoom) hudZoom.textContent = Math.round((9.5/cur.camZ)*100) + "%";
     requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
@@ -153,7 +155,7 @@
     var a = STAGES[ORDER[i]], b = STAGES[ORDER[i+1]];
     var t = 0;
     if(centers[i+1] > centers[i]) t = Math.max(0, Math.min(1, (mid - centers[i])/(centers[i+1]-centers[i])));
-    target = {ry: lerp(a.ry,b.ry,t), rx: lerp(a.rx,b.rx,t), rz: lerp(a.rz||0,b.rz||0,t), explode: lerp(a.explode,b.explode,t), s: lerp(a.s,b.s,t), x: lerp(a.x||0,b.x||0,t), y: lerp(a.y||0,b.y||0,t)};
+    target = {ry: lerp(a.ry,b.ry,t), rx: lerp(a.rx,b.rx,t), rz: lerp(a.rz||0,b.rz||0,t), explode: lerp(a.explode,b.explode,t), s: lerp(a.s,b.s,t), x: lerp(a.x||0,b.x||0,t), y: lerp(a.y||0,b.y||0,t), camZ: lerp(a.camZ||9.5,b.camZ||9.5,t)};
     window.__bagTarget = target;
     setStage(t > .5 ? ORDER[i+1] : ORDER[i]);
     updateQuote();
@@ -194,7 +196,7 @@
     ["pointerup","pointercancel"].forEach(function(ev){
       scene.addEventListener(ev, function(){ dragging=false; lastScroll=Date.now(); });
     });
-    scene.addEventListener("dblclick", function(){ dragRy=0; dragRx=0; autoRy=0; });
+    scene.addEventListener("dblclick", function(){ dragRy=0; dragRx=0; });
   }
 
   /* ---------- Hotspots ---------- */
@@ -263,7 +265,7 @@
       if(el) el.scrollIntoView({behavior: reduced ? "auto" : "smooth"});
       e.preventDefault();
     } else if(e.key==="f" || e.key==="F"){ toggleFs(); }
-    else if(e.key==="r" || e.key==="R"){ dragRy=0; dragRx=0; autoRy=0; }
+    else if(e.key==="r" || e.key==="R"){ dragRy=0; dragRx=0; }
   });
 
   /* ---------- Portrait overlay (reference style) ---------- */
