@@ -9,68 +9,169 @@ import * as THREE from 'three'
  * ------------------------------------------------------------------ */
 
 /* ------------------------------------------------------------------ *
- * 03b — the tablets sack print, taken from the product photography:
- *       WATER SOFTENING SALT TABLETS · Sea Salt / Solar Evaporation / High Purity
+ * The 50 kg export sack print, copied from the product photograph
+ * (public/img/ref/bag50.jpg): blue mountain + crystal emblem over the
+ * SinaiCore wordmark, the product line, four round assurance badges, then
+ * NET WEIGHT 50 kg · PRODUCT OF EGYPT · www.sinaicore.com — same order,
+ * same ink, on the same off-white PP ground.
  * ------------------------------------------------------------------ */
-export function SackArtTexture() {
+const INK = '#1b4a86'
+const INK_LIGHT = '#2b6cb5'
+
+function drawSackBadges(x: CanvasRenderingContext2D, W: number, by: number) {
+  const labels: [string, string][] = [
+    ['NATURAL', 'SOURCE'],
+    ['HIGH', 'PURITY'],
+    ['FOOD', 'GRADE'],
+    ['QUALITY', 'ASSURED'],
+  ]
+  const xs = [0.225, 0.405, 0.595, 0.775]
+  labels.forEach((lab, i) => {
+    const cx = W * xs[i]
+    const r = W * 0.058
+    x.strokeStyle = INK
+    x.lineWidth = Math.max(1.6, W * 0.006)
+    x.beginPath()
+    x.arc(cx, by, r, 0, Math.PI * 2)
+    x.stroke()
+    x.save()
+    x.translate(cx, by)
+    x.fillStyle = INK
+    const s = r * 0.5
+    if (i === 0) {
+      // droplet
+      x.beginPath()
+      x.moveTo(0, -s)
+      x.bezierCurveTo(s * 0.95, -s * 0.1, s * 0.62, s, 0, s)
+      x.bezierCurveTo(-s * 0.62, s, -s * 0.95, -s * 0.1, 0, -s)
+      x.fill()
+    } else if (i === 1) {
+      // diamond
+      x.beginPath()
+      x.moveTo(0, -s)
+      x.lineTo(s, -s * 0.18)
+      x.lineTo(0, s)
+      x.lineTo(-s, -s * 0.18)
+      x.closePath()
+      x.fill()
+    } else if (i === 2) {
+      // rosette
+      for (let p = 0; p < 7; p++) {
+        const a = (p / 7) * Math.PI * 2
+        x.beginPath()
+        x.ellipse(Math.cos(a) * s * 0.5, Math.sin(a) * s * 0.5, s * 0.42, s * 0.24, a, 0, Math.PI * 2)
+        x.fill()
+      }
+      x.beginPath()
+      x.arc(0, 0, s * 0.3, 0, Math.PI * 2)
+      x.fill()
+    } else {
+      // shield with a tick
+      x.beginPath()
+      x.moveTo(0, -s)
+      x.lineTo(s * 0.88, -s * 0.62)
+      x.lineTo(s * 0.88, s * 0.2)
+      x.quadraticCurveTo(s * 0.7, s * 0.92, 0, s)
+      x.quadraticCurveTo(-s * 0.7, s * 0.92, -s * 0.88, s * 0.2)
+      x.lineTo(-s * 0.88, -s * 0.62)
+      x.closePath()
+      x.fill()
+      x.strokeStyle = '#f7f7f4'
+      x.lineWidth = Math.max(1.4, W * 0.005)
+      x.beginPath()
+      x.moveTo(-s * 0.36, 0)
+      x.lineTo(-s * 0.08, s * 0.3)
+      x.lineTo(s * 0.4, -s * 0.3)
+      x.stroke()
+    }
+    x.restore()
+    x.fillStyle = INK
+    x.font = `700 ${Math.round(W * 0.038)}px Inter, Helvetica, Arial, sans-serif`
+    x.fillText(lab[0], cx, by + r * 1.72)
+    x.fillText(lab[1], cx, by + r * 1.72 + W * 0.048)
+  })
+}
+
+export function SackArtTexture(
+  opts: { kg?: 25 | 50; line?: string } = {},
+) {
+  const { kg = 50, line = 'VACUUM REFINED IODIZED FOOD GRADE TABLE SALT' } = opts
   return useMemo(() => {
-    const W = 512
-    const H = 640
+    const W = 1024
+    const H = 1680
     const c = document.createElement('canvas')
     c.width = W
     c.height = H
     const x = c.getContext('2d')!
-    const blue = '#1a6b9c'
-    const navy = '#0e1a2b'
-    const copper = '#a8582a'
 
     const paint = (img?: HTMLImageElement) => {
       x.setTransform(1, 0, 0, 1, 0, 0)
       x.clearRect(0, 0, W, H)
       x.textAlign = 'center'
+      x.fillStyle = '#f7f7f4'
+      x.fillRect(0, 0, W, H)
 
-      // emblem
+      // 1 — emblem (the real brand mark, tinted flat blue like the print)
+      const emW = W * 0.4
       if (img) {
-        const w = 210
-        const hh = w * (img.height / img.width)
-        x.drawImage(img, W / 2 - w / 2, 26, w, hh)
+        const emH = emW * (img.height / img.width)
+        x.save()
+        // monochrome blue: draw, then recolour the alpha through a blue pass
+        const tmp = document.createElement('canvas')
+        tmp.width = emW
+        tmp.height = emH
+        const tc = tmp.getContext('2d')!
+        tc.drawImage(img, 0, 0, emW, emH)
+        tc.globalCompositeOperation = 'source-in'
+        tc.fillStyle = INK_LIGHT
+        tc.fillRect(0, 0, emW, emH)
+        x.drawImage(tmp, W / 2 - emW / 2, H * 0.075)
+        x.restore()
       }
-      // wordmark in the two lockup colours
-      x.font = '600 54px Inter, Helvetica, Arial, sans-serif'
-      const wS = x.measureText('Sinai').width
-      const wC = x.measureText('Core').width
-      const left = W / 2 - (wS + wC) / 2
-      x.textAlign = 'left'
-      x.fillStyle = copper
-      x.fillText('Sinai', left, 210)
-      x.fillStyle = blue
-      x.fillText('Core', left + wS, 210)
 
-      x.textAlign = 'center'
-      x.fillStyle = blue
-      x.font = '700 44px Inter, Helvetica, Arial, sans-serif'
-      x.fillText('WATER SOFTENING', W / 2, 286)
-      x.fillText('SALT TABLETS', W / 2, 336)
+      // 2 — wordmark + tagline
+      const wordY = img ? H * 0.238 : H * 0.14
+      x.fillStyle = INK
+      x.font = `700 ${Math.round(W * 0.15)}px Georgia, 'Times New Roman', serif`
+      x.fillText('SinaiCore', W / 2, wordY)
+      x.font = `400 ${Math.round(W * 0.042)}px Inter, Helvetica, Arial, sans-serif`
+      x.fillText('At the Core of Quality and Purity', W / 2, wordY + W * 0.055)
 
-      x.font = '400 27px Inter, Helvetica, Arial, sans-serif'
-      const lines = ['Sea Salt', 'Solar Evaporation Process', 'High Purity']
-      lines.forEach((t, i) => {
-        const yy = 400 + i * 36
-        x.fillStyle = blue
-        x.beginPath()
-        x.arc(W / 2 - 132, yy - 9, 4.5, 0, Math.PI * 2)
-        x.fill()
-        x.textAlign = 'left'
-        x.fillText(t, W / 2 - 116, yy)
-        x.textAlign = 'center'
-      })
+      // 3 — rule
+      x.fillStyle = 'rgba(27,74,134,0.3)'
+      x.fillRect(W * 0.37, wordY + W * 0.085, W * 0.26, 2)
 
-      x.fillStyle = blue
-      x.font = '700 46px Inter, Helvetica, Arial, sans-serif'
-      x.fillText('25 / 50 kg', W / 2, 552)
-      x.fillStyle = navy
-      x.font = '400 28px Inter, Helvetica, Arial, sans-serif'
-      x.fillText('PRODUCT OF EGYPT', W / 2, 596)
+      // 4 — product line, as three centred lines in the photo
+      x.fillStyle = INK
+      x.font = `700 ${Math.round(W * 0.063)}px Inter, Helvetica, Arial, sans-serif`
+      const maxW = W * 0.76
+      const rows: string[] = []
+      let cur = ''
+      for (const word of line.split(' ')) {
+        const next = cur ? `${cur} ${word}` : word
+        if (x.measureText(next).width > maxW && cur) {
+          rows.push(cur)
+          cur = word
+        } else cur = next
+      }
+      if (cur) rows.push(cur)
+      const lineY = wordY + W * 0.135
+      rows.forEach((t, i) => x.fillText(t, W / 2, lineY + i * W * 0.058))
+
+      // 5 — four assurance badges
+      drawSackBadges(x, W, lineY + W * 0.115 + rows.length * W * 0.058)
+
+      // 6 — net weight block
+      const netY = H * 0.83
+      x.fillStyle = INK
+      x.font = `600 ${Math.round(W * 0.044)}px Inter, Helvetica, Arial, sans-serif`
+      x.fillText('NET WEIGHT', W / 2, netY)
+      x.font = `700 ${Math.round(W * 0.115)}px Inter, Helvetica, Arial, sans-serif`
+      x.fillText(`${kg} kg`, W / 2, netY + W * 0.1)
+      x.font = `600 ${Math.round(W * 0.04)}px Inter, Helvetica, Arial, sans-serif`
+      x.fillText('PRODUCT OF EGYPT', W / 2, netY + W * 0.155)
+      x.font = `500 ${Math.round(W * 0.036)}px Inter, Helvetica, Arial, sans-serif`
+      x.fillText('www.sinaicore.com', W / 2, netY + W * 0.2)
 
       tex.needsUpdate = true
     }
@@ -78,13 +179,23 @@ export function SackArtTexture() {
     const tex = new THREE.CanvasTexture(c)
     tex.colorSpace = THREE.SRGBColorSpace
     tex.anisotropy = 8
+    // the print spans the front face only, so the map is not stretched around
+    tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping
     const img = new Image()
     img.onload = () => paint(img)
     img.onerror = () => paint()
     img.src = '/brand/logo-mark.png'
     paint()
     return tex
-  }, [])
+  }, [kg, line])
+}
+
+/* the tablets sack keeps the tablets wording */
+export function TabletsSackArt() {
+  return SackArtTexture({
+    kg: 25,
+    line: 'WATER SOFTENING SALT TABLETS',
+  })
 }
 
 /* aliases used by the reference cut */

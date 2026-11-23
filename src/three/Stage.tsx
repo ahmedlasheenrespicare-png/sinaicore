@@ -378,8 +378,14 @@ function PackingChapter() {
       if (!mesh.isMesh) return
       const n = mesh.name
       if (n.includes('panel')) {
-        mesh.material = new THREE.MeshStandardMaterial({
-          map: sackArt, transparent: true, roughness: 0.84, metalness: 0, envMapIntensity: 0.7,
+        // the print map is opaque and fills the face; keep it lit, not glazed
+        mesh.material = new THREE.MeshPhysicalMaterial({
+          map: sackArt,
+          roughness: 0.8,
+          metalness: 0,
+          clearcoat: 0.12,
+          clearcoatRoughness: 0.6,
+          envMapIntensity: 0.8,
         })
       } else if (n.includes('crimp')) {
         mesh.material = new THREE.MeshStandardMaterial({

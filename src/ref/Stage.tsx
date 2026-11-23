@@ -63,11 +63,19 @@ function StudioEnv({ dark }: { dark: boolean }) {
 /* ------------------------------------------------------------------ *
  * Individual model rigs
  * ------------------------------------------------------------------ */
-function useSpinner(speed = 0.16, tilt = 0) {
+/* slow turntable; `swing` keeps the object a little off-axis so the front
+   face stays readable instead of presenting a bare back panel */
+function useSpinner(speed = 0.16, tilt = 0, swing = 0) {
   const ref = useRef<THREE.Group>(null)
+  const t = useRef(Math.PI * 2)
   useFrame((_, dt) => {
     if (!ref.current) return
-    ref.current.rotation.y += dt * speed
+    if (swing > 0) {
+      t.current += dt * speed
+      ref.current.rotation.y = Math.sin(t.current * 0.42) * swing
+    } else {
+      ref.current.rotation.y += dt * speed
+    }
     ref.current.rotation.z = tilt
   })
   return ref
@@ -206,7 +214,8 @@ function SackModel() {
   const { scene } = useGLTF('/models/sack-50kg.glb')
   const art = SackArtTexture()
   const plainWeave = useWovenPBR([3, 4])
-  const ref = useSpinner(0.22)
+  // no full turn: the printed face is the point, so it swings within ±0.75 rad
+  const ref = useSpinner(0.3, 0, 0.34)
   const model = useMemo(() => {
     const m = scene.clone(true)
     m.traverse((o) => {
@@ -224,7 +233,7 @@ function SackModel() {
     return m
   }, [scene, art, plainWeave])
   return (
-    <group ref={ref} position={[0, -0.5, 0]} scale={1.62}>
+    <group ref={ref} position={[0, -0.66, 0]} scale={1.34}>
       <primitive object={model} />
     </group>
   )

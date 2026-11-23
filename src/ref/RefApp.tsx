@@ -339,16 +339,17 @@ export default function RefApp() {
             <div className="ref-feature" style={{ marginBlockEnd: 'clamp(1.6rem,3vw,2.4rem)' }}>
               <Plate
                 kind="sack"
-                tag="50 KG · TABLET SACK"
-                hint="3D · sack-50kg.glb"
-                camera={{ position: [1.7, 1.3, 2.5], fov: 32 }}
-                shadowsAt={-0.66}
+                tag="50 KG · PRINTED SACK"
+                hint="3D · sack-50kg.glb · real print"
+                camera={{ position: [2.0, 1.25, 3.0], fov: 32 }}
+                shadowsAt={-0.68}
               />
               <div className="ref-feature-copy">
                 <h3>شكارة ٥٠ كجم مطبوعة، جاهزة للتحميل</h3>
                 <p>
-                  شكارة PP بيضاء بختم رأس مطوي وطبعة المنتج الحقيقية، تُرصّ في الحاوية على
-                  شبكة محسوبة — ٤ × ٢ من شكائر الجامبو مع طبقة شكائر ٥٠ كجم تسدّ الفراغ أعلاها.
+                  نفس الشكارة الموجودة في صورة المنتج: قماش PP أبيض بجسم مسطّح وقدم متسعة
+                  وختم رأس مطويّ ملحوم، وطبعة زرقاء كاملة — شعار الجبل والبلور، السطر
+                  التعريفي، أربع شارات ضمان، ثم وزن ٥٠ كجم و«صناعة مصر».
                 </p>
                 <ul className="ref-facts">
                   <li>

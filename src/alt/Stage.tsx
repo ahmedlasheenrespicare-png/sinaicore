@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useGLTF, Preload, ContactShadows, AdaptiveDpr, PerformanceMonitor } from '@react-three/drei'
 import { gl, smooth, sstep } from '../three/state'
-import { useContainerPrint } from '../three/textures'
+import { useContainerPrint, SackArtTexture } from '../three/textures'
 import { seaPorts, seaRoutes } from './content'
 
 useGLTF.setDecoderPath('/draco/')
@@ -108,6 +108,7 @@ function ShippingScene() {
   const globe = useGLTF('/models/globe.glb')
   const ship = useGLTF('/models/cargo-ship.glb')
   const print = useContainerPrint()
+  const sackPrint = SackArtTexture({ line: 'VACUUM REFINED IODIZED FOOD GRADE TABLE SALT' })
 
   const root = useRef<THREE.Group>(null)
   const doorsL = useRef<THREE.Group>(null)
@@ -186,10 +187,20 @@ function ShippingScene() {
     m.traverse((o) => {
       const mesh = o as THREE.Mesh
       if (!mesh.isMesh) return
+      // the printed faces keep the real sack art; the fabric stays matte white
+      if (mesh.name.includes('panel')) {
+        mesh.material = new THREE.MeshStandardMaterial({
+          map: sackPrint,
+          roughness: 0.86,
+          metalness: 0,
+          side: THREE.DoubleSide,
+        })
+        return
+      }
       mesh.material = new THREE.MeshStandardMaterial({ color: '#fbfbf7', roughness: 0.93, side: THREE.DoubleSide })
     })
     return m
-  }, [sack.scene])
+  }, [sack.scene, sackPrint])
 
   /* stable clones: React must not see a fresh object every render */
   const bagClones = useMemo(

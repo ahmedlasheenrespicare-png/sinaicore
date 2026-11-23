@@ -136,6 +136,11 @@ photographic brief rather than a "nice 3D" one:
   and caustics bloom), ACES tone mapping and SMAA. It is skipped on phones, on
   `prefers-reduced-motion`, and on software rasterisers (detected via
   `WEBGL_debug_renderer_info`), where MSAA alone is used instead.
+- **The printed bag.** The 50 kg sack is rebuilt from the product photography
+  (`npm run sack`): flat-faced PP body, flared foot, welded pleated head seal, and the print
+  from the photo on both faces — emblem, wordmark, product line, the four assurance badges,
+  `NET WEIGHT 50 kg · PRODUCT OF EGYPT · www.sinaicore.com`. Its turntable is a ±0.34 rad
+  swing, not a full spin, so the printed face stays legible.
 - **Assets.** Every model in `public/models/` is Draco-compressed GLB (9–160 KB),
   decoded from the local `public/draco/` decoder; no HDRIs, textures or models are
   fetched from third parties at runtime.
@@ -169,9 +174,15 @@ textures / HDRI in `scripts/build-textures.mjs` (both write into `public/`):
 - tablets: indexed lathe profile with a bevelled rim and a recessed face groove
 - FIBC: superellipse body with bulge, pleats and a gathered top; webbing, hems,
   spouts, and a brand panel raycast onto the fabric surface
-- tablets sack: a pillow-profile PP sack (soft rounds, crimped accordion head seal,
-  stitched collar) modelled on the 25/50 kg bags in the product photography, with the
-  `WATER SOFTENING SALT TABLETS` print projected onto its face
+- 50 kg export sack: rebuilt from the product photograph (`public/img/ref/bag50.jpg`) —
+  a flat-faced PP body that flares slightly at the gusseted foot, a rounded shoulder and a
+  heat-sealed pleated head seal; the print (`SackArtTexture` in `src/three/textures.ts`) is
+  a 1:1 transcription of the bag in the photo — blue mountain-and-crystal emblem over the
+  SinaiCore wordmark, the `VACUUM REFINED IODIZED FOOD GRADE TABLE SALT` line, the four
+  assurance badges (natural source / high purity / food grade / quality assured), then
+  `NET WEIGHT 50 kg · PRODUCT OF EGYPT · www.sinaicore.com`. A 25 kg sibling
+  (`sack-25kg.glb`) uses the same geometry family; the tablets wording is available as
+  `TabletsSackArt()`. Rebuild with `npm run sack`.
 - sample jar: glass lathe with a shoulder, salt fill, ribbed screw cap, copper seal
   band and a 1:1 label wrap
 - globe: icosphere + Natural Earth 110m coastline ribbons baked to

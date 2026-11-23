@@ -543,7 +543,7 @@ function Pour() {
     if (ref.current) {
       const fill = sstep(0.8, 0.97, pan.p)
       ref.current.visible = on > 0.01
-      ref.current.position.set(PORTRAIT ? 0.1 : -0.72, PORTRAIT ? 2.8 : 0.42 + fill * 0.16, 1.1)
+      ref.current.position.set(PORTRAIT ? 0.1 : -0.72, PORTRAIT ? 1.95 : 0.42 + fill * 0.16, 1.1)
     }
   })
   return <points ref={ref} geometry={geo} material={mat} visible={false} />
@@ -588,10 +588,10 @@ function ExportSack() {
     const arrive = sstep(0.68, 0.8, p)
     const fill = sstep(0.8, 0.97, p)
     g.visible = arrive > 0.001
-    g.position.set(PORTRAIT ? 0.1 : -0.72, PORTRAIT ? 2.45 : 0.12 + fill * 0.16, 1.1)
-    g.scale.setScalar((PORTRAIT ? 1.0 : 1.2) + arrive * (PORTRAIT ? 0.35 : 0.35))
+    g.position.set(PORTRAIT ? 0.1 : -0.72, PORTRAIT ? 1.6 : 0.12 + fill * 0.16, 1.1)
+    g.scale.setScalar((PORTRAIT ? 0.78 : 0.95) + arrive * (PORTRAIT ? 0.27 : 0.28))
     // the sack is limp until the grains land, then rounds out
-    g.scale.y = ((PORTRAIT ? 1.0 : 1.2) + arrive * (PORTRAIT ? 0.35 : 0.35)) * (0.5 + fill * 0.54)
+    g.scale.y = ((PORTRAIT ? 0.78 : 0.95) + arrive * (PORTRAIT ? 0.27 : 0.28)) * (0.5 + fill * 0.54)
     g.rotation.y = 0.5 + arrive * 0.5
   })
 
