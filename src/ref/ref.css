@@ -584,10 +584,7 @@
   position: relative;
 }
 .ref-step .n {
-  font-family: var(--f-mono);
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: color-mix(in oklab, var(--ref-copper) 45%, #fff);
+  display: block;
   line-height: 1;
 }
 .ref-step h4 { margin: 0.5rem 0 0.45rem; font-size: 1rem; font-weight: 700; }

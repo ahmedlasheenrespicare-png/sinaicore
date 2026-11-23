@@ -1,0 +1,1147 @@
+/* ================================================================== *
+ * ملاحظات الميدان — editorial cut
+ *
+ * The whole page is built like a printed field notebook: one measure of
+ * text, a sticky margin that names the chapter you are reading, hairline
+ * rules instead of cards, footnotes that live in that margin, and figures
+ * that count themselves. Restraint is the design.
+ * ================================================================== */
+
+:root {
+  --paper: #fdfcfa;
+  --paper-warm: #ede8e8;
+  --paper-sand: #f1ece4;
+  --ink: #2c2a28;
+  --ink-soft: #57524d;
+  --ink-faint: #8b857e;
+  --rule: #d9d3cb;
+  --rule-strong: #b9b1a6;
+  --blue: #1d4f7c;
+  --blue-ink: #17405f;
+  --copper: #a9552a;
+
+  --f-ar: 'Amiri', 'EB Garamond Variable', 'Times New Roman', serif;
+  --f-lat: 'EB Garamond Variable', 'EB Garamond', Georgia, serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --measure: 38rem;
+  --margin-col: 14rem;
+  --gutter: clamp(2rem, 4vw, 3.4rem);
+  --pad: clamp(1.25rem, 5vw, 5rem);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: auto;
+  background: var(--paper);
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--f-ar);
+  font-size: clamp(1.06rem, 0.36vw + 0.94rem, 1.22rem);
+  line-height: 1.92;
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  counter-reset: fig;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+::selection {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule-strong);
+  padding-bottom: 0.05em;
+  transition: border-color 0.25s var(--ease), color 0.25s var(--ease);
+}
+a:hover {
+  border-color: var(--ink);
+}
+
+.mono {
+  font-family: var(--f-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 400;
+}
+
+.lat {
+  font-family: var(--f-lat);
+}
+
+/* ---------------------------------------------------------------- *
+ * shell
+ * ---------------------------------------------------------------- */
+.shell {
+  width: min(100% - var(--pad) * 2, 64rem);
+  margin-inline: auto;
+}
+
+/* a document row: the text measure, then the margin column.
+   The margin column takes the remaining width, so the two columns stay
+   adjacent instead of drifting to opposite edges of the page. */
+.row {
+  display: grid;
+  grid-template-columns: var(--measure) minmax(var(--margin-col), 1fr);
+  gap: var(--gutter);
+  align-items: start;
+}
+
+.row > .body {
+  max-width: var(--measure);
+  /* keep the measure on the reading side (right in RTL) */
+  justify-self: start;
+}
+
+.row > .margin {
+  justify-self: stretch;
+  padding-block-start: 0.35rem;
+}
+
+/* ---------------------------------------------------------------- *
+ * progress hairline + header
+ * ---------------------------------------------------------------- */
+.progress {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  height: 1px;
+  z-index: 60;
+  background: transparent;
+}
+.progress i {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+  transform-origin: right center;
+  transform: scaleX(var(--p, 0));
+  transition: transform 0.15s linear;
+}
+
+.head {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 50;
+  background: color-mix(in oklab, var(--paper) 88%, transparent);
+  backdrop-filter: blur(10px) saturate(140%);
+  border-block-end: 1px solid transparent;
+  transition: border-color 0.3s var(--ease);
+}
+.head.is-pinned {
+  border-block-end-color: var(--rule);
+}
+.head-in {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  height: 3.6rem;
+}
+
+.wordmark {
+  font-family: var(--f-lat);
+  font-weight: 500;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  border: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+.wordmark b {
+  font-weight: 600;
+}
+.wordmark .dash {
+  inline-size: 1.1rem;
+  block-size: 1px;
+  background: currentColor;
+  display: inline-block;
+  opacity: 0.75;
+}
+
+.head nav {
+  margin-inline-start: auto;
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+.head nav a {
+  border: 0;
+  font-family: var(--f-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  transition: color 0.2s var(--ease);
+}
+.head nav a:hover,
+.head nav a.is-here {
+  color: var(--ink);
+}
+.head .lang {
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-family: var(--f-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  display: flex;
+  gap: 0.35rem;
+}
+.head .lang span:first-child {
+  color: var(--ink);
+}
+.head .lang span:last-child {
+  color: var(--ink-faint);
+}
+
+/* ---------------------------------------------------------------- *
+ * hero — a title page, not a landing banner
+ * ---------------------------------------------------------------- */
+.hero {
+  padding-block: clamp(3rem, 9vh, 7rem) clamp(2rem, 6vh, 5rem);
+  border-block-end: 1px solid var(--rule);
+}
+.hero .kicker {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  color: var(--ink-faint);
+  margin-block-end: clamp(2rem, 7vh, 4.5rem);
+}
+.hero .kicker em {
+  font-style: normal;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.hero .kicker em::after {
+  content: '';
+  inline-size: 2.4rem;
+  block-size: 1px;
+  background: var(--rule-strong);
+  display: inline-block;
+}
+
+.hero h1 {
+  margin: 0;
+  font-family: var(--f-ar);
+  font-weight: 700;
+  font-size: clamp(2.6rem, 7.2vw, 6.2rem);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+}
+.hero h1 span {
+  display: block;
+}
+.hero h1 span:last-child {
+  color: var(--ink-soft);
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--gutter);
+  align-items: start;
+  margin-block-start: clamp(2rem, 5vh, 3.5rem);
+}
+.hero-grid .lede-wrap {
+  max-width: var(--measure);
+}
+/* the contents sit in the opposite column from the lede, so the title page
+   balances: copy on the reading side, the index on the other */
+.hero-grid .hero-contents {
+  grid-column: 2;
+  align-self: start;
+  padding-block-start: 0.4rem;
+}
+.hero-grid .hero-meta {
+  grid-column: 1 / -1;
+}
+.hero .lede {
+  font-size: 1.06em;
+  line-height: 1.85;
+  color: var(--ink-soft);
+  margin: 0;
+  max-width: 30rem;
+}
+.hero .lede::first-letter {
+  font-size: 1em;
+}
+
+.hero .start {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-block-start: 1.6rem;
+  border: 0;
+}
+.hero .start .dot {
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: 50%;
+  background: var(--copper);
+  display: inline-block;
+  animation: pulse 2.4s var(--ease) infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.72); }
+}
+.hero .start small {
+  font-family: var(--f-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.hero-meta {
+  /* a title-page colophon: four facts on one hairline, full width */
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.1rem 1.6rem;
+  margin-block-start: clamp(1.8rem, 5vh, 3rem);
+  padding-block-start: 1rem;
+  border-block-start: 1px solid var(--rule);
+  max-width: none;
+}
+.hero-meta div {
+  border-inline-end: 1px solid var(--rule);
+  padding-inline-end: 1rem;
+}
+.hero-meta div:last-child {
+  border-inline-end: 0;
+  padding-inline-end: 0;
+}
+.hero-meta div {
+  display: grid;
+  gap: 0.15rem;
+}
+.hero-meta dt {
+  font-family: var(--f-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.hero-meta dd {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+/* the contents list that balances the title page */
+.hero-contents {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  align-content: start;
+  max-width: 30rem;
+}
+.hero-contents .hc-head {
+  color: var(--ink-faint);
+  padding-block-end: 0.5rem;
+  border-block-end: 1px solid var(--rule-strong);
+}
+.hero-contents li a {
+  display: grid;
+  grid-template-columns: 1.9rem auto 1fr auto;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding-block: 0.42rem;
+  border: 0;
+  border-block-end: 1px solid var(--rule);
+  color: var(--ink-soft);
+  transition: color 0.2s var(--ease);
+}
+.hero-contents li a:hover {
+  color: var(--ink);
+}
+.hero-contents .i {
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+.hero-contents .t {
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+.hero-contents .d {
+  block-size: 1px;
+  background: var(--rule);
+  align-self: center;
+  min-inline-size: 0.8rem;
+}
+.hero-contents .s {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+/* a full-bleed plate: the page opens up once, like a fold-out */
+.band {
+  margin: 0;
+  border-block: 1px solid var(--rule);
+}
+.band .frame {
+  position: relative;
+  /* a letterbox, not a window: the strip is 1400 × 490 */
+  aspect-ratio: 2.86 / 1;
+  overflow: hidden;
+  background: var(--paper-sand);
+}
+.band img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+.band .tag {
+  position: absolute;
+  inset-block-start: 0.8rem;
+  inset-inline-start: 1rem;
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  padding: 0.12rem 0.45rem;
+  color: var(--ink);
+  font-size: 0.55rem;
+}
+.band figcaption {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  gap: 1rem;
+  align-items: baseline;
+  padding-block: 0.8rem 0;
+}
+.band figcaption .mono {
+  color: var(--ink-faint);
+}
+.band figcaption p {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  color: var(--ink-soft);
+  max-width: 44rem;
+}
+
+/* ---------------------------------------------------------------- *
+ * the notes
+ * ---------------------------------------------------------------- */
+.notes {
+  padding-block: clamp(3rem, 8vh, 6rem);
+}
+
+.chapter {
+  padding-block: clamp(4rem, 12vh, 9rem) clamp(3rem, 9vh, 7rem);
+  border-block-start: 1px solid var(--rule);
+}
+.chapter:first-child {
+  border-block-start: 0;
+  padding-block-start: clamp(2rem, 6vh, 4rem);
+}
+
+/* the sticky margin: number, title, sub, chapter list */
+.margin-in {
+  position: sticky;
+  inset-block-start: 5.2rem;
+  display: grid;
+  gap: 1.4rem;
+}
+
+.chapter-head {
+  display: grid;
+  gap: 0.35rem;
+}
+.chapter-head .n {
+  font-family: var(--f-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.chapter-head .n::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+.chapter-head h2 {
+  margin: 0;
+  font-family: var(--f-ar);
+  font-weight: 700;
+  font-size: clamp(1.6rem, 2.6vw, 2.35rem);
+  line-height: 1.2;
+}
+.chapter-head p {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.chapter-list {
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+  border-block-start: 1px solid var(--rule);
+  padding-block-start: 1rem;
+}
+.chapter-list a {
+  border: 0;
+  display: grid;
+  grid-template-columns: 1.7rem 1fr;
+  gap: 0.4rem;
+  align-items: baseline;
+  color: var(--ink-faint);
+  transition: color 0.2s var(--ease);
+}
+.chapter-list a:hover {
+  color: var(--ink);
+}
+.chapter-list .i {
+  font-family: var(--f-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.1em;
+}
+.chapter-list .t {
+  font-size: 0.9rem;
+  border-block-end: 1px solid transparent;
+}
+.chapter-list li.is-on a {
+  color: var(--ink);
+}
+.chapter-list li.is-on .t {
+  border-block-end-color: var(--rule-strong);
+}
+
+/* body copy */
+.body p {
+  margin: 0 0 1.35em;
+  text-wrap: pretty;
+}
+.body p:last-child {
+  margin-bottom: 0;
+}
+.body .opening {
+  padding-block-start: 0.2rem;
+}
+.body .opener {
+  font-size: 2.15em;
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -0.01em;
+  margin-inline-end: 0.16em;
+  display: inline-block;
+  vertical-align: baseline;
+  transform: translateY(0.06em);
+}
+
+.lead {
+  font-size: 1.16em;
+  line-height: 1.78;
+  color: var(--ink);
+  margin: 0 0 1.6rem;
+  max-width: var(--measure);
+  text-wrap: pretty;
+}
+
+/* superscript footnote marker, like the reference's sup */
+sup.fn {
+  font-family: var(--f-mono);
+  font-size: 0.56em;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  vertical-align: super;
+  color: var(--ink-faint);
+  margin-inline-start: 0.18em;
+  line-height: 1;
+  display: inline-block;
+  transition: color 0.2s var(--ease);
+}
+sup.fn:hover {
+  color: var(--copper);
+}
+sup.fn a {
+  border: 0;
+}
+
+/* running section counter in the header — the reference's "54 ———" */
+.count {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-family: var(--f-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  color: var(--ink-faint);
+  order: -1;
+}
+.count::after {
+  content: '';
+  inline-size: clamp(1.5rem, 5vw, 4.5rem);
+  block-size: 1px;
+  background: var(--rule-strong);
+  display: inline-block;
+}
+.count b {
+  color: var(--ink);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.head nav {
+  margin-inline-start: 1.6rem;
+}
+
+/* stacked prev / next, bottom corner, hairline between (reference) */
+.jump {
+  position: fixed;
+  inset-block-end: 1rem;
+  inset-inline-end: 1.2rem;
+  z-index: 45;
+  display: grid;
+  justify-items: center;
+  background: color-mix(in oklab, var(--paper) 86%, transparent);
+  border: 1px solid var(--rule);
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+  transition: opacity 0.3s var(--ease), transform 0.3s var(--ease);
+}
+.jump.is-on {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.jump button {
+  appearance: none;
+  background: none;
+  border: 0;
+  width: 2rem;
+  height: 1.9rem;
+  display: grid;
+  place-items: center;
+  color: var(--ink-faint);
+  cursor: pointer;
+  font-size: 0.7rem;
+  line-height: 1;
+  transition: color 0.2s var(--ease), background 0.2s var(--ease);
+}
+.jump button:hover {
+  color: var(--ink);
+  background: color-mix(in oklab, var(--ink) 5%, transparent);
+}
+.jump button + button {
+  border-block-start: 1px solid var(--rule);
+}
+
+/* a margin note that pairs with a footnote marker */
+.note {
+  border-block-start: 1px solid var(--rule);
+  padding-block-start: 0.7rem;
+  display: grid;
+  gap: 0.3rem;
+  margin-block-end: 1.6rem;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+.note:last-child {
+  margin-block-end: 0;
+}
+.note .n {
+  font-family: var(--f-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
+  color: var(--copper);
+}
+.note h4 {
+  margin: 0;
+  font-family: var(--f-ar);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+.note p {
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------- *
+ * figures — numbered by CSS counter, captioned like a plate
+ * ---------------------------------------------------------------- */
+.fig {
+  margin: 2.6rem 0 2.2rem;
+  max-width: var(--measure);
+}
+.fig .frame {
+  position: relative;
+  overflow: hidden;
+  background: var(--paper-sand);
+  border: 1px solid var(--rule);
+  /* figures that carry no printed mark are shown whole; the box keeps the
+     plate's own proportions so nothing is cut */
+  aspect-ratio: 4 / 3;
+}
+.fig img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  filter: saturate(0.86) contrast(1.02);
+  transform: scale(1.01);
+  transition: transform 1.2s var(--ease);
+}
+.fig:hover img {
+  transform: scale(1.045);
+}
+.fig.bare .frame {
+  background: none;
+  border: 0;
+}
+.fig.bare img {
+  object-fit: contain;
+  transform: none;
+  filter: saturate(0.94) contrast(1.01);
+}
+.fig.bare:hover img {
+  transform: none;
+}
+.fig.bare figcaption {
+  border-block-start: 1px solid var(--rule);
+  padding-block-start: 0.6rem;
+}
+.fig .plate {
+  position: absolute;
+  inset-block-start: 0.7rem;
+  inset-inline-start: 0.7rem;
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  padding: 0.1rem 0.4rem;
+  font-family: var(--f-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+  counter-increment: fig;
+  z-index: 2;
+  color: var(--ink);
+}
+.fig .plate::before {
+  content: 'لوحة ' counter(fig, decimal-leading-zero);
+}
+.fig figcaption {
+  margin-block-start: 0.7rem;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  color: var(--ink-soft);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.8rem;
+  align-items: baseline;
+}
+.fig figcaption::before {
+  content: 'FIG.';
+  font-family: var(--f-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
+}
+
+/* wide figure: breaks out of the measure, still inside the shell */
+.fig.wide {
+  max-width: none;
+}
+.fig.wide img {
+  aspect-ratio: 16 / 9;
+}
+
+/* pull quote */
+.pull {
+  margin: 2.6rem 0;
+  padding-block: 1.4rem;
+  border-block: 1px solid var(--rule);
+  display: grid;
+  gap: 0.8rem;
+}
+.pull p {
+  margin: 0;
+  font-family: var(--f-ar);
+  font-size: clamp(1.2rem, 2vw, 1.55rem);
+  line-height: 1.6;
+  text-wrap: balance;
+}
+.pull cite {
+  font-style: normal;
+  font-family: var(--f-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
+}
+
+/* definition rows */
+.rows {
+  margin: 2.2rem 0;
+  border-block-start: 1px solid var(--rule-strong);
+}
+.rows h4 {
+  margin: 0;
+  padding-block: 0.6rem;
+  font-family: var(--f-mono);
+  font-weight: 500;
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  border-block-end: 1px solid var(--rule);
+}
+.rows dl {
+  margin: 0;
+}
+.rows .r {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  padding-block: 0.62rem;
+  border-block-end: 1px solid var(--rule);
+  align-items: baseline;
+}
+.rows dt {
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+}
+.rows dd {
+  margin: 0;
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  white-space: nowrap;
+  unicode-bidi: isolate;
+}
+
+/* ---------------------------------------------------------------- *
+ * the numbers table + closing
+ * ---------------------------------------------------------------- */
+.numbers {
+  background: var(--paper-warm);
+  padding-block: clamp(3rem, 9vh, 6rem);
+  border-block: 1px solid var(--rule);
+}
+.numbers h2 {
+  margin: 0 0 0.4rem;
+  font-family: var(--f-ar);
+  font-weight: 700;
+  font-size: clamp(1.8rem, 3.4vw, 2.9rem);
+  line-height: 1.15;
+}
+.numbers .sub {
+  margin: 0 0 clamp(2rem, 5vh, 3rem);
+  color: var(--ink-soft);
+  max-width: 34rem;
+}
+.numbers .grid {
+  display: grid;
+  /* a single measure-wide list, like the reference's tables — the pair
+     columns left a dead half-page on a 1440 screen */
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: var(--gutter);
+  max-width: var(--measure);
+  border-block-start: 1px solid var(--rule-strong);
+}
+.numbers .r {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  padding-block: 0.75rem;
+  border-block-end: 1px solid var(--rule);
+  align-items: baseline;
+}
+.numbers .r span {
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+}
+.numbers .r b {
+  font-family: var(--f-mono);
+  font-weight: 500;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.quote-sec {
+  padding-block: clamp(3rem, 9vh, 6rem);
+}
+.quote-sec h2 {
+  margin: 0 0 1rem;
+  font-family: var(--f-ar);
+  font-weight: 700;
+  font-size: clamp(1.8rem, 3.4vw, 2.9rem);
+  line-height: 1.15;
+}
+.quote-sec p {
+  margin: 0 0 1.8rem;
+  max-width: 32rem;
+  color: var(--ink-soft);
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  padding: 0.62rem 1.35rem;
+  font-size: 0.92rem;
+  transition: background 0.25s var(--ease), color 0.25s var(--ease);
+}
+.btn:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+.btn .arw {
+  font-family: var(--f-lat);
+  font-size: 1.05em;
+  line-height: 1;
+  transform: translateY(-0.03em);
+}
+
+.quote-meta {
+  display: grid;
+  gap: 0.9rem;
+  align-content: end;
+}
+.quote-meta div {
+  display: grid;
+  gap: 0.1rem;
+  padding-block-start: 0.6rem;
+  border-block-start: 1px solid var(--rule);
+}
+.quote-meta dt {
+  font-family: var(--f-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.quote-meta dd {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+/* ---------------------------------------------------------------- *
+ * colophon
+ * ---------------------------------------------------------------- */
+.colophon {
+  border-block-start: 1px solid var(--rule-strong);
+  padding-block: 2rem 3.2rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.9rem;
+  justify-items: start;
+}
+.colophon .mark {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-family: var(--f-lat);
+  font-size: 1.05rem;
+}
+.colophon .mark .dash {
+  inline-size: 1.6rem;
+  block-size: 1px;
+  background: var(--ink);
+}
+.colophon p {
+  margin: 0.5rem 0 0;
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+  max-width: 30rem;
+}
+.colophon ul {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.4rem;
+}
+.colophon ul a {
+  border: 0;
+  font-family: var(--f-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  transition: color 0.2s var(--ease);
+}
+.colophon ul a:hover {
+  color: var(--ink);
+}
+
+/* the little running status, bottom corner — the reference has one */
+.status {
+  position: fixed;
+  inset-block-end: 1rem;
+  inset-inline-start: 1.2rem;
+  z-index: 40;
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  font-family: var(--f-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
+  background: color-mix(in oklab, var(--paper) 82%, transparent);
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--rule);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.3s var(--ease), transform 0.3s var(--ease);
+}
+.status.is-on {
+  opacity: 1;
+  transform: none;
+}
+.status b {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* ---------------------------------------------------------------- *
+ * reveal on scroll — restrained: 12px and a fade, nothing spins
+ * ---------------------------------------------------------------- */
+.rise {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+}
+.rise.in {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .hero .start .dot {
+    animation: none;
+  }
+  .fig img,
+  .fig:hover img {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------- *
+ * narrow
+ * ---------------------------------------------------------------- */
+@media (max-width: 62rem) {
+  :root {
+    --measure: 33rem;
+    --margin-col: 12rem;
+    --gutter: 2.2rem;
+  }
+}
+
+@media (max-width: 52rem) {
+  .row,
+  .hero-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.6rem;
+  }
+  .hero-contents {
+    display: none;
+  }
+  .hero-grid .lede-wrap {
+    grid-column: 1 / -1;
+  }
+  .row > .margin {
+    order: -1;
+  }
+  .margin-in {
+    position: static;
+  }
+  .chapter-list {
+    display: none;
+  }
+  .head nav {
+    gap: 1rem;
+  }
+  .head nav a:nth-child(2),
+  .head nav a:nth-child(3) {
+    display: none;
+  }
+  .hero-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.2rem;
+  }
+  .hero-meta div:nth-child(2n) {
+    border-inline-end: 0;
+    padding-inline-end: 0;
+  }
+  .numbers .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .fig .frame {
+    aspect-ratio: 3 / 2;
+  }
+  .band .frame {
+    aspect-ratio: 1.6 / 1;
+  }
+  .band figcaption {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.3rem;
+    padding-inline: var(--pad);
+  }
+  .status,
+  .jump {
+    display: none;
+  }
+}
+
+@media (max-width: 34rem) {
+  .head nav {
+    display: none;
+  }
+  .hero h1 {
+    font-size: clamp(2.2rem, 11vw, 3.2rem);
+  }
+  .body .opener {
+    font-size: 1.8em;
+  }
+}

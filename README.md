@@ -16,6 +16,9 @@ npm install
 npm run dev        # http://localhost:5173
 npm run build      # typecheck + production bundle into dist/
 npm run preview    # serve the production build
+npm run preview:alt    # container cut on :5180
+npm run preview:ref    # reference cut on :5181
+npm run preview:notes  # editorial cut on :5182
 node scripts/build-assets.mjs   # regenerate the 3D assets + preview renders
 ```
 
@@ -79,6 +82,53 @@ compositor and the 3D layer reads the same number from plain JS state — no Rea
 re-render per frame. The canvas switches to `frameloop="never"` when the pinned act
 scrolls off screen, DPR is capped (and lowered automatically by `PerformanceMonitor`),
 and `prefers-reduced-motion` disables idle drift, marquees and reveal transitions.
+
+## Editorial cut — `notes.html`, the craft bar
+
+`notes.html` (`npm run preview:notes`, port 5182) is a fourth page and the one that sets
+the bar for the rest: a **field notebook** about one salt pan, built to the typographic
+standard of the 84—24.org reference.
+
+- **Type, self-hosted, no CDN.** Amiri (Arabic, 400/700) + EB Garamond Variable (Latin
+  numerals, labels, plate marks) + IBM Plex Mono (tags). Subsets are the Arabic/Latin ones
+  only — 29 woff2 files, ~0.9 MB for all four cuts together. Installed from
+  `@fontsource*` and bundled by Vite.
+- **One measure.** `--measure: 38rem` for every paragraph; the reading column is set, the
+  margin column runs next to it and holds the chapter number, title, sub-title and the
+  running index. On a phone the margin moves above the copy and the index is dropped —
+  the reference does the same.
+- **Hairlines, not cards.** Section rules, definition rows (`dt`/`dd` with tabular mono
+  values), footnote markers, pull quotes between two rules. No shadows, no radii, no
+  coloured panels except the single warm band on the numbers table.
+- **Figures caption themselves.** A CSS counter prints `لوحة 01` on the plate and `FIG.` on
+  the caption, exactly like the reference's `fig.` counter; each figure declares its own
+  aspect ratio so a crop never cuts a product, and photographs that carry a printed mark
+  are shown whole rather than cropped.
+- **Sticky margin + running status.** The chapter margin is `position: sticky`; a 1px
+  progress hairline runs across the top of the document; the nav carries the running
+  section number (`01 ———`) and a fixed corner shows `فصل 04 · الغسيل · 04 / 08` with
+  stacked ↑/↓ chapter jumps, both of which fade in only after the first screen.
+- **One motion.** A 14px rise + fade on entry, a 1.1s 1.03× zoom on figures, the pulsing
+  start dot. All of it collapses under `prefers-reduced-motion`.
+- **Beats:** title page (with the contents as a printed index) → full-bleed brine plate →
+  eight chapters (water, pan, harvest, wash, refine, grade, pack, lab) → numbers table →
+  quote → colophon. Copy is the real SinaiCore content in Arabic; photographs are
+  `public/img/ref/` plus `brine.jpg`, a 2.86:1 letterbox extracted from `salt-pans.jpg`.
+
+## Shared craft layer — `src/styles/craft.css`
+
+The editorial cut's rules were then lifted into one shared sheet and loaded **after** the
+cut's own CSS by both `ref.html` and `alt.html`, so the existing markup did not change:
+
+- section heads become numbered page headings (`01 ——— QUALITY · BATCH BY BATCH`) on a
+  hairline, left-aligned and set in Amiri — replacing the centred mono kickers;
+- cards, product plates, port tiles and step tiles lose their radii and shadows and become
+  hairline-topped columns; product images carry a `PLATE 0N` mark from a CSS counter;
+- Latin over-lines move from 0.46rem mono (unreadable at 7px) to a serif label at 0.66rem;
+- the alt cut's ports section gets the same treatment inverted: hairline table, serif
+  coordinates, rule-topped stop cards, and Latin labels isolated to the reading side;
+- one restrained reveal (`12px + fade`, threshold 0 so tall rows still fire, plus a safety
+  timeout for fast jumps) and a slow figure zoom; all disabled under reduced motion.
 
 ## Reference cut — the published site's own architecture
 

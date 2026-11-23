@@ -186,6 +186,9 @@ export default function AltApp() {
 
       <footer className="alt-footer">
         <img src="/brand/logo-header-reverse.png" alt="SinaiCore" />
+        <a className="alt-foot-link" href="/notes.html">
+          EDITORIAL CUT · ملاحظات الميدان
+        </a>
         <span className="mono">ALT CUT · CONTAINER · 20 / 40 FT · FOB ARISH / SUEZ</span>
       </footer>
 

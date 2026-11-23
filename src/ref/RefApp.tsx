@@ -57,6 +57,47 @@ export default function RefApp() {
     }
   }, [])
 
+  /* one restrained reveal for the whole document: the section heads and the
+     figure rows rise 12px, once. Nothing else moves except the plates' slow
+     zoom on hover. */
+  useEffect(() => {
+    const els = Array.from(
+      document.querySelectorAll<HTMLElement>('.ref-sec-head, .ref-feature, .ref-product, .ref-port'),
+    )
+    els.forEach((e) => e.classList.add('craft-rise'))
+    if (!('IntersectionObserver' in window)) {
+      els.forEach((e) => e.classList.add('in'))
+      return
+    }
+    const io = new IntersectionObserver(
+      (list) => {
+        for (const e of list) {
+          if (e.isIntersecting) {
+            e.target.classList.add('in')
+            io.unobserve(e.target)
+          }
+        }
+      },
+      /* threshold 0 + a small negative margin: a tall figure row is taller
+         than the viewport, so a percentage threshold would never fire */
+      { rootMargin: '0px 0px -6% 0px', threshold: 0 },
+    )
+    els.forEach((e) => io.observe(e))
+    /* safety net: anything still hidden after a fast jump is shown */
+    const t = setTimeout(() => {
+      els.forEach((e) => {
+        if (!e.classList.contains('in')) {
+          const r = e.getBoundingClientRect()
+          if (r.top < window.innerHeight && r.bottom > 0) e.classList.add('in')
+        }
+      })
+    }, 1800)
+    return () => {
+      io.disconnect()
+      clearTimeout(t)
+    }
+  }, [])
+
   return (
     <div className={`ref ${on ? 'is-on' : ''}`} id="top">
       {/* ------------------------------------------------------- nav */}
@@ -237,6 +278,8 @@ export default function RefApp() {
         <section className="ref-sec on-light" id="quality">
           <div className="ref-shell">
             <div className="ref-sec-head">
+              <span className="over">Quality · Batch by Batch</span>
+              <h2>كل دفعة تُختبر قبل أن تُشحن</h2>
               <p>
                 يُحصَد ملحنا البحري عبر التبخير الشمسي الطبيعي، ويُراقَب بإجراءات ضبط جودة
                 منظمة في كل مرحلة — من الاستخراج حتى تحميل التصدير النهائي. تخضع كل دفعة
@@ -329,6 +372,8 @@ export default function RefApp() {
         <section className="ref-sec on-gray" id="logistics">
           <div className="ref-shell">
             <div className="ref-sec-head">
+              <span className="over">Logistics · Port to Port</span>
+              <h2>من الملّاحة إلى بوليصة الشحن</h2>
               <p>
                 عمليات لوجستية منظمة تدعم المشترين الصناعيين حول العالم. من الشحنات المعبأة
                 إلى تحميل السفن السائبة، نضمن إجراءات محسّنة وشروط Incoterms مرنة وتوثيقًا
@@ -560,8 +605,13 @@ export default function RefApp() {
                   <a href="#contact">تواصل معنا</a>
                 </li>
                 <li>
-                  <a className="ref-switch" href="/alt.html" style={{ marginBlockStart: '0.6rem' }}>
-                    الجرافة البديلة · CONTAINER CUT
+                  <a className="ref-switch" href="/notes.html" style={{ marginBlockStart: '0.6rem' }}>
+                    ملاحظات الميدان · EDITORIAL CUT
+                  </a>
+                </li>
+                <li>
+                  <a className="ref-switch" href="/alt.html">
+                    النسخة البديلة · CONTAINER CUT
                   </a>
                 </li>
               </ul>

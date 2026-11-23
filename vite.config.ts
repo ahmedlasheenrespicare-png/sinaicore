@@ -23,6 +23,7 @@ export default defineConfig({
         main: 'index.html',
         alt: 'alt.html',
         ref: 'ref.html',
+        notes: 'notes.html',
       },
     },
     assetsInlineLimit: 2048,

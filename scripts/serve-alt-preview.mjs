@@ -6,6 +6,7 @@
  *
  *   node scripts/serve-alt-preview.mjs 5180 alt   # container cut
  *   node scripts/serve-alt-preview.mjs 5181 ref   # reference cut
+ *   node scripts/serve-alt-preview.mjs 5182 notes # editorial notes cut
  *
  * Build first: npm run build
  */
@@ -16,7 +17,9 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 const PORT = Number(process.argv[2] || 5180)
-const ENTRY = (process.argv[3] || 'alt') === 'ref' ? 'ref.html' : 'alt.html'
+const CUT = process.argv[3] || 'alt'
+const ENTRY = CUT === 'ref' ? 'ref.html' : CUT === 'notes' ? 'notes.html' : 'alt.html'
+const LABEL = CUT === 'ref' ? 'reference' : CUT === 'notes' ? 'editorial notes' : 'container'
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -52,5 +55,5 @@ const server = http.createServer((req, res) => {
 })
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`${ENTRY === 'ref.html' ? 'reference' : 'container'} cut preview → http://0.0.0.0:${PORT}`)
+  console.log(`${LABEL} cut preview → http://0.0.0.0:${PORT}`)
 })
