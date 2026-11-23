@@ -44,12 +44,9 @@ export default function Curtain({ ready }: { ready: boolean }) {
       <div className="curtain-grain" aria-hidden="true" />
       <div className="curtain-inner">
         <div className="curtain-brand">
-          <svg viewBox="0 0 32 32" width="34" height="34" fill="none" aria-hidden="true">
-            <path d="M16 2.5 27.7 9.3v13.4L16 29.5 4.3 22.7V9.3L16 2.5Z" stroke="currentColor" strokeWidth="1" />
-            <path d="M16 2.5v27M4.3 9.3l11.7 6.8 11.7-6.8M4.3 22.7l11.7-6.6 11.7 6.6" stroke="currentColor" strokeWidth="0.6" opacity=".4" />
-          </svg>
-          <span>
-            SINAI<span>CORE</span>
+          <img className="curtain-mark" src="/brand/logo-mark.png" alt="" width={92} height={50} />
+          <span className="curtain-word">
+            Sinai<span>Core</span>
           </span>
         </div>
 
@@ -59,7 +56,7 @@ export default function Curtain({ ready }: { ready: boolean }) {
           <div className="curtain-bar">
             <i style={{ transform: `scaleX(${pct / 100})` }} />
           </div>
-          <span className="curtain-hint">GLB · DRACO · 4 STAGES</span>
+          <span className="curtain-hint">GLB · DRACO · 5 STATIONS</span>
         </div>
       </div>
     </div>

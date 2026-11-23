@@ -35,12 +35,20 @@ and both offices (El Arish & New Cairo) with live contact details.
 
 ## Brand
 
+- Typeface: **Inter**, the family the live site sets its Latin copy in (variable, self-hosted);
+  Cairo carries the Arabic.
 - Palette taken from the logo and the published site: navy `#0E1A2B`, primary blue
   `#1A6B9C`, copper accent `#C2712F`, product white `#F4F3ED`.
-- `public/brand/logo-header.png` — supplied header lockup (header + footer)
+- `public/brand/logo-header.png` — the supplied header lockup, exactly as the site ships it
+- `public/brand/logo-header-reverse.png` — same lockup, wordmark and tagline lifted to a
+  light steel so it holds on the ink header/footer (no white plate behind it)
+- `public/brand/logo-full.png` — supplied stacked lockup (mark + wordmark + tagline)
 - `public/brand/logo-mark.png` — extracted mark, used in 3D prints, spec panel and favicon
 - `public/img/*` — supplied product/facility photography for the portfolio cards,
   the mobile hero and the refined-grade plate
+- The FIBC/sack print in 3D reproduces the supplied bag artwork: emblem, `SinaiCore`
+  wordmark, `INDUSTRIAL SEA SALT / JUMBO BULK BAG`, the three selling points,
+  `1000 kg (1 Ton)` and `PRODUCT OF EGYPT`
 
 Stations 01–04 live in one pinned viewport (`.journey`, ~4.6 viewports of scroll) with a
 sticky WebGL canvas behind it. The copy panels swap as the shared progress value

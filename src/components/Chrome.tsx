@@ -23,7 +23,8 @@ export function Header() {
   return (
     <header className={`site-header ${scrolled ? 'is-scrolled' : ''}`}>
       <a href="#top" className="brand" aria-label="SinaiCore — الصفحة الرئيسية">
-        <img className="brand-lockup" src="/brand/logo-header.png" alt="SinaiCore — At the Core of Quality and Purity" width={300} height={44} />
+        {/* the supplied reverse lockup: white wordmark + light tagline for the ink header */}
+        <img className="brand-lockup" src="/brand/logo-header-reverse.png" alt="SinaiCore — At the Core of Quality and Purity" width={300} height={44} />
       </a>
 
       <div className="header-right">

@@ -319,7 +319,7 @@ export function Footer() {
       <div className="shell">
         <div className="footer-top">
           <div className="footer-brand">
-            <img src="/brand/logo-header.png" alt="SinaiCore" width={260} height={38} loading="lazy" decoding="async" />
+            <img src="/brand/logo-header-reverse.png" alt="SinaiCore" width={260} height={38} loading="lazy" decoding="async" />
             <p>SinaiCore for Salts &amp; Minerals — An Egyptian salt exporter coordinating qualified sourcing, quality verification, packaging, documentation, and logistics for global markets.</p>
           </div>
           <nav className="footer-nav" aria-label="روابط التذييل">

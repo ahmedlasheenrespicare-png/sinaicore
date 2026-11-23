@@ -47,14 +47,12 @@
   text-decoration: none;
 }
 .brand-lockup {
-  height: clamp(30px, 3.6vw, 40px);
+  height: clamp(36px, 4.2vw, 50px);
   width: auto;
   display: block;
-  /* the supplied lockup is dark-on-white: lift it off the ink plate */
-  filter: brightness(1.06) contrast(1.05) drop-shadow(0 1px 6px rgba(0, 0, 0, 0.5));
-  border-radius: 2px;
-  background: #f4f3ee;
-  padding: 3px 6px;
+  /* reverse lockup, derived from the supplied file: wordmark and tagline
+     lifted to a light steel so they hold on the ink header */
+  filter: brightness(1.04) contrast(1.04) drop-shadow(0 1px 6px rgba(0, 0, 0, 0.45));
 }
 
 .header-right {
@@ -328,17 +326,18 @@
   gap: 0.8rem;
   color: var(--brine);
 }
-.curtain-brand span {
+.curtain-word {
   font-family: var(--f-lat);
-  font-weight: 700;
-  letter-spacing: 0.24em;
-  font-size: 1.05rem;
-  color: var(--salt);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  font-size: 1.35rem;
+  color: var(--copper);
   direction: ltr;
 }
-.curtain-brand span span {
-  color: var(--brine);
-  letter-spacing: 0.24em;
+.curtain-word span {
+  color: #3f95cd;
+  letter-spacing: 0.01em;
+  font-size: inherit;
 }
 .curtain-mid {
   display: grid;
@@ -1975,12 +1974,10 @@
 
 /* footer lockup on the dark plate */
 .footer-brand img {
-  height: 34px;
+  height: clamp(34px, 4vw, 42px);
   width: auto;
   display: block;
-  background: #f4f3ee;
-  border-radius: 2px;
-  padding: 3px 6px;
+  filter: brightness(1.04) contrast(1.04);
 }
 .footer-brand b {
   display: none;
@@ -2033,4 +2030,18 @@
 }
 @media (max-width: 900px) {
   .jar-stage { height: 220px; order: -1; }
+}
+
+/* Loader mark: the real SinaiCore emblem, not a stand-in glyph. */
+.curtain-mark {
+  height: clamp(34px, 4.4vw, 46px);
+  width: auto;
+  display: block;
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.55));
+}
+
+/* Header mark: keep the lockup legible without crowding the mobile bar. */
+@media (max-width: 640px) {
+  .brand-lockup { height: 34px; }
+  .site-header .header-cta { padding-inline: 0.8rem; }
 }

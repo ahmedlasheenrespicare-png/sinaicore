@@ -92,7 +92,7 @@ function useLabelTexture() {
       // front block: mark + SINAICORE wordmark + tagline, centred on the wrap
       const mh = 84
       const logoW = img ? mh * (img.width / img.height) : 0
-      const font = '700 54px Archivo, Helvetica, Arial, sans-serif'
+      const font = '700 54px Inter, Helvetica, Arial, sans-serif'
       x.font = font
       const wS = x.measureText('SINAI').width
       const wC = x.measureText('CORE').width
@@ -109,7 +109,7 @@ function useLabelTexture() {
       x.fillStyle = '#1a6b9c'
       x.fillText('CORE', cx + wS + gap, 112)
       x.fillStyle = '#33556e'
-      x.font = '400 25px Archivo, Helvetica, Arial, sans-serif'
+      x.font = '400 25px Inter, Helvetica, Arial, sans-serif'
       x.textAlign = 'center'
       x.fillText('REFINED SALT · PRODUCT OF EGYPT', W / 2 + 6, 148)
 
@@ -117,7 +117,7 @@ function useLabelTexture() {
       for (const bx of [W * 0.165, W * 0.835]) {
         x.textAlign = 'center'
         x.fillStyle = '#0e1a2b'
-        x.font = '700 42px Archivo, Helvetica, Arial, sans-serif'
+        x.font = '700 42px Inter, Helvetica, Arial, sans-serif'
         x.fillText('LAB SAMPLE', bx, 90)
         x.fillStyle = '#8a5a2e'
         x.font = '400 28px monospace'

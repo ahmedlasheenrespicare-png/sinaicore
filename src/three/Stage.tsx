@@ -256,74 +256,103 @@ function TabletChapter({ onHotspots }: { onHotspots: (show: boolean) => void }) 
 }
 
 /* ------------------------------------------------------------------ *
- * 03 — printing: brand texture shared by the sack and the FIBC
+ * 03 — printing: the bag artwork from the reference site, on the real mark
  * ------------------------------------------------------------------ */
 function BrandTexture() {
   return useMemo(() => {
+    const S = 1024
     const c = document.createElement('canvas')
-    c.width = 1024
-    c.height = 1024
+    c.width = S
+    c.height = S
     const x = c.getContext('2d')!
     // woven polypropylene ground
-    x.fillStyle = '#f2f1ea'
-    x.fillRect(0, 0, 1024, 1024)
-    for (let i = 0; i < 1024; i += 8) {
-      x.fillStyle = i % 16 === 0 ? 'rgba(26,107,156,0.035)' : 'rgba(0,0,0,0.02)'
-      x.fillRect(0, i, 1024, 4)
-      x.fillRect(i, 0, 4, 1024)
+    x.fillStyle = '#f4f4f1'
+    x.fillRect(0, 0, S, S)
+    for (let i = 0; i < S; i += 8) {
+      x.fillStyle = i % 16 === 0 ? 'rgba(26,107,156,0.035)' : 'rgba(0,0,0,0.018)'
+      x.fillRect(0, i, S, 4)
+      x.fillRect(i, 0, 4, S)
     }
-    // printed plate
-    const navy = '#0e1a2b'
     const blue = '#1a6b9c'
+    const navy = '#0e1a2b'
     const copper = '#c2712f'
-    x.strokeStyle = 'rgba(26,107,156,0.5)'
-    x.lineWidth = 4
-    x.strokeRect(96, 84, 832, 856)
 
-    // the mark is drawn once the asset is decoded; the plate ships with text only
-    const img = new Image()
-    img.onload = () => {
-      const ratio = img.width / img.height
-      const w = 470
-      const h = w / ratio
-      x.drawImage(img, 512 - w / 2, 140, w, h)
-      x.textAlign = 'center'
-      x.fillStyle = copper
-      x.font = '700 96px Archivo, Helvetica, Arial, sans-serif'
-      x.fillText('SINAI', 512 - 118, 140 + h + 104)
-      x.fillStyle = blue
-      x.fillText('CORE', 512 + 118, 140 + h + 104)
-      x.fillStyle = navy
-      x.font = '400 34px Archivo, Helvetica, Arial, sans-serif'
-      x.fillText('At the Core of Quality and Purity', 512, 140 + h + 158)
-
-      x.font = '700 46px Archivo, Helvetica, Arial, sans-serif'
-      x.fillText('REFINED IODIZED SALT', 512, 640)
-      x.font = '400 34px Archivo, Helvetica, Arial, sans-serif'
-      x.fillStyle = '#33556e'
-      x.fillText('PREMIUM VACUUM REFINED  ·  FOOD & INDUSTRIAL', 512, 690)
-
-      x.fillStyle = navy
-      x.font = '700 58px Archivo, Helvetica, Arial, sans-serif'
-      x.fillText('FIBC 1 MT', 512, 790)
-      x.font = '400 32px monospace'
-      x.fillStyle = '#3c5a55'
-      x.fillText('NaCl ≥ 99.5%  ·  SWL 5:1  ·  PRODUCT OF EGYPT', 512, 842)
-
-      let bx = 372
-      for (let i = 0; i < 40; i++) {
-        const bw = (i % 3) + 1
-        x.fillStyle = i % 2 ? navy : '#f2f1ea'
-        x.fillRect(bx, 880, bw * 2, 44)
-        bx += bw * 2 + 3
+    const paint = (img?: HTMLImageElement) => {
+      x.setTransform(1, 0, 0, 1, 0, 0)
+      x.clearRect(0, 0, S, S)
+      x.fillStyle = '#f4f4f1'
+      x.fillRect(0, 0, S, S)
+      for (let i = 0; i < S; i += 8) {
+        x.fillStyle = i % 16 === 0 ? 'rgba(26,107,156,0.035)' : 'rgba(0,0,0,0.018)'
+        x.fillRect(0, i, S, 4)
+        x.fillRect(i, 0, 4, S)
       }
+      // the two printed webbing rules the supplier bag carries at the hem
+      x.fillStyle = 'rgba(26,107,156,0.55)'
+      x.fillRect(0, 34, S, 6)
+      x.fillRect(0, S - 40, S, 6)
+
+      // emblem
+      if (img) {
+        const w = 300
+        const h = w * (img.height / img.width)
+        x.drawImage(img, S / 2 - w / 2, 58, w, h)
+      }
+      x.textAlign = 'center'
+      // wordmark, in the two printed colours of the lockup
+      x.font = '600 76px Inter, Helvetica, Arial, sans-serif'
+      const wS = x.measureText('Sinai').width
+      const wC = x.measureText('Core').width
+      const left = S / 2 - (wS + wC) / 2
+      x.textAlign = 'left'
+      x.fillStyle = copper
+      x.fillText('Sinai', left, 470)
+      x.fillStyle = blue
+      x.fillText('Core', left + wS, 470)
+
+      x.textAlign = 'center'
+      x.fillStyle = blue
+      x.font = '700 58px Inter, Helvetica, Arial, sans-serif'
+      x.fillText('INDUSTRIAL SEA SALT', S / 2, 556)
+      x.fillText('JUMBO BULK BAG', S / 2, 616)
+
+      x.font = '400 34px Inter, Helvetica, Arial, sans-serif'
+      const lines = ['Sea Salt', 'Solar Evaporation Process', 'High Purity']
+      lines.forEach((t, i) => {
+        const yy = 682 + i * 44
+        x.textAlign = 'left'
+        x.fillStyle = blue
+        x.beginPath()
+        x.arc(S / 2 - 196, yy - 11, 6, 0, Math.PI * 2)
+        x.fill()
+        x.textAlign = 'left'
+        x.fillText(t, S / 2 - 174, yy)
+      })
+
+      x.textAlign = 'center'
+      x.fillStyle = blue
+      x.font = '700 66px Inter, Helvetica, Arial, sans-serif'
+      x.fillText('1000 kg (1 Ton)', S / 2, 862)
+      x.font = '400 36px Inter, Helvetica, Arial, sans-serif'
+      x.fillStyle = navy
+      x.fillText('PRODUCT OF EGYPT', S / 2, 920)
+
+      // 50 kg sack variant: same plate, different fill line
+      x.font = '400 30px Inter, Helvetica, Arial, sans-serif'
+      x.fillStyle = 'rgba(14,26,43,0.72)'
+      x.fillText('NaCl ≥ 99.5%  ·  SWL 5:1  ·  COA PER BATCH', S / 2, 966)
+
       tex.needsUpdate = true
     }
-    img.src = '/brand/logo-mark.png'
 
     const tex = new THREE.CanvasTexture(c)
     tex.colorSpace = THREE.SRGBColorSpace
     tex.anisotropy = 8
+    const img = new Image()
+    img.onload = () => paint(img)
+    img.onerror = () => paint()
+    img.src = '/brand/logo-mark.png'
+    paint()
     return tex
   }, [])
 }
