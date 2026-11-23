@@ -109,6 +109,37 @@ SinaiCore site**, with our 3D work standing in where that site uses flat photogr
   separate lazy-loaded canvas that unmounts when it leaves the viewport, has a portrait
   camera rig for phones, and holds a still frame for `prefers-reduced-motion`.
 
+### Visual fidelity — how the 3D is lit and shaded
+
+The salt act (and the FIBC / 50 kg sack models elsewhere in the cut) are built to a
+photographic brief rather than a "nice 3D" one:
+
+- **HDRI lighting.** `public/hdr/pans.hdr` is a small equirect Radiance sky authored
+  offline (`scripts/build-textures.mjs`): a tight sun disk with bloom and haze, a blue-to-haze
+  gradient, thin cloud bands and a bright brine floor. It is PMREM-prefiltered through
+  drei's `<Environment>`, so every PBR surface gets physical reflections and image-based
+  fill; the directional light only adds the hard specular streak and the shadow.
+- **PBR maps, GPU-compressed.** The woven PP fabric (albedo + normal) and the cracked
+  salt-crust relief normal are generated procedurally and encoded to **KTX2** (Basis
+  Universal — ETC1S for albedo, UASTC for normals) into `public/tex/`. They arrive on the
+  GPU already compressed, at ~0.5 MB total, instead of as decoded PNGs. The transcoder
+  ships locally from `public/basis/`, so nothing is fetched from a CDN.
+- **Transmission / scatter.** The cut block is a `meshPhysicalMaterial` with real
+  transmission, IOR 1.5, attenuation colour and distance, plus a clearcoat and an inner
+  emissive core — halite scatters and glows from the inside instead of reading as glass.
+  The quality section's crystal cluster uses the same physical setup.
+- **Contact shadows.** A `ContactShadows` plane grounds the sack in the pan, on top of a
+  real shadow-casting sun (`shadows` on the canvas, 1024² PCF), so nothing floats.
+- **Post.** On GPU hardware the canvas runs a `postprocessing` chain: N8AO ambient
+  occlusion in the pan ruts, a world-space **depth of field** focused on the action
+  (block / sack), a highlight-only bloom (threshold 1.15, so only the sun, the water veil
+  and caustics bloom), ACES tone mapping and SMAA. It is skipped on phones, on
+  `prefers-reduced-motion`, and on software rasterisers (detected via
+  `WEBGL_debug_renderer_info`), where MSAA alone is used instead.
+- **Assets.** Every model in `public/models/` is Draco-compressed GLB (9–160 KB),
+  decoded from the local `public/draco/` decoder; no HDRIs, textures or models are
+  fetched from third parties at runtime.
+
 ## Alternate cut — the container
 
 `alt.html` (built alongside `index.html`, served at `/alt.html`) is a **separate**
@@ -131,7 +162,8 @@ Assets: `container.glb` (frame, corrugated sheet, floor, one hinged leaf, print 
 
 ## Assets
 
-The models are authored procedurally in `scripts/build-assets.mjs`:
+The models are authored procedurally in `scripts/build-assets.mjs`, and the detail
+textures / HDRI in `scripts/build-textures.mjs` (both write into `public/`):
 
 - halite: irregular faceted cubes (chamfered + position-driven noise), flat-shaded
 - tablets: indexed lathe profile with a bevelled rim and a recessed face groove

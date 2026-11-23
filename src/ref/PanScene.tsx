@@ -1,8 +1,18 @@
-import { memo, useEffect, useMemo, useRef } from 'react'
+import { Suspense, memo, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { useGLTF } from '@react-three/drei'
-import { useWovenTexture, useSackPrint } from '../three/textures'
+import { useGLTF, useKTX2, ContactShadows, Environment } from '@react-three/drei'
+import {
+  EffectComposer,
+  DepthOfField,
+  Bloom,
+  N8AO,
+  ToneMapping,
+  SMAA,
+} from '@react-three/postprocessing'
+import { ToneMappingMode } from 'postprocessing'
+import { useSackPrint } from '../three/textures'
+import { BASIS, useWovenPBR, fabricProps } from './fabric'
 
 useGLTF.setDecoderPath('/draco/')
 
@@ -29,6 +39,16 @@ const PORTRAIT = typeof window !== 'undefined' && window.innerWidth < 820
 /* reduced motion: hold the shader-animated sparks to a still frame */
 const REDUCED =
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+/* ------------------------------------------------------------------ *
+ * HDRI environment: a locally authored equirect sky (public/hdr/pans.hdr)
+ * is prefiltered into the scene environment, so every PBR surface picks up
+ * the sun, the haze and the bounced light off the brine — and reflections
+ * are what actually makes the salt read as gloss.
+ * ------------------------------------------------------------------ */
+function PanEnvironment() {
+  return <Environment files="/hdr/pans.hdr" background={false} environmentIntensity={0.5} />
+}
 
 /* ------------------------------------------------------------------ *
  * Pan landscape: procedural aerial texture of brine basins
@@ -193,11 +213,27 @@ function Sparkles({ count = 1800, radius = 30, height = 2.2, y = 0.15 }: { count
  * ------------------------------------------------------------------ */
 function Pans() {
   const tex = usePanTexture()
+  const crust = useKTX2('/tex/crust_n.ktx2', BASIS)
+  const crustN = useMemo(() => {
+    const t = crust.clone()
+    t.wrapS = t.wrapT = THREE.RepeatWrapping
+    t.repeat.set(70, 70)
+    t.anisotropy = 8
+    t.needsUpdate = true
+    return t
+  }, [crust])
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[200, 200, 1, 1]} />
-        <meshStandardMaterial map={tex} roughness={0.5} metalness={0.02} envMapIntensity={1.2} />
+        <meshStandardMaterial
+          map={tex}
+          normalMap={crustN}
+          normalScale={new THREE.Vector2(0.42, 0.42)}
+          roughness={0.46}
+          metalness={0.02}
+          envMapIntensity={1.25}
+        />
       </mesh>
       {/* wet sheen, a second layer so the surface shimmers as the camera moves */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]}>
@@ -256,18 +292,39 @@ function SaltBlock() {
   })
   return (
     <group ref={ref}>
+      {/* halite is translucent: light enters, scatters and leaves the edges.
+          Transmission alone reads as glass, so the interior is faked with an
+          inner glow shell and a thin-film clearcoat on the outer facets. */}
       <mesh geometry={geo} castShadow>
         <meshPhysicalMaterial
-          color="#f7fdff"
-          roughness={0.18}
-          metalness={0.06}
+          color="#f4fcff"
+          roughness={0.14}
+          metalness={0.04}
+          ior={1.5}
+          transmission={0.34}
+          thickness={0.7}
+          attenuationColor="#5fb2cc"
+          attenuationDistance={0.3}
           clearcoat={1}
-          clearcoatRoughness={0.12}
-          envMapIntensity={2}
-          emissive="#a9e2f2"
-          emissiveIntensity={0.1}
+          clearcoatRoughness={0.05}
+          specularIntensity={1}
+          envMapIntensity={1.9}
+          emissive="#9fd8ea"
+          emissiveIntensity={0.02}
           side={THREE.DoubleSide}
           flatShading
+        />
+      </mesh>
+      {/* inner scatter shell — the pale core you see inside a salt lump */}
+      <mesh geometry={geo} scale={0.74}>
+        <meshStandardMaterial
+          color="#dff4fb"
+          emissive="#9ed9ec"
+          emissiveIntensity={0.55}
+          roughness={0.6}
+          transparent
+          opacity={0.3}
+          depthWrite={false}
         />
       </mesh>
       {/* a faint light under it, so it reads as lifted, not stuck in the pan */}
@@ -299,7 +356,7 @@ function Wash() {
     }
     if (curtain.current) {
       const m = curtain.current.material as THREE.MeshPhysicalMaterial
-      m.opacity = on * 0.44
+      m.opacity = on * 0.3
       curtain.current.visible = on > 0.01
       curtain.current.position.y = 0.95 + sstep(0.3, 0.46, p) * 2.2
       curtain.current.position.x = PORTRAIT ? 0.1 : -0.55
@@ -495,7 +552,8 @@ function Pour() {
 function ExportSack() {
   const { scene } = useGLTF('/models/sack-50kg.glb')
   const art = useSackPrint()
-  const woven = useWovenTexture(true)
+  // the woven maps tile at the tape scale of a real 50 kg PP sack
+  const woven = useWovenPBR([4.5, 7], 1.5)
   const ref = useRef<THREE.Group>(null)
 
   const model = useMemo(() => {
@@ -505,18 +563,20 @@ function ExportSack() {
       if (!mesh.isMesh) return
       const n = mesh.name
       if (n.includes('panel')) {
-        mesh.material = new THREE.MeshStandardMaterial({ map: art, roughness: 0.82, envMapIntensity: 0.9 })
+        mesh.material = new THREE.MeshPhysicalMaterial({
+          map: art,
+          roughness: 0.7,
+          clearcoat: 0.35,
+          clearcoatRoughness: 0.4,
+          envMapIntensity: 1,
+        })
       } else if (n.includes('crimp')) {
         mesh.material = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.7, envMapIntensity: 1 })
       } else {
-        mesh.material = new THREE.MeshStandardMaterial({
-          map: woven,
-          color: '#ffffff',
-          roughness: 0.88,
-          side: THREE.DoubleSide,
-          envMapIntensity: 0.85,
-        })
+        mesh.material = new THREE.MeshPhysicalMaterial(fabricProps(woven))
       }
+      mesh.castShadow = true
+      mesh.receiveShadow = true
     })
     return m
   }, [scene, art, woven])
@@ -673,11 +733,29 @@ function Scene() {
     <>
       <Sky />
       <Sun />
+      <Suspense fallback={null}>
+        <PanEnvironment />
+      </Suspense>
       <fog attach="fog" args={['#cbe2ea', 60, 240]} />
-      <ambientLight intensity={1.15} />
-      <hemisphereLight args={['#eaf7fb', '#c8bda2', 1.15]} />
-      <directionalLight position={[-16, 26, -34]} intensity={3.4} color="#fff3e0" />
-      <directionalLight position={[10, 14, 16]} intensity={0.8} color="#cfe9f4" />
+      {/* the HDRI carries most of the light; the sun adds the hard specular
+          streak and the shadow the contact pass needs */}
+      <ambientLight intensity={0.18} />
+      <hemisphereLight args={['#eaf7fb', '#c8bda2', 0.3]} />
+      <directionalLight
+        position={[-16, 26, -34]}
+        intensity={2.3}
+        color="#fff3e0"
+        castShadow
+        shadow-mapSize={[1024, 1024]}
+        shadow-camera-left={-8}
+        shadow-camera-right={8}
+        shadow-camera-top={8}
+        shadow-camera-bottom={-8}
+        shadow-camera-near={1}
+        shadow-camera-far={60}
+        shadow-bias={-0.0012}
+        shadow-normalBias={0.02}
+      />
       <Pans />
       <Sparkles />
       <SaltBlock />
@@ -685,8 +763,43 @@ function Scene() {
       <Grains />
       <Pour />
       <ExportSack />
+      {/* grounding: soft contact shadow under the sack, refreshed as it fills */}
+      <ContactShadows
+        position={[PORTRAIT ? 0.1 : -0.72, 0.02, 1.1]}
+        scale={6}
+        blur={2.8}
+        far={2.4}
+        opacity={0.35}
+        resolution={256}
+        color="#0a2333"
+        frames={Infinity}
+      />
       <Rig />
     </>
+  )
+}
+
+/* ------------------------------------------------------------------ *
+ * Post: depth of field on the action, gentle bloom on the sun and the
+ * water veil, occlusion in the pan ruts, ACES tone map, SMAA on top.
+ * ------------------------------------------------------------------ */
+function Post() {
+  return (
+    <EffectComposer multisampling={0} enableNormalPass={false}>
+      <N8AO aoRadius={1.8} intensity={0.7} distanceFalloff={1} halfRes quality="performance" />
+      {/* focus rides with the action: world units, so the block and the sack
+          stay sharp while the far pans and the near foreground fall away */}
+      <DepthOfField
+        worldFocusDistance={6.5}
+        worldFocusRange={34}
+        bokehScale={0.8}
+        resolutionScale={0.7}
+      />
+      {/* only genuine highlights (sun disk, water veil, crystal caustics) bloom */}
+      <Bloom mipmapBlur intensity={0.3} luminanceThreshold={1.15} luminanceSmoothing={0.12} />
+      <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+      <SMAA />
+    </EffectComposer>
   )
 }
 
@@ -702,20 +815,40 @@ export default memo(function PanScene({
     return () => clearTimeout(t)
   }, [onReady])
 
+  // post only on real GPUs: on a software rasteriser it costs more than it gives
+  const [post, setPost] = useState(true)
+  useEffect(() => {
+    const gl = document.createElement('canvas').getContext('webgl2') as WebGL2RenderingContext | null
+    if (!gl) {
+      setPost(false)
+      return
+    }
+    const dbg = gl.getExtension('WEBGL_debug_renderer_info')
+    const name = dbg ? String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)) : ''
+    const soft = /swiftshader|software|llvmpipe|basic render/i.test(name) && !(window as any).__PAN_FORCE_POST
+    const mobile = window.innerWidth < 820
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    setPost(!soft && !mobile && !reduced)
+    gl.getExtension('WEBGL_lose_context')?.loseContext()
+  }, [])
+
   return (
     <Canvas
-      dpr={[1, 1.7]}
+      dpr={[1, 1.75]}
       frameloop={active ? 'always' : 'never'}
-      gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+      shadows
+      gl={{ antialias: !post, alpha: true, powerPreference: 'high-performance' }}
       camera={{ position: [9, 27, 23], fov: 44, near: 0.05, far: 400 }}
       onCreated={({ gl }) => {
-        gl.toneMapping = THREE.ACESFilmicToneMapping
-        gl.toneMappingExposure = 1.05
+        // tone mapping runs in the post chain when it is on, otherwise here
+        gl.toneMapping = post ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
+        gl.toneMappingExposure = 0.9
         gl.setClearColor(0x000000, 0)
       }}
       style={{ position: 'absolute', inset: 0 }}
     >
       <Scene />
+      {post && <Post />}
     </Canvas>
   )
 })

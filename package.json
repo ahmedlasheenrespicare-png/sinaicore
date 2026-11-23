@@ -3,14 +3,16 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "SinaiCore — immersive RTL industrial scroll experience for North Sinai salt export",
+  "description": "SinaiCore \u2014 immersive RTL industrial scroll experience for North Sinai salt export",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173",
     "build": "tsc -b --noEmit && vite build",
     "preview": "vite preview --host 0.0.0.0 --port 4173",
     "typecheck": "tsc -b --noEmit",
     "preview:alt": "node scripts/serve-alt-preview.mjs 5180 alt",
-    "preview:ref": "node scripts/serve-alt-preview.mjs 5181 ref"
+    "preview:ref": "node scripts/serve-alt-preview.mjs 5181 ref",
+    "assets": "node scripts/build-assets.mjs",
+    "textures": "node scripts/build-textures.mjs"
   },
   "dependencies": {
     "@fontsource-variable/cairo": "^5.3.0",
@@ -18,7 +20,9 @@
     "@fontsource/ibm-plex-mono": "^5.3.0",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.2",
+    "@react-three/postprocessing": "^3.2.2",
     "framer-motion": "^14.14.0",
+    "postprocessing": "^6.39.6",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "three": "^0.187.0"
@@ -32,6 +36,7 @@
     "@types/three": "^0.187.0",
     "@vitejs/plugin-react": "^5.2.0",
     "draco3d": "^1.5.9",
+    "ktx2-encoder": "^0.6.0",
     "typescript": "^5.9.3",
     "vite": "^7.3.8"
   }

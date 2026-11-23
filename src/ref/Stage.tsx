@@ -2,7 +2,8 @@ import { Suspense, memo, useEffect, useMemo, useRef, useState, type ComponentTyp
 import * as THREE from 'three'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useGLTF, Preload, ContactShadows } from '@react-three/drei'
-import { SackArtTexture, useWovenTexture, useContainerPrint } from '../three/textures'
+import { SackArtTexture, useContainerPrint } from '../three/textures'
+import { useWovenPBR, fabricProps } from './fabric'
 
 useGLTF.setDecoderPath('/draco/')
 
@@ -120,15 +121,22 @@ function CrystalModel() {
       mesh.material = rock
         ? new THREE.MeshStandardMaterial({ color: '#3d372f', roughness: 0.95 })
         : new THREE.MeshPhysicalMaterial({
-            // transmission needs a background to refract; on a light plate a
-            // bright glossy dielectric reads better and stays visible
-            // halite against a pale plate: tint it sea-glass so the facets read
-            color: '#9cc9d9',
-            roughness: 0.22,
-            metalness: 0.25,
-            clearcoat: 0.85,
-            clearcoatRoughness: 0.08,
-            envMapIntensity: 0.8,
+            // the section sits on a dark plate, so real transmission works here:
+            // halite = a bright dielectric with a hint of scatter (attenuation)
+            color: '#f2fbff',
+            roughness: 0.16,
+            metalness: 0.02,
+            ior: 1.54,
+            transmission: 0.5,
+            thickness: 0.8,
+            attenuationColor: '#63b4cd',
+            attenuationDistance: 0.5,
+            clearcoat: 0.9,
+            clearcoatRoughness: 0.06,
+            specularIntensity: 1,
+            envMapIntensity: 1.6,
+            emissive: '#7cc6dd',
+            emissiveIntensity: 0.06,
           })
     })
     return m
@@ -161,7 +169,7 @@ function TabletsModel() {
 
 function FibcModel() {
   const { scene } = useGLTF('/models/jumbo-bag.glb')
-  const woven = useWovenTexture()
+  const woven = useWovenPBR([3, 3])
   const ref = useSpinner(0.16)
   const model = useMemo(() => {
     const m = scene.clone(true)
@@ -170,9 +178,15 @@ function FibcModel() {
       if (!mesh.isMesh) return
       const n = mesh.name
       if (n.includes('brand_panel')) {
-        mesh.material = new THREE.MeshStandardMaterial({ color: '#f6f7f4', roughness: 0.78, envMapIntensity: 0.9 })
+        mesh.material = new THREE.MeshPhysicalMaterial({
+          color: '#f6f7f4',
+          roughness: 0.74,
+          sheen: 0.3,
+          sheenColor: new THREE.Color('#e6f0f6'),
+          envMapIntensity: 0.95,
+        })
       } else if (n.includes('body')) {
-        mesh.material = new THREE.MeshStandardMaterial({ map: woven, color: '#ffffff', roughness: 0.86, side: THREE.DoubleSide, envMapIntensity: 0.8 })
+        mesh.material = new THREE.MeshPhysicalMaterial(fabricProps(woven))
       } else if (n.includes('loops')) {
         mesh.material = new THREE.MeshStandardMaterial({ color: '#1a6b9c', roughness: 0.8 })
       } else {
@@ -191,7 +205,7 @@ function FibcModel() {
 function SackModel() {
   const { scene } = useGLTF('/models/sack-50kg.glb')
   const art = SackArtTexture()
-  const plainWeave = useWovenTexture(true)
+  const plainWeave = useWovenPBR([3, 4])
   const ref = useSpinner(0.22)
   const model = useMemo(() => {
     const m = scene.clone(true)
@@ -204,13 +218,7 @@ function SackModel() {
       } else if (n.includes('crimp')) {
         mesh.material = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.72, envMapIntensity: 0.9 })
       } else {
-        mesh.material = new THREE.MeshStandardMaterial({
-          map: plainWeave,
-          color: '#ffffff',
-          roughness: 0.9,
-          side: THREE.DoubleSide,
-          envMapIntensity: 0.75,
-        })
+        mesh.material = new THREE.MeshPhysicalMaterial(fabricProps(plainWeave))
       }
     })
     return m
