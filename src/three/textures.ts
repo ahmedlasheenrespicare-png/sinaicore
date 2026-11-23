@@ -87,6 +87,9 @@ export function SackArtTexture() {
   }, [])
 }
 
+/* aliases used by the reference cut */
+export const useSackPrint = SackArtTexture
+
 /* Woven PP fabric: a seamless tile of threads plus the brand's blue weft stripe.
    `plain` drops the stripe for the white tablets sack. */
 export function useWovenTexture(plain = false) {

@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
 import { Icon } from './icons'
+import PanAct from './PanAct'
 import {
   nav,
   pillars,
@@ -128,6 +129,9 @@ export default function RefApp() {
             </div>
           </div>
         </section>
+
+        {/* ---------------------------------------- the aerial salt-pan act */}
+        <PanAct />
 
         {/* --------------------------------------------------- pillars */}
         <section className="ref-sec on-light" id="company">

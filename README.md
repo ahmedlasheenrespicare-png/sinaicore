@@ -98,6 +98,16 @@ SinaiCore site**, with our 3D work standing in where that site uses flat photogr
   SinaiCore content, in Arabic; the section kickers stay Latin like the original.
 - Photography for the grade and logistics cards lives in `public/img/ref/` (downscaled
   copies of the reference's own product shots).
+- Between the hero and the pillars sits a **pinned aerial act**: a 3D pass over the North
+  Sinai salt pans, in four beats tied to scroll — `01 AERIAL` the camera descends out of a
+  sunlit sky onto the shimmering brine, `02 CRUST` a chiselled block of crystallised salt is
+  carved out of the crust, `03 WASH · GRADE` the block dissolves into a veil of wash water
+  and its grains sort into coarse / medium / fine layers in mid-air, `04 PACK` those grains
+  stream down and fill the printed 50 kg export sack. Copy beats, the side rail and the
+  specimen data (`NaCl ≥ 99.5 %`, `1–3 / 0.5–1 / < 0.5 mm`, `25·50 kg`, `FIBC 1–1.5 MT`,
+  `FOB Arish · Suez`) sit on a right-hand scrim so the scene stays clear. The act is a
+  separate lazy-loaded canvas that unmounts when it leaves the viewport, has a portrait
+  camera rig for phones, and holds a still frame for `prefers-reduced-motion`.
 
 ## Alternate cut — the container
 

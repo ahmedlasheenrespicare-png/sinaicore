@@ -25,6 +25,62 @@ export const nav = [
   { label: 'تواصل معنا', lat: 'Contact', href: '#contact' },
 ]
 
+/** The pinned aerial act: pans → cut block → wash & grade → packed for export. */
+export const panBeats = [
+  {
+    id: 'aerial',
+    n: '01',
+    tag: 'من السماء',
+    kicker: 'AERIAL · NORTH SINAI',
+    title: 'ملاحات شمال سيناء\nتحت شمس الصباح',
+    body: 'أحواض التبخير الشمسي على ساحل العريش، تقطعها الجسور الترابية، وطبقة الملح المتبلور تلمع على سطح كل حوض. المشهد مأخوذ من الجو قبل الهبوط.',
+    facts: [
+      { k: 'ALTITUDE', v: '120 m' },
+      { k: 'SOURCE', v: 'Solar evaporation' },
+      { k: 'REGION', v: 'North Sinai' },
+    ],
+  },
+  {
+    id: 'cut',
+    n: '02',
+    tag: 'الاقتطاع',
+    kicker: 'CRUST · CUT OUT',
+    title: 'تهبط الكاميرا\nوتُقتطع كتلة من الملح',
+    body: 'تنخفض الكاميرا إلى سطح الملاحة، فتنفصل كتلة من قشرة الملح المتبلور — نفس البلورة التي تبدأ منها سلسلة الإنتاج: هاليت بحري بتركيز يصل إلى ٩٩.٥٪.',
+    facts: [
+      { k: 'NaCl', v: '≥ 99.5%' },
+      { k: 'WATER', v: 'Solar brine' },
+      { k: 'MOISTURE', v: '≤ 0.2%' },
+    ],
+  },
+  {
+    id: 'wash',
+    n: '03',
+    tag: 'الغسل والفرز',
+    kicker: 'WASH · SCREEN · GRADE',
+    title: 'غسل في الهواء\nوفرز ثلاث درجات',
+    body: 'تمر الكتلة عبر ستارة غسل، ثم تتفتّت إلى حبيبات تُفرز في الهواء إلى ثلاث درجات: خشن ومتوسط وناعم — كل درجة بنطاق حجم حبيبي يخصّ تطبيقها.',
+    facts: [
+      { k: 'COARSE', v: '1 – 3 mm' },
+      { k: 'MEDIUM', v: '0.5 – 1 mm' },
+      { k: 'FINE', v: '< 0.5 mm' },
+    ],
+  },
+  {
+    id: 'pack',
+    n: '04',
+    tag: 'التعبئة',
+    kicker: 'PACKED · EXPORT READY',
+    title: 'تستقر الحبيبات\nداخل عبوات التصدير',
+    body: 'تتجمّع الدرجات الثلاث وتتساقط داخل شكارة ٢٥/٥٠ كجم المطبوعة، فتنتفخ وتستقيم — جاهزة للرصّ في الحاوية ولباقي الطريق حتى ميناء الوصول.',
+    facts: [
+      { k: 'PACK', v: '25 / 50 kg' },
+      { k: 'FIBC', v: '1 – 1.5 MT' },
+      { k: 'FOB', v: 'Arish · Suez' },
+    ],
+  },
+]
+
 export const pillars = [
   {
     n: '01',
