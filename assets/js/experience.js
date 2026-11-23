@@ -164,7 +164,6 @@
       h.words.forEach(function(w,i){ w.classList.toggle("on", i < on); });
     });
   }
-  });
   /* Nav drag-to-scroll (reference slider nav) */
   var expNav = document.querySelector(".exp-nav");
   if(expNav){
