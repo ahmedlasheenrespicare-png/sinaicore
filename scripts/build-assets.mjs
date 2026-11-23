@@ -549,72 +549,199 @@ function bag(CFG = BAG_JUMBO, opts = {}) {
 }
 
 /* ------------------------------------------------------------------ *
- * 03b — 50 kg export sack (flat gusseted, stitched top)
+ * 03b — 25/50 kg tablets sack: the pillow-shaped white PP bag from the
+ *       product photography (soft rounds, crimped flute seal at the mouth)
  * ------------------------------------------------------------------ */
-function sack50() {
-  const CFG = BAG_50KG
-  const { body, caps, seams, panel } = bag(CFG, { withLoops: false, withSpouts: false, capTop: true, straight: true, pillow: true })
-  const loops = G()
-  const top = CFG.h / 2
-  const bottom = -CFG.h / 2
+const PILLOW = { a: 0.40, b: 0.175, h: 0.90, exp: 3.4 }
 
-  /* stitched top seam: a dense row of short dashes across the mouth */
-  const stitch = G()
-  const rowY = top + 0.003
-  const needle = []
-  for (let i = 0; i < 84; i++) {
-    const a = (i / 84) * Math.PI * 2
-    const [px, pz] = superellipse(a, CFG.a * 0.955, CFG.b * 0.955, CFG.exp)
-    needle.push([px, pz, a])
-  }
-  for (const [px, pz, a] of needle) {
-    const nx = Math.cos(a) * 0.016
-    const nz = Math.sin(a) * 0.016
-    const tx = -Math.sin(a) * 0.012
-    const tz = Math.cos(a) * 0.012
-    merge(stitch, flatNormals([
-      [px - tx, rowY, pz - tz], [px + tx, rowY, pz + tz], [px + tx + nx, rowY, pz + tz + nz],
-      [px - tx, rowY, pz - tz], [px + tx + nx, rowY, pz + tz + nz], [px - tx + nx, rowY, pz - tz + nz],
-    ]))
-  }
+/* lateral scale of the pillow at height fraction v (0 = bottom, 1 = mouth) */
+const pillowK = (v) => Math.pow(Math.max(0, 1 - Math.pow(2 * v - 1, 4)), 1 / 3.1)
 
-  /* sewn mouth: a dashed seam running across the flat top, edge to edge */
-  const seamTop = G()
-  const segN = 26
-  for (let i = 0; i < segN; i++) {
-    const zz = -CFG.b * 0.9 + (i / (segN - 1)) * CFG.b * 1.8
-    if (Math.abs(zz) < 0.006) continue
-    const w = 0.006
-    merge(seamTop, flatNormals([
-      [-w, rowY + 0.001, zz - 0.012], [w, rowY + 0.001, zz + 0.012], [w, rowY + 0.001, zz + 0.004],
-      [-w, rowY + 0.001, zz - 0.012], [w, rowY + 0.001, zz + 0.004], [-w, rowY + 0.001, zz - 0.004],
-    ]))
+function pillowSack() {
+  const { a, b, h, exp } = PILLOW
+  const RINGS = 40
+  const SEG = 96
+  const V0 = 0.028
+  const V1 = 0.985
+  const rows = []
+  for (let i = 0; i <= RINGS; i++) {
+    const t = i / RINGS
+    const v = V0 + (V1 - V0) * t
+    const k = pillowK(v)
+    const y = -h / 2 + v * h
+    const row = []
+    for (let s = 0; s <= SEG; s++) {
+      const th = (s / SEG) * Math.PI * 2
+      const [x, z] = superellipse(th, a * k, b * k, exp)
+      // faint vertical seam channels, like the stitched side seams in the photo
+      const seam = 1 - 0.03 * Math.max(0, Math.cos(th * 2)) ** 8
+      row.push([x * seam, y, z * seam])
+    }
+    rows.push(row)
   }
-
-  /* side gusset folds: two vertical seams on each narrow face */
-  const crease = G()
-  for (const sz of [-1, 1]) {
-    for (const fx of [-0.36, 0.36]) {
-      const pts = []
-      for (let i = 0; i <= 14; i++) {
-        const v = i / 14
-        const y = bottom + CFG.h * 0.03 + v * CFG.h * 0.94
-        pts.push([CFG.a * fx, y, sz * CFG.b * 1.004])
-      }
-      merge(crease, tube(pts, 0.0042, 4))
+  const tris = []
+  for (let i = 0; i < RINGS; i++) {
+    for (let s = 0; s < SEG; s++) {
+      const p = rows[i][s], q = rows[i][s + 1], r = rows[i + 1][s + 1], u = rows[i + 1][s]
+      // outward winding: down the ring, then up the next one
+      tris.push(p, r, q, p, u, r)
     }
   }
-  void bottom
+  // lids: fans over the first and last ring, wound both ways
+  const capTris = []
+  const capNorm = []
+  const capFan = (ring, ny) => {
+    let cx = 0, cz = 0, cy = 0
+    for (const p of ring) { cx += p[0]; cy += p[1]; cz += p[2] }
+    cx /= ring.length; cy /= ring.length; cz /= ring.length
+    for (let s = 0; s < ring.length - 1; s++) {
+      const p0 = ring[s], p1 = ring[s + 1]
+      capTris.push([cx, cy, cz], [p1[0], p1[1], p1[2]], [p0[0], p0[1], p0[2]])
+      capTris.push([cx, cy, cz], [p0[0], p0[1], p0[2]], [p1[0], p1[1], p1[2]])
+      for (let k = 0; k < 6; k++) capNorm.push(0, ny, 0)
+    }
+  }
+  capFan(rows[0], -1)
+  capFan(rows[RINGS], 1)
+
+  const body = (() => {
+    const g = G()
+    for (const t of tris) {
+      g.positions.push(...t)
+      g.uvs.push(t[0] * 1.4, t[1] * 1.4)
+    }
+    const geom = new THREE.BufferGeometry()
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(g.positions, 3))
+    geom.setIndex(Array.from({ length: g.positions.length / 3 }, (_, i) => i))
+    geom.computeVertexNormals()
+    g.normals = Array.from(geom.getAttribute('normal').array)
+    g.indices = Array.from({ length: g.positions.length / 3 }, (_, i) => i)
+    return { ...finalize(g), caps: finalize((() => {
+      const cp = G()
+      for (const t of capTris) cp.positions.push(...t)
+      cp.uvs = new Array((cp.positions.length / 3) * 2).fill(0)
+      cp.normals = capNorm
+      cp.indices = Array.from({ length: cp.positions.length / 3 }, (_, i) => i)
+      return cp
+    })()) }
+  })()
+
+  /* crimped head seal: an accordion of pleats across the mouth, plus the
+     heat-sealed lip that holds them, exactly as on the shipped bag */
+  const crimp = G()
+  const topY = -h / 2 + V1 * h
+  const kTop = pillowK(V1)
+  const zf = b * kTop * 0.62
+  const H = 0.062          // pleat height
+  const N = 26             // pleat count
+  const x0 = -a * kTop * 0.96
+  const span = a * kTop * 1.92
+  const zAt = (i) => (i % 2 === 0 ? zf : zf * 0.55)
+  for (const face of [1, -1]) {
+    for (let i = 0; i < N; i++) {
+      const xa = x0 + (i / N) * span
+      const xb = x0 + ((i + 1) / N) * span
+      const za = zAt(i) * face
+      const zb = zAt(i + 1) * face
+      // the pleat wall, leaning back as it rises
+      merge(crimp, flatNormals(
+        face > 0
+          ? [
+              [xa, topY, za], [xb, topY, zb], [xb, topY + H, zb * 0.62],
+              [xa, topY, za], [xb, topY + H, zb * 0.62], [xa, topY + H, za * 0.62],
+            ]
+          : [
+              [xa, topY, za], [xb, topY + H, zb * 0.62], [xb, topY, zb],
+              [xa, topY, za], [xa, topY + H, za * 0.62], [xb, topY + H, zb * 0.62],
+            ],
+      ))
+    }
+  }
+  // close both ends of the crimp so it reads as a sealed band, not a fin
+  for (const face of [1, -1]) {
+    const xe = face * a * kTop * 0.96
+    merge(crimp, flatNormals(
+      face > 0
+        ? [
+            [xe, topY, zf], [xe, topY, zf * 0.55], [xe, topY + H, zf * 0.62],
+            [xe, topY, zf], [xe, topY + H, zf * 0.62], [xe, topY + H, zf * 0.34],
+          ]
+        : [
+            [xe, topY, zf], [xe, topY + H, zf * 0.62], [xe, topY, zf * 0.55],
+            [xe, topY, zf], [xe, topY + H, zf * 0.34], [xe, topY + H, zf * 0.62],
+          ],
+    ))
+  }
+
+  // the sealed lip: a band a little outside the mouth, front and back
+  for (const face of [1, -1]) {
+    merge(crimp, flatNormals(
+      face > 0
+        ? [
+            [-a * kTop * 0.99, topY - 0.016, zf * 1.05], [a * kTop * 0.99, topY - 0.016, zf * 1.05], [a * kTop * 0.99, topY + 0.008, zf * 1.02],
+            [-a * kTop * 0.99, topY - 0.016, zf * 1.05], [a * kTop * 0.99, topY + 0.008, zf * 1.02], [-a * kTop * 0.99, topY + 0.008, zf * 1.02],
+          ]
+        : [
+            [-a * kTop * 0.99, topY - 0.016, zf * 1.05], [a * kTop * 0.99, topY + 0.008, zf * 1.02], [a * kTop * 0.99, topY - 0.016, zf * 1.05],
+            [-a * kTop * 0.99, topY - 0.016, zf * 1.05], [-a * kTop * 0.99, topY + 0.008, zf * 1.02], [a * kTop * 0.99, topY + 0.008, zf * 1.02],
+          ],
+    ))
+  }
+  // the roll that sits under the crimp, like the bag's stitched collar
+  const collar = []
+  for (let s2 = 0; s2 <= 72; s2++) {
+    const th = (s2 / 72) * Math.PI * 2
+    const [cx, cz] = superellipse(th, a * kTop * 0.985, b * kTop * 0.985, exp)
+    collar.push([cx, topY - 0.012, cz])
+  }
+  merge(crimp, tube(collar, 0.008, 6))
+
+  /* print panel projected onto the pillow face */
+  const surfZ = (x, y) => {
+    const v = (y + h / 2) / h
+    const k = pillowK(Math.min(0.999, Math.max(0.001, v)))
+    const ax = Math.abs(x / (a * k))
+    if (ax >= 1) return 0
+    return b * k * Math.pow(1 - Math.pow(ax, exp), 2 / exp)
+  }
+  const panel = G()
+  const py = -0.02, ph = 0.215, pw = a * 0.44, NU = 18, NV = 20
+  const grid = []
+  for (let i = 0; i <= NU; i++) {
+    const row = []
+    for (let j = 0; j <= NV; j++) {
+      const x = -pw + (i / NU) * pw * 2
+      const y = py - ph + (j / NV) * ph * 2
+      row.push([x, y, surfZ(x, y) + 0.003])
+    }
+    grid.push(row)
+  }
+  for (let i = 0; i < NU; i++) {
+    for (let j = 0; j < NV; j++) {
+      const p0 = grid[i][j], p1 = grid[i + 1][j], p2 = grid[i + 1][j + 1], p3 = grid[i][j + 1]
+      panel.positions.push(...p0, ...p1, ...p2, ...p0, ...p2, ...p3)
+      const u0 = i / NU
+      const u1 = (i + 1) / NU
+      const v0 = j / NV
+      const v1 = (j + 1) / NV
+      panel.uvs.push(u0, v0, u1, v0, u1, v1, u0, v0, u1, v1, u0, v1)
+    }
+  }
+  panel.indices = Array.from({ length: panel.positions.length / 3 }, (_, i) => i)
+  panel.normals = []
+  for (let i = 0; i < panel.positions.length; i += 9) {
+    const p0 = new THREE.Vector3(panel.positions[i], panel.positions[i + 1], panel.positions[i + 2])
+    const p1 = new THREE.Vector3(panel.positions[i + 3], panel.positions[i + 4], panel.positions[i + 5])
+    const p2 = new THREE.Vector3(panel.positions[i + 6], panel.positions[i + 7], panel.positions[i + 8])
+    const n = new THREE.Vector3().subVectors(p1, p0).cross(new THREE.Vector3().subVectors(p2, p0)).normalize()
+    for (let k2 = 0; k2 < 3; k2++) panel.normals.push(n.x, n.y, n.z)
+  }
 
   return {
-    body: finalize(body),
-    hardware: finalize(loops),
-    seams: finalize(seams),
+    body,
+    caps: body.caps,
+    crimp: finalize(crimp),
     panel: finalize(panel),
-    caps,
-    stitch: finalize(stitch),
-    seamTop: finalize(seamTop),
-    crease: finalize(crease),
   }
 }
 
@@ -1004,51 +1131,23 @@ console.log('SinaiCore — building 3D assets')
   ])
 }
 
-/* 03b 50 kg sack */
+/* 03b tablets sack (25 / 50 kg) */
 {
-  const { body, caps, hardware, seams, panel, stitch, crease, seamTop } = sack50()
-  // re-use the same woven look: preview only, materials are set at runtime
+  const { body, caps, crimp, panel } = pillowSack()
   renderPreview(path.join(OUT_PREVIEW, '03b-sack50.png'), [
-    { geo: body, color: [238, 236, 226], rough: 0.86 },
-    { geo: caps, color: [232, 230, 220], rough: 0.88 },
-    { geo: crease, color: [206, 214, 220] },
-    { geo: stitch, color: [120, 140, 150] },
-    { geo: seamTop, color: [110, 130, 142] },
-    { geo: hardware, color: [206, 220, 230], metal: 0.1, rough: 0.7 },
-    { geo: panel, color: [18, 40, 60] },
-  ], { eye: [1.5, 0.75, 1.85], target: [0, 0.02, 0], fov: 32 })
+    { geo: body, color: [244, 244, 240], rough: 0.92 },
+    { geo: body.caps ?? crimp, color: [240, 240, 235], rough: 0.92 },
+    { geo: crimp, color: [236, 236, 231], rough: 0.9 },
+    { geo: panel, color: [26, 107, 156] },
+  ], { eye: [1.35, 0.55, 1.9], target: [0, 0.0, 0], fov: 32 })
   await writeGLB('sack-50kg.glb', [
     {
       name: 'sack_body', geo: body,
-      material: { name: 'woven_sack', color: [0.96, 0.96, 0.93], roughness: 0.86, doubleSided: true },
+      material: { name: 'woven_sack', color: [0.97, 0.97, 0.95], roughness: 0.92, doubleSided: true },
     },
-    { name: 'sack_caps', geo: caps, material: { name: 'sack_cap', color: [0.94, 0.94, 0.9], roughness: 0.88 } },
-    { name: 'sack_seams', geo: seams, material: { name: 'sack_seam', color: [0.82, 0.86, 0.88], roughness: 0.9 } },
-    { name: 'sack_closure', geo: hardware, material: { name: 'sack_closure', color: [0.86, 0.9, 0.92], roughness: 0.8 } },
-    { name: 'sack_stitch', geo: finalize((() => { const t = G(); merge(t, stitch); merge(t, seamTop); return t })()), material: { name: 'sack_thread', color: [0.45, 0.52, 0.58], roughness: 0.9 } },
-    { name: 'sack_crease', geo: crease, material: { name: 'sack_crease', color: [0.78, 0.84, 0.88], roughness: 0.9 } },
-    { name: 'brand_panel', geo: panel, material: { name: 'print_panel', color: [1, 1, 1], roughness: 0.8, opacity: 0.999 } },
-  ])
-}
-
-/* 05 sample jar */
-{
-  const { glass, fill, cap, ribs, seal, label } = sampleJar()
-  renderPreview(path.join(OUT_PREVIEW, '05-jar.png'), [
-    { geo: fill, color: [250, 250, 246] },
-    { geo: glass, color: [214, 236, 245], opacity: 0.5 },
-    { geo: label, color: [14, 26, 43] },
-    { geo: seal, color: [194, 113, 47] },
-    { geo: cap, color: [236, 242, 246] },
-    { geo: ribs, color: [206, 218, 226] },
-  ], { eye: [0.95, 0.55, 1.15], target: [0, 0.02, 0], fov: 30 })
-  await writeGLB('sample-jar.glb', [
-    { name: 'jar_glass', geo: glass, material: { name: 'lab_glass', color: [0.86, 0.94, 0.97], roughness: 0.06, metallic: 0, opacity: 0.34 } },
-    { name: 'jar_salt', geo: fill, material: { name: 'salt_sample', color: [0.99, 0.99, 0.97], roughness: 0.9 } },
-    { name: 'jar_cap', geo: cap, material: { name: 'jar_cap', color: [0.94, 0.96, 0.97], roughness: 0.42 } },
-    { name: 'jar_ribs', geo: ribs, material: { name: 'jar_cap_ribs', color: [0.86, 0.9, 0.93], roughness: 0.5 } },
-    { name: 'jar_seal', geo: seal, material: { name: 'jar_seal', color: [0.76, 0.44, 0.18], roughness: 0.35, metallic: 0.35 } },
-    { name: 'jar_label', geo: label, material: { name: 'jar_label', color: [0.05, 0.1, 0.17], roughness: 0.7 } },
+    { name: 'sack_caps', geo: caps, material: { name: 'sack_cap', color: [0.96, 0.96, 0.94], roughness: 0.92, doubleSided: true } },
+    { name: 'sack_crimp', geo: crimp, material: { name: 'sack_crimp', color: [0.95, 0.95, 0.93], roughness: 0.9, doubleSided: true } },
+    { name: 'sack_panel', geo: panel, material: { name: 'sack_print', color: [1, 1, 1], roughness: 0.86 } },
   ])
 }
 

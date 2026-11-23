@@ -357,34 +357,120 @@ function BrandTexture() {
   }, [])
 }
 
-/* Woven PP fabric: a seamless tile of threads plus the brand's blue weft stripe. */
-function useWovenTexture() {
+/* ------------------------------------------------------------------ *
+ * 03b — the tablets sack print, taken from the product photography:
+ *       WATER SOFTENING SALT TABLETS · Sea Salt / Solar Evaporation / High Purity
+ * ------------------------------------------------------------------ */
+function SackArtTexture() {
+  return useMemo(() => {
+    const W = 512
+    const H = 640
+    const c = document.createElement('canvas')
+    c.width = W
+    c.height = H
+    const x = c.getContext('2d')!
+    const blue = '#1a6b9c'
+    const navy = '#0e1a2b'
+    const copper = '#a8582a'
+
+    const paint = (img?: HTMLImageElement) => {
+      x.setTransform(1, 0, 0, 1, 0, 0)
+      x.clearRect(0, 0, W, H)
+      x.textAlign = 'center'
+
+      // emblem
+      if (img) {
+        const w = 210
+        const hh = w * (img.height / img.width)
+        x.drawImage(img, W / 2 - w / 2, 26, w, hh)
+      }
+      // wordmark in the two lockup colours
+      x.font = '600 54px Inter, Helvetica, Arial, sans-serif'
+      const wS = x.measureText('Sinai').width
+      const wC = x.measureText('Core').width
+      const left = W / 2 - (wS + wC) / 2
+      x.textAlign = 'left'
+      x.fillStyle = copper
+      x.fillText('Sinai', left, 210)
+      x.fillStyle = blue
+      x.fillText('Core', left + wS, 210)
+
+      x.textAlign = 'center'
+      x.fillStyle = blue
+      x.font = '700 44px Inter, Helvetica, Arial, sans-serif'
+      x.fillText('WATER SOFTENING', W / 2, 286)
+      x.fillText('SALT TABLETS', W / 2, 336)
+
+      x.font = '400 27px Inter, Helvetica, Arial, sans-serif'
+      const lines = ['Sea Salt', 'Solar Evaporation Process', 'High Purity']
+      lines.forEach((t, i) => {
+        const yy = 400 + i * 36
+        x.fillStyle = blue
+        x.beginPath()
+        x.arc(W / 2 - 132, yy - 9, 4.5, 0, Math.PI * 2)
+        x.fill()
+        x.textAlign = 'left'
+        x.fillText(t, W / 2 - 116, yy)
+        x.textAlign = 'center'
+      })
+
+      x.fillStyle = blue
+      x.font = '700 46px Inter, Helvetica, Arial, sans-serif'
+      x.fillText('25 / 50 kg', W / 2, 552)
+      x.fillStyle = navy
+      x.font = '400 28px Inter, Helvetica, Arial, sans-serif'
+      x.fillText('PRODUCT OF EGYPT', W / 2, 596)
+
+      tex.needsUpdate = true
+    }
+
+    const tex = new THREE.CanvasTexture(c)
+    tex.colorSpace = THREE.SRGBColorSpace
+    tex.anisotropy = 8
+    const img = new Image()
+    img.onload = () => paint(img)
+    img.onerror = () => paint()
+    img.src = '/brand/logo-mark.png'
+    paint()
+    return tex
+  }, [])
+}
+
+/* Woven PP fabric: a seamless tile of threads plus the brand's blue weft stripe.
+   `plain` drops the stripe for the white tablets sack. */
+function useWovenTexture(plain = false) {
   return useMemo(() => {
     const N = 256
     const c = document.createElement('canvas')
     c.width = c.height = N
     const x = c.getContext('2d')!
-    x.fillStyle = '#f0f0ea'
+    x.fillStyle = plain ? '#fbfbf8' : '#f0f0ea'
     x.fillRect(0, 0, N, N)
     // warp / weft threads
     for (let i = 0; i < N; i += 4) {
-      x.fillStyle = i % 8 === 0 ? 'rgba(26,107,156,0.10)' : 'rgba(120,130,140,0.05)'
+      x.fillStyle = plain
+        ? (i % 8 === 0 ? 'rgba(120,130,140,0.05)' : 'rgba(120,130,140,0.035)')
+        : (i % 8 === 0 ? 'rgba(26,107,156,0.10)' : 'rgba(120,130,140,0.05)')
       x.fillRect(0, i, N, 2)
-      x.fillStyle = i % 8 === 0 ? 'rgba(26,107,156,0.07)' : 'rgba(150,160,170,0.04)'
+      x.fillStyle = plain
+        ? 'rgba(150,160,170,0.03)'
+        : (i % 8 === 0 ? 'rgba(26,107,156,0.07)' : 'rgba(150,160,170,0.04)')
       x.fillRect(i, 0, 2, N)
     }
     // the printed blue stripe seen on the real FIBCs
-    x.fillStyle = 'rgba(26,107,156,0.55)'
-    x.fillRect(N * 0.46, 0, 8, N)
-    x.fillStyle = 'rgba(194,113,47,0.35)'
-    x.fillRect(N * 0.56, 0, 4, N)
+    if (!plain) {
+      x.fillStyle = 'rgba(26,107,156,0.55)'
+      x.fillRect(N * 0.46, 0, 8, N)
+      x.fillStyle = 'rgba(194,113,47,0.35)'
+      x.fillRect(N * 0.56, 0, 4, N)
+    }
     const t = new THREE.CanvasTexture(c)
     t.colorSpace = THREE.SRGBColorSpace
     t.wrapS = t.wrapT = THREE.RepeatWrapping
-    t.repeat.set(2, 2)
+    t.repeat.set(plain ? 3 : 2, plain ? 3 : 2)
     t.anisotropy = 4
     return t
-  }, [])
+  }, [plain])
 }
 
 /* 03 — packing station: 50 kg sack beside the FIBC, one slow revolution */
@@ -395,30 +481,33 @@ function PackingChapter() {
   const sack = useGLTF('/models/sack-50kg.glb')
   const jumbo = useGLTF('/models/jumbo-bag.glb')
   const brand = BrandTexture()
+  const sackArt = SackArtTexture()
   const woven = useWovenTexture()
+  const plainWeave = useWovenTexture(true)
 
+  /* 50 kg tablets sack: soft white PP, crimped head seal, printed face */
   const sackModel = useMemo(() => {
     const m = sack.scene.clone(true)
     m.traverse((o) => {
       const mesh = o as THREE.Mesh
       if (!mesh.isMesh) return
       const n = mesh.name
-      if (n.includes('brand_panel')) {
-        mesh.material = new THREE.MeshStandardMaterial({ map: brand, roughness: 0.8, transparent: true, envMapIntensity: 0.8 })
-      } else if (n.includes('body')) {
+      if (n.includes('panel')) {
         mesh.material = new THREE.MeshStandardMaterial({
-          color: '#fbfbf6', map: woven, roughness: 0.88, metalness: 0, envMapIntensity: 0.8, side: THREE.DoubleSide,
+          map: sackArt, transparent: true, roughness: 0.84, metalness: 0, envMapIntensity: 0.7,
         })
-      } else if (n.includes('crease') || n.includes('seam')) {
-        mesh.material = new THREE.MeshStandardMaterial({ color: '#cfdde6', roughness: 0.9 })
-      } else if (n.includes('stitch')) {
-        mesh.material = new THREE.MeshStandardMaterial({ color: '#8f9aa2', roughness: 0.92 })
+      } else if (n.includes('crimp')) {
+        mesh.material = new THREE.MeshStandardMaterial({
+          color: '#eef0ee', roughness: 0.9, metalness: 0, side: THREE.DoubleSide, envMapIntensity: 0.6,
+        })
       } else {
-        mesh.material = new THREE.MeshStandardMaterial({ color: '#e2ebf1', roughness: 0.85 })
+        mesh.material = new THREE.MeshStandardMaterial({
+          color: '#ffffff', map: plainWeave, roughness: 0.95, metalness: 0, side: THREE.DoubleSide, envMapIntensity: 0.45,
+        })
       }
     })
     return m
-  }, [sack.scene, brand, woven])
+  }, [sack.scene, sackArt, plainWeave])
 
   const bagModel = useMemo(() => {
     const m = jumbo.scene.clone(true)
@@ -459,7 +548,7 @@ function PackingChapter() {
 
   return (
     <group ref={group}>
-      <group ref={sackRef} position={[-1.24, -0.14, 0.2]} scale={1.0}>
+      <group ref={sackRef} position={[-1.2, -0.08, 0.24]} scale={0.98}>
         <primitive object={sackModel} />
       </group>
       <group ref={bagRef} position={[-0.12, -0.02, -0.22]} scale={0.78}>

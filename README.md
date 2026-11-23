@@ -25,7 +25,7 @@ node scripts/build-assets.mjs   # regenerate the 3D assets + preview renders
 |---|---------|-------|-------------|
 | 01 | `crystal` — بلورة الهاليت | `crystal.glb` (macro halite cluster on host rock) | slow centre-screen turn; on scroll the camera dollies *into* the crystal surface |
 | 02 | `purity` — النقاء والمعالجة | `tablets.glb` (3 softening tablets) | shards scatter into a grain field, then settle to the tablets; hotspots for NaCl ≥99.5%, moisture, granulometry and independent COA |
-| 03 | `packing` — التعبئة والمنتجات | `sack-50kg.glb` + `jumbo-bag.glb` | the 50 kg export sack and the FIBC 1–1.5 MT side by side, each turning a full 360° past its print, seams and discharge spout |
+| 03 | `packing` — التعبئة والمنتجات | `sack-50kg.glb` + `jumbo-bag.glb` | the 25/50 kg water-softening sack (as photographed) beside the FIBC 1–1.5 MT, each turning a full 360° past its print, crimped seal and discharge spout |
 | 04 | `export` — الموانئ واللوجستيات | `globe.glb` (ocean + land ribbons) | FOB arcs from El Arish and Suez / Port Said East to every destination, growing as the station settles |
 | 05 | `quote` — طلب عرض سعر | `sample-jar.glb` (lab jar, copper seal, printed label) | not in the pinned act: it parks at a fixed three-quarter angle beside the quote form and only mounts when the section approaches |
 
@@ -88,9 +88,9 @@ The models are authored procedurally in `scripts/build-assets.mjs`:
 - tablets: indexed lathe profile with a bevelled rim and a recessed face groove
 - FIBC: superellipse body with bulge, pleats and a gathered top; webbing, hems,
   spouts, and a brand panel raycast onto the fabric surface
-- 50 kg sack: the same superellipse skin in flat, straight-gusseted mode with a
-  pillowed fill, a sealed stitched mouth (rim cap + dashes), side creases and the
-  same printed panel
+- tablets sack: a pillow-profile PP sack (soft rounds, crimped accordion head seal,
+  stitched collar) modelled on the 25/50 kg bags in the product photography, with the
+  `WATER SOFTENING SALT TABLETS` print projected onto its face
 - sample jar: glass lathe with a shoulder, salt fill, ribbed screw cap, copper seal
   band and a 1:1 label wrap
 - globe: icosphere + Natural Earth 110m coastline ribbons baked to
