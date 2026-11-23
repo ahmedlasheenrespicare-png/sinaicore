@@ -9,6 +9,22 @@
     requestAnimationFrame(lenisRaf);
     if(lenis.on) lenis.on("scroll", function(){ lastScroll = Date.now(); });
   }
+  /* GSAP ScrollTrigger: particle morph per scene (crystal->granules->bag->globe) */
+  window.__morph = {from:0, to:0, progress:0, rotY:0};
+  if(typeof gsap !== "undefined" && typeof ScrollTrigger !== "undefined"){
+    gsap.registerPlugin(ScrollTrigger);
+    var morph = window.__morph;
+    function morphTl(trigger, from, to){
+      var tl = gsap.timeline({scrollTrigger:{trigger:trigger, scrub:true, start:"top bottom", end:"bottom top"}});
+      tl.fromTo(morph, {from:from, to:from, progress:0}, {from:from, to:to, progress:1, ease:"none"}, 0);
+      return tl;
+    }
+    morphTl("#ch1", 0, 0);
+    morphTl("#ch2", 0, 1);
+    morphTl("#ch3", 1, 2);
+    morphTl("#ch4", 2, 3);
+    morphTl("#ch5", 3, 3);
+  }
   /* Mouse parallax (shared with 3D camera) */
   window.__mouse = {x:0, y:0};
   window.addEventListener("mousemove", function(e){
@@ -54,7 +70,7 @@
     ch5:  {ry:45,  rx:10, rz:0,  explode:1,   s:1,    x:0,    y:0,    camZ:11.0, light:1.35},
     end:  {ry:45,  rx:10, rz:0,  explode:1,   s:1,    x:0,    y:0,    camZ:11.0, light:1.35}
   };
-  var TITLES = {hero:"Welcome",ch1:"Introduction",ch2:"The Challenge",ch3:"Inside the Bag",ch4:"Packaging",ch5:"Final Result",end:"The End"};
+  var TITLES = {hero:"Welcome",ch1:"01 The Crystal",ch2:"02 Granules & Tablets",ch3:"03 The Jumbo Bag",ch4:"04 Arish to the World",ch5:"Conclusion",end:"The End"};
   var NUMS = {hero:"00 / 05",ch1:"01 / 05",ch2:"02 / 05",ch3:"03 / 05",ch4:"04 / 05",ch5:"05 / 05",end:"05 / 05"};
   var CAPTIONS = {
     hero:"Fig. 0 — Hero: centre, 45° angle, slow auto-rotate, bright light.",
@@ -132,6 +148,9 @@
     document.querySelectorAll(".exp-nav a").forEach(function(a){
       a.classList.toggle("active", a.getAttribute("href")==="#"+id);
     });
+    document.querySelectorAll(".side-rail a").forEach(function(a){
+      a.classList.toggle("active", a.getAttribute("href")==="#"+id);
+    });
     document.querySelectorAll(".chapter").forEach(function(c){
       c.classList.toggle("in-view", c.id===id);
     });
@@ -164,6 +183,13 @@
       h.words.forEach(function(w,i){ w.classList.toggle("on", i < on); });
     });
   }
+  document.querySelectorAll(".side-rail a").forEach(function(a){
+    a.addEventListener("click", function(e){
+      e.preventDefault();
+      var el = document.getElementById(a.getAttribute("href").slice(1));
+      if(el){ if(lenis) lenis.scrollTo(el); else el.scrollIntoView({behavior: reduced ? "auto" : "smooth"}); }
+    });
+  });
   /* Nav drag-to-scroll (reference slider nav) */
   var expNav = document.querySelector(".exp-nav");
   if(expNav){

@@ -353,3 +353,13 @@ main{z-index:2}
 .stage-hud{z-index:30}
 .stage-cta{z-index:30}
 .stage-caption,.stage-hint{z-index:30}
+
+/* v18: numbered side rail (01-04 scenes, reference style) */
+.side-rail{position:fixed;left:16px;top:50%;transform:translateY(-50%);z-index:260;display:flex;flex-direction:column;gap:8px}
+.side-rail a{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:999px;font-size:11px;font-weight:700;color:#8fa6bd;background:rgba(14,26,43,.72);border:1px solid #2a4a6b;backdrop-filter:blur(6px);transition:.25s;white-space:nowrap}
+.side-rail a b{font-family:var(--serif);font-size:15px;color:#7ec3e8}
+.side-rail a span{max-width:0;overflow:hidden;transition:max-width .3s;color:#cfe2ee}
+.side-rail a:hover span,.side-rail a.active span{max-width:170px}
+.side-rail a.active{background:#fff;color:var(--col1);border-color:#fff}
+.side-rail a.active b{color:var(--accent)}
+@media(max-width:1100px){.side-rail{display:none}}

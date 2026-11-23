@@ -251,9 +251,18 @@
         m.rotation.x = time*m.userData.sp*.7;
         m.position.y = m.userData.y + Math.sin(time*m.userData.sp + m.userData.s)*.22;
       });
+      /* Solid bag fades in only in Scene 3 (morph to bag shape) */
+      var mm = window.__morph || {from:0, to:0, progress:0};
+      var bagAmt = (mm.to===2) ? mm.progress : (mm.from===2 ? 1-mm.progress : 0);
+      canvas.style.opacity = String(Math.max(0, Math.min(1, bagAmt*1.6)));
+      var pc = document.getElementById("particles-canvas");
+      if(pc) pc.style.opacity = String(1 - bagAmt*.55);
       renderer.render(scene, camera);
     }
     wrap.hidden = false;
+    canvas.style.position = "absolute"; canvas.style.inset = "0";
+    canvas.style.width = "100%"; canvas.style.height = "100%";
+    canvas.style.zIndex = "2"; canvas.style.opacity = "0";
     if(cssScene){
       cssScene.querySelectorAll(".layer,.gusset,.stitch").forEach(function(el){ el.style.display = "none"; });
       cssScene.style.background = "transparent";
