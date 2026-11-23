@@ -155,7 +155,8 @@
     var a = STAGES[ORDER[i]], b = STAGES[ORDER[i+1]];
     var t = 0;
     if(centers[i+1] > centers[i]) t = Math.max(0, Math.min(1, (mid - centers[i])/(centers[i+1]-centers[i])));
-    target = {ry: lerp(a.ry,b.ry,t), rx: lerp(a.rx,b.rx,t), rz: lerp(a.rz||0,b.rz||0,t), explode: lerp(a.explode,b.explode,t), s: lerp(a.s,b.s,t), x: lerp(a.x||0,b.x||0,t), y: lerp(a.y||0,b.y||0,t), camZ: lerp(a.camZ||9.5,b.camZ||9.5,t)};
+    var panScale = window.innerWidth < 1100 ? 0.3 : 1; /* phones: bag stays near centre */
+    target = {ry: lerp(a.ry,b.ry,t), rx: lerp(a.rx,b.rx,t), rz: lerp(a.rz||0,b.rz||0,t), explode: lerp(a.explode,b.explode,t), s: lerp(a.s,b.s,t), x: lerp(a.x||0,b.x||0,t)*panScale, y: lerp(a.y||0,b.y||0,t), camZ: lerp(a.camZ||9.5,b.camZ||9.5,t)};
     window.__bagTarget = target;
     setStage(t > .5 ? ORDER[i+1] : ORDER[i]);
     updateQuote();

@@ -152,7 +152,9 @@
       bag.rotation.y = THREE.MathUtils.degToRad(cur.ry + dragRy); /* scrub + drag orbit only */
       bag.rotation.x = THREE.MathUtils.degToRad(cur.rx + dragRx);
       bag.rotation.z = THREE.MathUtils.degToRad(cur.rz);
-      bag.position.x = cur.x;
+      var halfW = Math.tan(THREE.MathUtils.degToRad(camera.fov/2)) * camera.position.z * camera.aspect;
+      var maxX = Math.max(0, halfW - 1.35);
+      bag.position.x = Math.max(-maxX, Math.min(maxX, cur.x)); /* keep bag on-screen in portrait */
       bag.position.y = cur.y + Math.sin(time*.9)*.08;
       camera.position.z = cur.camZ; /* Zoom In/Out: camera dolly */
       bag.scale.setScalar(cur.s);
