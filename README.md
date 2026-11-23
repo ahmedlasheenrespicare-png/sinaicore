@@ -80,6 +80,25 @@ re-render per frame. The canvas switches to `frameloop="never"` when the pinned 
 scrolls off screen, DPR is capped (and lowered automatically by `PerformanceMonitor`),
 and `prefers-reduced-motion` disables idle drift, marquees and reveal transitions.
 
+## Reference cut — the published site's own architecture
+
+`ref.html` (served at `/ref.html`, or `npm run preview:ref` on its own port) is a third
+preview: the palette, section order and information architecture of the **published
+SinaiCore site**, with our 3D work standing in where that site uses flat photography.
+
+- Light surfaces + white nav + copper CTA, then the navy and copper banded headings,
+  exactly where the reference puts them: hero → three pillars → product band + grade
+  cards → quality band + QA tiles + standards + Intertek cards → packaging band +
+  logistics → global reach → how it works → quote → footer.
+- The reference's hero logo plate is replaced by the **export container** turning in place;
+  the quality section's flat photo by the **halite cluster**; the packaging section by the
+  **printed 50 kg tablets sack**; the global-reach map by the **3D globe**; and the quote
+  block by the **lab sample jar**.
+- Copy, grades, ports, Incoterms, standards, offices and contact details are the published
+  SinaiCore content, in Arabic; the section kickers stay Latin like the original.
+- Photography for the grade and logistics cards lives in `public/img/ref/` (downscaled
+  copies of the reference's own product shots).
+
 ## Alternate cut — the container
 
 `alt.html` (built alongside `index.html`, served at `/alt.html`) is a **separate**

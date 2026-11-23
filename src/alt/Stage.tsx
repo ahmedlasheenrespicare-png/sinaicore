@@ -3,6 +3,7 @@ import * as THREE from 'three'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useGLTF, Preload, ContactShadows, AdaptiveDpr, PerformanceMonitor } from '@react-three/drei'
 import { gl, smooth, sstep } from '../three/state'
+import { useContainerPrint } from '../three/textures'
 import { seaPorts, seaRoutes } from './content'
 
 useGLTF.setDecoderPath('/draco/')
@@ -49,59 +50,6 @@ function StudioEnv() {
     }
   }, [scene, renderer])
   return null
-}
-
-/* ------------------------------------------------------------------ *
- * Container print — the same identity, sprayed on the side panel
- * ------------------------------------------------------------------ */
-function useContainerPrint() {
-  return useMemo(() => {
-    const W = 1200
-    const H = 320
-    const c = document.createElement('canvas')
-    c.width = W
-    c.height = H
-    const x = c.getContext('2d')!
-    const blue = '#1a6b9c'
-    const copper = '#c2712f'
-    const paint = (img?: HTMLImageElement) => {
-      x.setTransform(1, 0, 0, 1, 0, 0)
-      x.clearRect(0, 0, W, H)
-      if (img) {
-        const h = 176
-        const w = h * (img.width / img.height)
-        x.drawImage(img, 54, 66, w, h)
-        x.textAlign = 'left'
-        x.font = '600 66px Inter, Helvetica, Arial, sans-serif'
-        x.fillStyle = copper
-        x.fillText('Sinai', 54 + w + 42, 172)
-        x.fillStyle = blue
-        const wS = x.measureText('Sinai').width
-        x.fillText('Core', 54 + w + 42 + wS, 172)
-        x.fillStyle = '#e8eef2'
-        x.font = '400 26px Inter, Helvetica, Arial, sans-serif'
-        x.fillText('SALTS & MINERALS · SINAI, EGYPT', 54 + w + 42, 214)
-      }
-      x.textAlign = 'right'
-      x.fillStyle = '#eef4f8'
-      x.font = '600 40px Inter, Helvetica, Arial, sans-serif'
-      x.fillText('SINAI REFINED SALT', W - 54, 128)
-      x.fillStyle = 'rgba(238,244,248,0.72)'
-      x.font = '400 26px monospace'
-      x.fillText('NaCl ≥ 99.5%  ·  FIBC 1.5 MT  ·  20 / 40 FT', W - 54, 172)
-      x.fillText('PRODUCT OF EGYPT  ·  FOB ARISH / SUEZ', W - 54, 208)
-      tex.needsUpdate = true
-    }
-    const tex = new THREE.CanvasTexture(c)
-    tex.colorSpace = THREE.SRGBColorSpace
-    tex.anisotropy = 8
-    const img = new Image()
-    img.onload = () => paint(img)
-    img.onerror = () => paint()
-    img.src = '/brand/logo-mark.png'
-    paint()
-    return tex
-  }, [])
 }
 
 /* ------------------------------------------------------------------ *

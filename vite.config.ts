@@ -22,6 +22,7 @@ export default defineConfig({
       input: {
         main: 'index.html',
         alt: 'alt.html',
+        ref: 'ref.html',
       },
     },
     assetsInlineLimit: 2048,

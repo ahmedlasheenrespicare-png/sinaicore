@@ -1,10 +1,13 @@
 /**
- * Preview server for the alternate cut.
+ * Preview server for the two extra cuts.
  *
- * Serves the production build but resolves "/" to alt.html, so the container
- * concept can be shown on its own port without touching the main site.
+ * Serves a production build with a chosen entry as "/", so either alternate
+ * design can be shown on its own port without touching the main site.
  *
- *   npm run build && node scripts/serve-alt-preview.mjs 5180
+ *   node scripts/serve-alt-preview.mjs 5180 alt   # container cut
+ *   node scripts/serve-alt-preview.mjs 5181 ref   # reference cut
+ *
+ * Build first: npm run build
  */
 import http from 'node:http'
 import fs from 'node:fs'
@@ -13,6 +16,7 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 const PORT = Number(process.argv[2] || 5180)
+const ENTRY = (process.argv[3] || 'alt') === 'ref' ? 'ref.html' : 'alt.html'
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -30,7 +34,7 @@ const TYPES = {
 
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent((req.url || '/').split('?')[0])
-  const rel = url === '/' ? 'alt.html' : url.replace(/^\/+/, '')
+  const rel = url === '/' ? ENTRY : url.replace(/^\/+/, '')
   const file = path.join(ROOT, rel)
   const inside = file.startsWith(ROOT)
 
@@ -44,9 +48,9 @@ const server = http.createServer((req, res) => {
   }
   // unknown routes fall back to the alternate cut
   res.writeHead(200, { 'content-type': TYPES['.html'], 'cache-control': 'no-cache' })
-  fs.createReadStream(path.join(ROOT, 'alt.html')).pipe(res)
+  fs.createReadStream(path.join(ROOT, ENTRY)).pipe(res)
 })
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`alt cut preview → http://0.0.0.0:${PORT}`)
+  console.log(`${ENTRY === 'ref.html' ? 'reference' : 'container'} cut preview → http://0.0.0.0:${PORT}`)
 })
