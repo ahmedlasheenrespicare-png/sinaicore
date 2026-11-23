@@ -12,6 +12,11 @@ export default function Hero() {
         <div className="hero-grid" />
       </div>
 
+      {/* small screens get a still of the crystal instead of the pinned stage */}
+      <div className="hero-poster" aria-hidden="true">
+        <img src="/media/halite-poster.png" alt="" width={720} height={720} loading="eager" decoding="async" />
+      </div>
+
       <div className="hero-inner shell">
         <div className="hero-eyebrow">
           <span className="chip">SinaiCore · Halite Division</span>

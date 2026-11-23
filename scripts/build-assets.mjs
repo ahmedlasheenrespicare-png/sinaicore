@@ -22,6 +22,7 @@ const OUT_MODELS = path.join(ROOT, 'public', 'models')
 const OUT_PREVIEW = path.join(ROOT, '.preview')
 fs.mkdirSync(OUT_MODELS, { recursive: true })
 fs.mkdirSync(OUT_PREVIEW, { recursive: true })
+fs.mkdirSync(path.join(ROOT, 'public', 'media'), { recursive: true })
 
 /* ------------------------------------------------------------------ *
  * PNG writer
@@ -836,6 +837,15 @@ console.log('SinaiCore — building 3D assets')
     { name: 'ocean_sphere', geo: body, material: { name: 'ocean', color: [0.035, 0.07, 0.075], roughness: 0.34, metallic: 0.15 } },
     { name: 'land_outlines', geo: land, material: { name: 'land', color: [0.52, 0.78, 0.72], roughness: 0.6 } },
   ])
+}
+
+/* mobile poster / social image: a brighter crystal still */
+{
+  const { crystal, rock } = crystalCluster()
+  renderPreview(path.join(ROOT, 'public', 'media', 'halite-poster.png'), [
+    { geo: rock, color: [30, 40, 38] },
+    { geo: crystal, color: [188, 252, 240], opacity: 0.97 },
+  ], { eye: [3.4, 1.9, 3.9], target: [0, 0.1, 0], fov: 30, bg: [2, 5, 6], w: 800, h: 800 })
 }
 
 /* summary */

@@ -20,13 +20,6 @@ export default function Journey({ hotspotsOn }: { hotspotsOn: boolean }) {
       if (id !== last && ref.current) {
         last = id
         ref.current.dataset.live = id
-        const idx = ['crystal', 'purity', 'packing', 'export'].indexOf(id)
-        const hudIdx = ref.current.querySelector('.act-index')
-        const hudLabel = ref.current.querySelector('.act-label')
-        if (hudIdx && hudLabel) {
-          hudIdx.textContent = chapters[idx].index
-          hudLabel.textContent = chapters[idx].labelAr
-        }
         window.dispatchEvent(new CustomEvent('sinaicore:chapter', { detail: id }))
         // let the panels' CSS transitions know where they are in the dwell
         ref.current.style.setProperty('--enter', '0')
@@ -40,11 +33,6 @@ export default function Journey({ hotspotsOn }: { hotspotsOn: boolean }) {
   return (
     <div className="journey" id="journey" ref={ref}>
       <div className="journey-sticky">
-        <div className="act-hud" aria-hidden="true">
-          <span className="mono act-index">{chapters[0].index}</span>
-          <span className="act-label">{chapters[0].labelAr}</span>
-        </div>
-
         {/* ---------------------------------------------------------- 01 */}
         <section className="panel p-crystal" id="crystal" data-chapter="0">
           <div className="panel-copy">
@@ -223,23 +211,23 @@ export default function Journey({ hotspotsOn }: { hotspotsOn: boolean }) {
   )
 }
 
-/** Anchored hotspots that float over the tablets in chapter 02. */
+/** Anchored markers on the tablets — the values themselves live in the list. */
 function HotspotOverlay({ visible }: { visible: boolean }) {
   const dots = [
-    { x: 60, y: 44, v: '99.5%', t: 'NaCl' },
-    { x: 70, y: 62, v: '0.08%', t: 'Insolubles' },
-    { x: 50, y: 30, v: '0.3–1.2', t: 'mm' },
+    { x: 57, y: 39 },
+    { x: 64, y: 56 },
+    { x: 47, y: 28 },
+    { x: 38, y: 47 },
   ]
-  const [a, b, c] = dots
   return (
     <div className={`hotspots ${visible ? 'is-on' : ''}`} aria-hidden="true">
-      {[a, b, c].map((d, i) => (
-        <span className="hotspot" key={i} style={{ '--x': `${d.x}%`, '--y': `${d.y}%`, '--d': `${i * 140}ms` } as React.CSSProperties}>
+      {dots.map((d, i) => (
+        <span
+          className="hotspot"
+          key={i}
+          style={{ '--x': `${d.x}%`, '--y': `${d.y}%`, '--d': `${i * 260}ms` } as React.CSSProperties}
+        >
           <i />
-          <span className="hs-tip">
-            <b className="ar-num">{d.v}</b>
-            <em className="mono">{d.t}</em>
-          </span>
         </span>
       ))}
     </div>
