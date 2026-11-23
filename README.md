@@ -13,7 +13,7 @@ images from the original site are included under `assets/img/`.
 
 ```
 index.html                  Home — hero, pillars, products, quality, logistics, global reach, how it works
-experience.html               NEW 3D Experience — scroll-driven 3D bag, exploded view, numbered chapters, editorial layout, packaging slider, before/after comparison, fullscreen (desktop-first)
+experience.html               NEW 3D Experience (v3, inspired by 84-24.org scrollytelling) — fixed 3D bag background model, editorial chapters, exploded view, packaging slider, before/after comparison, fullscreen, portrait warning (desktop-first, SinaiCore colours/data)
 products/
   refined-salt.html                 Premium Refined Salt Solutions (NaCl ≥ 99.5%)
   washed-salt.html                  Industrial Washed Salt Solutions (NaCl ≥ 98.5%)
