@@ -132,9 +132,6 @@
     document.querySelectorAll(".exp-nav a").forEach(function(a){
       a.classList.toggle("active", a.getAttribute("href")==="#"+id);
     });
-    document.querySelectorAll(".slide-dots a").forEach(function(a){
-      a.classList.toggle("active", a.getAttribute("href")==="#"+id);
-    });
     document.querySelectorAll(".chapter").forEach(function(c){
       c.classList.toggle("in-view", c.id===id);
     });
@@ -167,12 +164,6 @@
       h.words.forEach(function(w,i){ w.classList.toggle("on", i < on); });
     });
   }
-  document.querySelectorAll(".slide-dots a").forEach(function(a){
-    a.addEventListener("click", function(e){
-      e.preventDefault();
-      var el = document.getElementById(a.getAttribute("href").slice(1));
-      if(el){ if(lenis) lenis.scrollTo(el); else el.scrollIntoView({behavior: reduced ? "auto" : "smooth"}); }
-    });
   });
   /* Nav drag-to-scroll (reference slider nav) */
   var expNav = document.querySelector(".exp-nav");
