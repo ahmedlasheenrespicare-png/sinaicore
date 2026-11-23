@@ -94,6 +94,16 @@
     label.position.z = D*.36 + D*.14 + .01;
     bag.add(back, liner, salt, front, label);
 
+    /* Inner salt crystals — revealed in exploded view */
+    var innerCrystals = new THREE.Group();
+    for(var ci=0; ci<22; ci++){
+      var cm = new THREE.Mesh(crysGeo, crysMat);
+      cm.position.set((Math.random()-.5)*1.6, (Math.random()-.5)*2.2, (Math.random()-.5)*.35);
+      cm.userData = {s: Math.random()*6.28, sp: .5+Math.random()};
+      innerCrystals.add(cm);
+    }
+    innerCrystals.scale.setScalar(0.001);
+    bag.add(innerCrystals);
     /* Stitching bar on top */
     var stitch = new THREE.Mesh(new THREE.BoxGeometry(W*.9,.14,.18),
       new THREE.MeshStandardMaterial({color:0xc96a1b, roughness:.7}));
@@ -139,6 +149,7 @@
     var clock = new THREE.Clock();
     function animate(){
       requestAnimationFrame(animate);
+      if(document.hidden) return;
       var t = window.__bagTarget || {ry:-18, rx:8, rz:0, explode:1, s:1, x:0, y:0, camZ:9.5};
       cur.ry = lerp(cur.ry, t.ry, .06);
       cur.rx = lerp(cur.rx, t.rx, .06);
@@ -157,6 +168,18 @@
       bag.position.x = Math.max(-maxX, Math.min(maxX, cur.x)); /* keep bag on-screen in portrait */
       bag.position.y = cur.y + Math.sin(time*.9)*.08;
       camera.position.z = cur.camZ; /* Zoom In/Out: camera dolly */
+      /* Camera follows the bag (reference: model stays framed while panning) */
+      var mx = (window.__mouse && window.__mouse.x) || 0;
+      var my = (window.__mouse && window.__mouse.y) || 0;
+      camera.position.x = bag.position.x * .55 + mx * .35;
+      camera.position.y = .4 + bag.position.y * .5 - my * .25;
+      camera.lookAt(bag.position.x, bag.position.y, 0);
+      /* Exploded crystals scatter out of the salt core */
+      innerCrystals.scale.setScalar(Math.max(.001, (e-1) * .9));
+      innerCrystals.children.forEach(function(cm){
+        cm.rotation.y = time*cm.userData.sp + cm.userData.s;
+        cm.position.y += Math.sin(time*cm.userData.sp + cm.userData.s) * .002;
+      });
       bag.scale.setScalar(cur.s);
       var e = cur.explode, fan = (e-1);
       back.position.z = -D*.36 * e;  back.position.y = -.35*fan;

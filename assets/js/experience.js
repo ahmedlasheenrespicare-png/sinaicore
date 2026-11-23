@@ -1,14 +1,29 @@
 (function(){
   "use strict";
   var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  /* Smooth scroll (Lenis) — buttery scrub like the reference */
+  var lenis = null;
+  if(typeof Lenis !== "undefined" && !reduced){
+    lenis = new Lenis({ duration: 1.15, smoothWheel: true });
+    function lenisRaf(time){ lenis.raf(time); requestAnimationFrame(lenisRaf); }
+    requestAnimationFrame(lenisRaf);
+    if(lenis.on) lenis.on("scroll", function(){ lastScroll = Date.now(); });
+  }
+  /* Mouse parallax (shared with 3D camera) */
+  window.__mouse = {x:0, y:0};
+  window.addEventListener("mousemove", function(e){
+    window.__mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+    window.__mouse.y = (e.clientY / window.innerHeight) * 2 - 1;
+  }, {passive:true});
   /* Intro: locked until "Click to start" (reference style) */
   var intro = document.getElementById("intro");
   var introBtn = document.getElementById("intro-start");
-  if(intro && !reduced){ document.body.classList.add("locked"); }
+  if(intro && !reduced){ document.body.classList.add("locked"); if(lenis) lenis.stop(); }
   function startExperience(){
     document.body.classList.remove("locked");
     document.body.classList.add("started");
     if(intro) intro.classList.add("hide");
+    if(lenis) lenis.start();
   }
   if(introBtn) introBtn.addEventListener("click", startExperience);
   if(intro){
@@ -159,6 +174,14 @@
     target = {ry: lerp(a.ry,b.ry,t), rx: lerp(a.rx,b.rx,t), rz: lerp(a.rz||0,b.rz||0,t), explode: lerp(a.explode,b.explode,t), s: lerp(a.s,b.s,t), x: lerp(a.x||0,b.x||0,t)*panScale, y: lerp(a.y||0,b.y||0,t), camZ: lerp(a.camZ||9.5,b.camZ||9.5,t)};
     window.__bagTarget = target;
     setStage(t > .5 ? ORDER[i+1] : ORDER[i]);
+    /* Nav progress: fill each link as its section passes */
+    document.querySelectorAll(".exp-nav a").forEach(function(a){
+      var sec = document.getElementById(a.getAttribute("href").slice(1));
+      if(!sec) return;
+      var r = sec.getBoundingClientRect();
+      var p = Math.max(0, Math.min(1, (window.innerHeight*0.85 - r.top) / (window.innerHeight + r.height)));
+      a.style.setProperty("--progress", Math.round(p*100) + "%");
+    });
     updateQuote();
     updateParallax();
     updateHeadings();
@@ -263,7 +286,7 @@
       var idx = ORDER.indexOf(currentStage||"hero");
       var next = e.key==="ArrowDown" ? Math.min(ORDER.length-1, idx+1) : Math.max(0, idx-1);
       var el = document.getElementById(ORDER[next]);
-      if(el) el.scrollIntoView({behavior: reduced ? "auto" : "smooth"});
+      if(el){ if(lenis) lenis.scrollTo(el); else el.scrollIntoView({behavior: reduced ? "auto" : "smooth"}); }
       e.preventDefault();
     } else if(e.key==="f" || e.key==="F"){ toggleFs(); }
     else if(e.key==="r" || e.key==="R"){ dragRy=0; dragRx=0; }

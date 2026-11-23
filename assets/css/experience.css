@@ -254,3 +254,8 @@ h2 .w.on{opacity:1}
 @media(max-width:1100px){
   .stage-caption,.stage-hint{position:static;transform:none;width:auto;margin:8px auto 0}
 }
+
+/* v9: nav progress fill (reference --progress) */
+.exp-nav a{position:relative;overflow:hidden}
+.exp-nav a::before{content:"";position:absolute;inset:0;background:var(--accent-soft);width:var(--progress,0%);z-index:-1;transition:width .15s linear}
+.exp-nav a.active::before{background:#dbe9f3}
