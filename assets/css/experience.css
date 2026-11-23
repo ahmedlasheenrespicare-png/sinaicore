@@ -346,3 +346,10 @@ main{margin-left:50vw;width:50vw;position:relative;z-index:2;background:var(--co
 .callout:hover,.callout.hot{background:#c96a1b;color:#fff;border-color:#c96a1b}
 .float-badge{background:rgba(255,255,255,.95)}
 .shadow-ellipse{background:radial-gradient(ellipse at center,rgba(0,0,0,.5),transparent 70%)}
+
+/* ===== v17: bag IN FRONT of sections (top layer, like reference canvas z-index) ===== */
+.stage-fixed{z-index:20}
+main{z-index:2}
+.stage-hud{z-index:30}
+.stage-cta{z-index:30}
+.stage-caption,.stage-hint{z-index:30}
