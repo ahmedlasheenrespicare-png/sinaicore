@@ -1,17 +1,28 @@
 (function(){
   "use strict";
   var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  /* Intro: locked until "Click to start" (reference style) */
+  var intro = document.getElementById("intro");
+  var introBtn = document.getElementById("intro-start");
+  if(intro && !reduced){ document.body.classList.add("locked"); }
+  function startExperience(){
+    document.body.classList.remove("locked");
+    document.body.classList.add("started");
+    if(intro) intro.classList.add("hide");
+  }
+  if(introBtn) introBtn.addEventListener("click", startExperience);
+  if(reduced) startExperience();
 
   /* ---------- Stage keyframes (continuous scroll interpolation) ---------- */
   var ORDER = ["hero","ch1","ch2","ch3","ch4","ch5","end"];
   var STAGES = {
-    hero: {ry:-18, rx:8,  explode:1,   s:1},
-    ch1:  {ry:-24, rx:6,  explode:1,   s:1},
-    ch2:  {ry:38,  rx:10, explode:1.15, s:.92},
-    ch3:  {ry:22,  rx:4,  explode:2.6,  s:.95},
-    ch4:  {ry:-38, rx:8,  explode:1,   s:1},
-    ch5:  {ry:14,  rx:5,  explode:1,   s:1.04},
-    end:  {ry:14,  rx:5,  explode:1,   s:1.04}
+    hero: {ry:-18, rx:8,  explode:1,   s:1, x:0},
+    ch1:  {ry:-24, rx:6,  explode:1,   s:1, x:0},
+    ch2:  {ry:38,  rx:10, explode:1.15, s:.92, x:1.1},
+    ch3:  {ry:22,  rx:4,  explode:2.6,  s:.95, x:0},
+    ch4:  {ry:-38, rx:8,  explode:1,   s:1, x:-1.1},
+    ch5:  {ry:14,  rx:5,  explode:1,   s:1.04, x:0},
+    end:  {ry:14,  rx:5,  explode:1,   s:1.04, x:0}
   };
   var TITLES = {hero:"Welcome",ch1:"Introduction",ch2:"The Challenge",ch3:"Inside the Bag",ch4:"Packaging",ch5:"Final Result",end:"The End"};
   var NUMS = {hero:"00 / 05",ch1:"01 / 05",ch2:"02 / 05",ch3:"03 / 05",ch4:"04 / 05",ch5:"05 / 05",end:"05 / 05"};
@@ -82,6 +93,42 @@
       a.classList.toggle("active", a.getAttribute("href")==="#"+id);
     });
   }
+  var parallaxImgs = document.querySelectorAll("figure img");
+  function updateParallax(){
+    if(reduced) return;
+    var vh = window.innerHeight;
+    parallaxImgs.forEach(function(img){
+      var r = img.parentElement.getBoundingClientRect();
+      if(r.bottom < 0 || r.top > vh) return;
+      var off = (r.top + r.height/2 - vh/2) * -0.05;
+      img.style.transform = "translateY(" + off.toFixed(1) + "px) scale(1.06)";
+    });
+  }
+  /* Heading word reveal */
+  var headingWords = [];
+  document.querySelectorAll(".chapter h2").forEach(function(h){
+    var words = h.textContent.trim().split(/\s+/);
+    h.innerHTML = words.map(function(w){ return '<span class="w">'+w+'</span>'; }).join(" ");
+    headingWords.push({el:h, words:h.querySelectorAll(".w")});
+  });
+  function updateHeadings(){
+    if(reduced){ headingWords.forEach(function(h){ h.words.forEach(function(w){ w.classList.add("on"); }); }); return; }
+    var vh = window.innerHeight;
+    headingWords.forEach(function(h){
+      var r = h.el.getBoundingClientRect();
+      var p = Math.max(0, Math.min(1, (vh*0.85 - r.top) / (vh*0.45)));
+      var on = Math.round(p * h.words.length);
+      h.words.forEach(function(w,i){ w.classList.toggle("on", i < on); });
+    });
+  }
+  /* Nav drag-to-scroll (reference slider nav) */
+  var expNav = document.querySelector(".exp-nav");
+  if(expNav){
+    var navDrag=false, navX=0, navL=0;
+    expNav.addEventListener("pointerdown", function(e){ navDrag=true; navX=e.clientX; navL=expNav.scrollLeft; });
+    expNav.addEventListener("pointermove", function(e){ if(navDrag) expNav.scrollLeft = navL - (e.clientX-navX); });
+    ["pointerup","pointerleave"].forEach(function(ev){ expNav.addEventListener(ev, function(){ navDrag=false; }); });
+  }
   function onScroll(){
     lastScroll = Date.now();
     var h = document.documentElement;
@@ -94,9 +141,12 @@
     var a = STAGES[ORDER[i]], b = STAGES[ORDER[i+1]];
     var t = 0;
     if(centers[i+1] > centers[i]) t = Math.max(0, Math.min(1, (mid - centers[i])/(centers[i+1]-centers[i])));
-    target = {ry: lerp(a.ry,b.ry,t), rx: lerp(a.rx,b.rx,t), explode: lerp(a.explode,b.explode,t), s: lerp(a.s,b.s,t)};
+    target = {ry: lerp(a.ry,b.ry,t), rx: lerp(a.rx,b.rx,t), explode: lerp(a.explode,b.explode,t), s: lerp(a.s,b.s,t), x: lerp(a.x||0,b.x||0,t)};
+    window.__bagTarget = target;
     setStage(t > .5 ? ORDER[i+1] : ORDER[i]);
     updateQuote();
+    updateParallax();
+    updateHeadings();
   }
   window.addEventListener("scroll", onScroll, {passive:true});
 

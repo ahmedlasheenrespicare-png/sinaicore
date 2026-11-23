@@ -9,11 +9,25 @@
 <meta name="theme-color" content="#1A6B9C">
 <link rel="icon" href="favicon.png">
 <link rel="stylesheet" href="assets/css/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/experience.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js" defer></script>
+<noscript><style>#intro{display:none}</style></noscript>
 </head>
 <body>
 <a class="skip" href="#main-content">Skip to main content</a>
 <div class="progress-bar" id="progress-bar"></div>
+<div id="intro" role="dialog" aria-label="Start the experience">
+  <div class="intro-inner">
+    <p class="intro-logo">Sinai<span>—</span>Core</p>
+    <p class="intro-title">Inside the Bag</p>
+    <p class="intro-sub">The tale of premium Egyptian salt,<br>from North Sinai to the world.</p>
+    <button class="intro-btn" id="intro-start" type="button">Click to start ↓</button>
+    <p class="intro-note">or simply scroll down · best on a large wide screen · landscape</p>
+  </div>
+</div>
 
 <!-- Header (reference style: logo / chapter slider nav / tools) -->
 <header class="exp-header">
@@ -45,6 +59,7 @@
       <span class="particle" style="top:74%;right:10%;animation-delay:.6s"></span>
       <span class="particle" style="top:48%;left:20%;animation-delay:2.8s"></span>
     </div>
+    <div id="webgl-wrap" hidden><canvas id="webgl" aria-label="3D model of an export salt bag"></canvas></div>
     <div class="scene" id="scene" aria-label="Interactive 3D model of an export salt bag. Drag to rotate.">
       <div class="bag3d" id="bag3d">
         <div class="stitch"></div>
@@ -95,7 +110,7 @@
   <section class="hero" id="hero">
     <div class="wrap">
       <p class="eyebrow">SinaiCore · Interactive Editorial · New Design</p>
-      <h1>How much <em>purity</em><br>do you need today?</h1>
+      <h1><span class="line"><span>How much <em>purity</em></span></span><span class="line"><span>do you need today?</span></span></h1>
       <p class="sub">The tale of bringing premium Egyptian salt from North Sinai to the world, harking back to an era when solar evaporation was deemed more than sufficient.</p>
       <div class="big-stat">≥ 99.5%<small> NaCl</small></div>
       <p style="font-family:var(--mono);font-size:13px;color:#7a8ba0">Premium Refined Salt — independently quality verified, professionally packaged, supplied worldwide.</p>
@@ -270,6 +285,7 @@
 </main>
 
 <script src="assets/js/main.js"></script>
+<script src="assets/js/experience-3d.js"></script>
 <script src="assets/js/experience.js"></script>
 </body>
 </html>
