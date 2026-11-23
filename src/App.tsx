@@ -49,15 +49,19 @@ export default function App() {
   useEffect(() => {
     let raf = 0
     let v = 0
+    let prev = performance.now()
     const tick = () => {
+      const now = performance.now()
+      const dt = Math.min(0.1, (now - prev) / 1000)
+      prev = now
       const el = actRef.current
       if (el) {
         const r = el.getBoundingClientRect()
         const vh = window.innerHeight
         const span = r.height - vh
         const p = span > 0 ? Math.min(1, Math.max(0, -r.top / span)) : 0
-        // smooth so stops feel damped rather than snapped
-        v += (p - v) * 0.12
+        // frame-rate independent damping, so slow devices still land on the stop
+        v += (p - v) * (1 - Math.exp(-9 * dt))
         gl.act = v
         document.documentElement.style.setProperty('--w', v.toFixed(4))
         const vel = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--vel')) || 0

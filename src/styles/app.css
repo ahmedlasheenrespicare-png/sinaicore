@@ -1985,3 +1985,52 @@
 .footer-brand b {
   display: none;
 }
+
+/* ------------------------------------------------------------------
+   Station 05 — sample jar parked beside the quote form
+   ------------------------------------------------------------------ */
+.contact-right {
+  position: relative;
+  display: grid;
+  gap: clamp(1.4rem, 3vw, 2.4rem);
+  align-items: start;
+}
+.jar-stage {
+  position: relative;
+  height: clamp(240px, 32vw, 340px);
+  border: 1px solid var(--line-soft);
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 42%, color-mix(in oklab, var(--brine) 9%, transparent), transparent 70%),
+    color-mix(in oklab, var(--ink-2) 55%, transparent);
+  pointer-events: none;
+  isolation: isolate;
+}
+.jar-stage canvas { pointer-events: none; }
+.jar-stage::after {
+  content: '';
+  position: absolute;
+  inset-inline: 12%;
+  inset-block-end: 12%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--brine) 40%, transparent), transparent);
+}
+.jar-caption {
+  position: absolute;
+  inset-block-end: 0.7rem;
+  inset-inline-start: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.5rem;
+  letter-spacing: 0.18em;
+  color: var(--mist-2);
+}
+.jar-caption i {
+  font-style: normal;
+  color: var(--brine);
+  border: 1px solid color-mix(in oklab, var(--brine) 34%, transparent);
+  padding: 0.14rem 0.34rem;
+}
+@media (max-width: 900px) {
+  .jar-stage { height: 220px; order: -1; }
+}

@@ -50,7 +50,7 @@ export default function Hero() {
             <ol className="hero-chapters" aria-label="محطات العرض">
               {chapters.map((c, i) => (
                 <li key={c.id} style={{ '--d': `${i * 80}ms` } as React.CSSProperties} data-reveal>
-                  <a href={`#${c.id}`}>
+                  <a href={`#${c.anchor ?? c.id}`}>
                     <span className="mono">{c.index}</span>
                     <span className="hc-ar">{c.labelAr}</span>
                     <span className="hc-en mono">{c.label}</span>
@@ -74,7 +74,7 @@ export default function Hero() {
           <div className="scroll-hint">
             <span className="mono">SCROLL</span>
             <i />
-            <span className="scroll-steps mono">01 — 04</span>
+            <span className="scroll-steps mono">01 — 05</span>
           </div>
         </div>
       </div>

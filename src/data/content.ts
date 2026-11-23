@@ -10,13 +10,20 @@ export type Chapter = {
   index: string
   label: string
   labelAr: string
+  /** in-page target when the station lives outside the pinned act */
+  anchor?: string
 }
 
+/**
+ * Five stations. 01–04 live inside the pinned WebGL act; 05 is the quote
+ * section, where the sample jar is parked beside the form.
+ */
 export const chapters: Chapter[] = [
-  { id: 'crystal', index: '01', label: 'Sourcing', labelAr: 'المصدر البحري' },
-  { id: 'purity', index: '02', label: 'Purity', labelAr: 'النقاء والمعالجة' },
-  { id: 'packing', index: '03', label: 'Packing', labelAr: 'التعبئة' },
-  { id: 'export', index: '04', label: 'Export', labelAr: 'خطوط التصدير' },
+  { id: 'crystal', index: '01', label: 'Hero · Halite', labelAr: 'بلورة الهاليت' },
+  { id: 'purity', index: '02', label: 'Quality', labelAr: 'النقاء والمعالجة' },
+  { id: 'packing', index: '03', label: 'Packaging', labelAr: 'التعبئة والمنتجات' },
+  { id: 'export', index: '04', label: 'Ports', labelAr: 'الموانئ واللوجستيات' },
+  { id: 'quote', index: '05', label: 'Quote', labelAr: 'طلب عرض سعر', anchor: 'contact' },
 ]
 
 /** Chapter 02 — the specification rows that scroll past the 3D tablets. */

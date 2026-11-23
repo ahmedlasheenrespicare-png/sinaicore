@@ -1,7 +1,8 @@
 # SinaiCore — ملح سيناء · 3D Scroll Experience
 
 An immersive, right-to-left scroll experience for **SinaiCore for Salts & Minerals**:
-marine halite sourcing → purity & water-softening tablets → FIBC jumbo bags → FOB export routes.
+marine halite sourcing → purity & water-softening tablets → 50 kg sacks and FIBC jumbo bags →
+FOB export routes from El Arish and Suez → a lab sample parked beside the quote form.
 
 All copy, figures, product grades, packaging formats, Incoterms, offices and contact
 details come from the official SinaiCore site. The brand lockup and photography are the
@@ -18,14 +19,15 @@ npm run preview    # serve the production build
 node scripts/build-assets.mjs   # regenerate the 3D assets + preview renders
 ```
 
-## The four stations
+## The five stations
 
-| # | Chapter | Model | Interaction |
+| # | Station | Model | Interaction |
 |---|---------|-------|-------------|
-| 01 | `crystal` — المصدر البحري | `crystal.glb` (halite cluster on host rock) | rotates with scroll + pointer; custom refraction/dispersion shader |
-| 02 | `purity` — النقاء والمعالجة | `tablets.glb` (3 softening tablets) | grain field morph, hotspots for NaCl ≥99.5% and batch control |
-| 03 | `packing` — التعبئة | `jumbo-bag.glb` (FIBC 1–1.5 MT) | one slow revolution; the face carries the printed SinaiCore lockup |
-| 04 | `export` — خطوط التصدير | `globe.glb` (ocean + land ribbons) | animated FOB arcs from El Arish / Suez to six continents |
+| 01 | `crystal` — بلورة الهاليت | `crystal.glb` (macro halite cluster on host rock) | slow centre-screen turn; on scroll the camera dollies *into* the crystal surface |
+| 02 | `purity` — النقاء والمعالجة | `tablets.glb` (3 softening tablets) | shards scatter into a grain field, then settle to the tablets; hotspots for NaCl ≥99.5%, moisture, granulometry and independent COA |
+| 03 | `packing` — التعبئة والمنتجات | `sack-50kg.glb` + `jumbo-bag.glb` | the 50 kg export sack and the FIBC 1–1.5 MT side by side, each turning a full 360° past its print, seams and discharge spout |
+| 04 | `export` — الموانئ واللوجستيات | `globe.glb` (ocean + land ribbons) | FOB arcs from El Arish and Suez / Port Said East to every destination, growing as the station settles |
+| 05 | `quote` — طلب عرض سعر | `sample-jar.glb` (lab jar, copper seal, printed label) | not in the pinned act: it parks at a fixed three-quarter angle beside the quote form and only mounts when the section approaches |
 
 Below the act: the five published product grades with their real NaCl/moisture specs,
 the three trust pillars, the technical sheet, the six-step inquiry-to-delivery line,
@@ -40,9 +42,9 @@ and both offices (El Arish & New Cairo) with live contact details.
 - `public/img/*` — supplied product/facility photography for the portfolio cards,
   the mobile hero and the refined-grade plate
 
-Everything lives in one pinned viewport (`.journey`, ~4.6 viewports of scroll) with a
+Stations 01–04 live in one pinned viewport (`.journey`, ~4.6 viewports of scroll) with a
 sticky WebGL canvas behind it. The copy panels swap as the shared progress value
-crosses each chapter threshold.
+crosses each station threshold.
 
 ## Architecture
 
@@ -52,13 +54,14 @@ src/
   lib/journal.ts          rAF scroll observer → CSS custom properties (--w, --vel…)
   three/
     state.ts              tiny shared mutable state (read in useFrame, never re-renders React)
-    Stage.tsx             canvas, studio env, 4 chapter models, camera rig, export arcs
+    Stage.tsx             canvas, studio env, 4 in-act stations, camera rig, export arcs
+    SampleJar.tsx         station 05's own small canvas (glass, salt, cap, label)
     materials/HaliteMaterial.ts   refracting / dispersing crystal shader
-  components/             Hero, Journey (pinned chapters), Sections, Chrome, Curtain
+  components/             Hero, Journey (pinned stations 01–04), Sections (05), Chrome, Curtain
   data/content.ts         every figure and line of copy (Arabic + Latin)
   styles/                 base tokens + layout
 scripts/build-assets.mjs  parametric geometry → Draco GLB + software-rasterised previews
-public/models/*.glb       the four assets (5–160 KB each)
+public/models/*.glb       the six assets (5–160 KB each, all Draco)
 public/draco/             three.js Draco decoder (self-hosted, no CDN)
 ```
 
@@ -77,6 +80,11 @@ The models are authored procedurally in `scripts/build-assets.mjs`:
 - tablets: indexed lathe profile with a bevelled rim and a recessed face groove
 - FIBC: superellipse body with bulge, pleats and a gathered top; webbing, hems,
   spouts, and a brand panel raycast onto the fabric surface
+- 50 kg sack: the same superellipse skin in flat, straight-gusseted mode with a
+  pillowed fill, a sealed stitched mouth (rim cap + dashes), side creases and the
+  same printed panel
+- sample jar: glass lathe with a shoulder, salt fill, ribbed screw cap, copper seal
+  band and a 1:1 label wrap
 - globe: icosphere + Natural Earth 110m coastline ribbons baked to
   `src/data/worldOutline.json` (antimeridian-safe, outward-wound)
 

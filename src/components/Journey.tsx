@@ -16,7 +16,7 @@ export default function Journey({ hotspotsOn }: { hotspotsOn: boolean }) {
     let last = ''
     const tick = () => {
       const a = gl.act
-      const id = a < 0.21 ? 'crystal' : a < 0.55 ? 'purity' : a < 0.9 ? 'packing' : 'export'
+      const id = a < 0.18 ? 'crystal' : a < 0.45 ? 'purity' : a < 0.78 ? 'packing' : 'export'
       if (id !== last && ref.current) {
         last = id
         ref.current.dataset.live = id
@@ -70,7 +70,7 @@ export default function Journey({ hotspotsOn }: { hotspotsOn: boolean }) {
               </svg>
               <span>يتبع دورانك</span>
             </div>
-            <span className="panel-counter mono">01 / 04</span>
+            <span className="panel-counter mono">01 / 05</span>
           </div>
         </section>
 
@@ -108,7 +108,7 @@ export default function Journey({ hotspotsOn }: { hotspotsOn: boolean }) {
           </div>
           <div className="panel-note">
             <span className="note-tag">NaCl ≥ 99.5%</span>
-            <span className="mono panel-counter">02 / 04</span>
+            <span className="mono panel-counter">02 / 05</span>
           </div>
         </section>
 
@@ -143,7 +143,7 @@ export default function Journey({ hotspotsOn }: { hotspotsOn: boolean }) {
           </div>
           <div className="panel-note">
             <span className="note-tag">{packaging.titleLat}</span>
-            <span className="mono panel-counter">03 / 04</span>
+            <span className="mono panel-counter">03 / 05</span>
           </div>
         </section>
 
@@ -190,7 +190,7 @@ export default function Journey({ hotspotsOn }: { hotspotsOn: boolean }) {
           </div>
           <div className="panel-note">
             <span className="note-tag">FOB · CIF</span>
-            <span className="mono panel-counter">04 / 04</span>
+            <span className="mono panel-counter">04 / 05</span>
           </div>
         </section>
 

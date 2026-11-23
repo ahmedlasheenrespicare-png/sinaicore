@@ -1,4 +1,39 @@
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { products, pillars, process, specs, compliance, contact } from '../data/content'
+
+const SampleJar = lazy(() => import('../three/SampleJar'))
+
+/**
+ * Station 05 — the jar only mounts when the quote section is close, so the
+ * second WebGL context never competes with the scroll act.
+ */
+function JarStage() {
+  const host = useRef<HTMLDivElement>(null)
+  const [live, setLive] = useState(false)
+  useEffect(() => {
+    const el = host.current
+    if (!el) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches && window.innerWidth < 760) return
+    const io = new IntersectionObserver(
+      ([e]) => setLive(e.isIntersecting),
+      { rootMargin: '260px 0px' },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+  return (
+    <div className="jar-stage" ref={host} aria-hidden="true">
+      {live && (
+        <Suspense fallback={null}>
+          <SampleJar />
+        </Suspense>
+      )}
+      <span className="jar-caption mono">
+        <i>05</i> LAB SAMPLE · 500 g · NaCl ≥ 99.5%
+      </span>
+    </div>
+  )
+}
 
 /** Product portfolio, five grades exactly as published. */
 export function Products() {
@@ -215,6 +250,8 @@ export function Contact() {
           </div>
         </div>
 
+        <div className="contact-right">
+          <JarStage />
         <form className="contact-form" onSubmit={(e) => e.preventDefault()}>
           <div className="cf-row">
             <label>
@@ -270,6 +307,7 @@ export function Contact() {
           </button>
           <p className="cf-note mono">NO SPAM · RESPONSE WITHIN 1 BUSINESS DAY</p>
         </form>
+        </div>
       </div>
     </section>
   )

@@ -45,18 +45,18 @@ export function Header() {
 
       <nav id="site-menu" className={`site-menu ${open ? 'is-open' : ''}`} aria-hidden={!open}>
         {chapters.map((c) => (
-          <a key={c.id} href={`#${c.id}`} onClick={() => setOpen(false)}>
+          <a key={c.id} href={`#${c.anchor ?? c.id}`} onClick={() => setOpen(false)}>
             <span className="mono">{c.index}</span>
             {c.labelAr}
             <i>{c.label}</i>
           </a>
         ))}
         <a href="#products" onClick={() => setOpen(false)}>
-          <span className="mono">05</span>
+          <span className="mono">06</span>
           المنتجات<i>Products</i>
         </a>
         <a href="#contact" onClick={() => setOpen(false)}>
-          <span className="mono">06</span>
+          <span className="mono">07</span>
           تواصل معنا<i>Contact</i>
         </a>
       </nav>
@@ -72,22 +72,45 @@ export function ChapterRail() {
     const order = ['crystal', 'purity', 'packing', 'export']
     const onChapter = (e: Event) => {
       const i = order.indexOf((e as CustomEvent<string>).detail)
-      if (i >= 0) setActive(i)
+      if (i >= 0 && !quoteInView()) setActive(i)
     }
     window.addEventListener('sinaicore:chapter', onChapter)
-    return () => window.removeEventListener('sinaicore:chapter', onChapter)
+
+    // station 05 lives in the quote section, so it takes the rail over there
+    const contact = document.getElementById('contact')
+    const io = contact
+      ? new IntersectionObserver(
+          ([entry]) => {
+            if (entry.isIntersecting) setActive(4)
+            else setActive((v) => (v === 4 ? 3 : v))
+          },
+          { threshold: 0.28 },
+        )
+      : null
+    if (contact && io) io.observe(contact)
+
+    return () => {
+      window.removeEventListener('sinaicore:chapter', onChapter)
+      io?.disconnect()
+    }
   }, [])
+  const quoteInView = () => {
+    const el = document.getElementById('contact')
+    if (!el) return false
+    const r = el.getBoundingClientRect()
+    return r.top < window.innerHeight * 0.55 && r.bottom > window.innerHeight * 0.2
+  }
 
   return (
     <nav className="chapter-rail" aria-label="فصول العرض">
       <span className="rail-progress" aria-hidden="true">
         <em className="mono">SCROLL</em>
-        <i style={{ '--p': active / 3 } as React.CSSProperties} />
+        <i style={{ '--p': active / Math.max(1, chapters.length - 1) } as React.CSSProperties} />
       </span>
       <ol>
         {chapters.map((c, i) => (
           <li key={c.id} className={active === i ? 'is-active' : ''}>
-            <a href={`#${c.id}`} aria-label={`${c.index} — ${c.labelAr}`}>
+            <a href={`#${c.anchor ?? c.id}`} aria-label={`${c.index} — ${c.labelAr}`}>
               <span className="mono">{c.index}</span>
               <span className="rail-label">{c.labelAr}</span>
             </a>

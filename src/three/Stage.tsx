@@ -102,20 +102,23 @@ function CrystalChapter() {
   useFrame((state, dt) => {
     if (!group.current || !inner.current) return
     const a = gl.act
-    // visible during 0.0 → 0.26, dissolving out by 0.31
-    const vis = 1 - sstep(0.2, 0.26, a)
+    // station 01 → dissolves once the camera has pushed through the surface
+    const vis = 1 - sstep(0.13, 0.175, a)
     group.current.visible = vis > 0.01
     if (!group.current.visible) return
 
-    // rotation follows scroll (0 → 2.4 rad) plus pointer parallax
-    const spin = sstep(0.0, 0.3, a) * Math.PI * 1.15
-    rot.current.y = smooth(rot.current.y, spin + gl.px * 0.32, 5, dt)
-    rot.current.x = smooth(rot.current.x, -0.08 + gl.py * 0.14, 4, dt)
+    // slow centre-screen turn; the drama comes from the camera dolly
+    const spin = sstep(0.0, 0.18, a) * Math.PI * 0.72
+    rot.current.y = smooth(rot.current.y, spin + gl.px * 0.26, 5, dt)
+    rot.current.x = smooth(rot.current.x, -0.06 + gl.py * 0.12, 4, dt)
     inner.current.rotation.set(rot.current.x, rot.current.y, 0)
 
-    // scroll momentum tips the cluster back, like a turntable picking up speed
-    group.current.position.y = smooth(group.current.position.y, 0.02 - a * 0.1, 4, dt)
-    const s = 1.02 - sstep(0, 0.28, a) * 0.12
+    // macro: the cluster starts large and keeps growing as we enter it
+    group.current.position.y = smooth(group.current.position.y, 0.02 + a * 0.06, 4, dt)
+    // narrow screens frame the crystal in the upper half, so it is scaled back
+    const narrow = state.size.width < 760
+    const base = narrow ? 0.92 : 1.52
+    const s = base + sstep(0, 0.18, a) * (narrow ? 0.34 : 0.62)
     group.current.scale.setScalar(s)
 
     mat.uniforms.uTime.value = state.clock.elapsedTime
@@ -128,7 +131,7 @@ function CrystalChapter() {
       <group ref={inner}>
         <primitive object={model} />
       </group>
-      <Glow size={5.5} intensity={1.2} />
+      <Glow size={7} intensity={1.35} />
     </group>
   )
 }
@@ -195,7 +198,7 @@ function GrainField({ count = 300 }: { count?: number }) {
 
   useFrame((s, dt) => {
     if (!points.current) return
-    const vis = sstep(0.24, 0.34, gl.act) * (1 - sstep(0.52, 0.6, gl.act))
+    const vis = sstep(0.15, 0.24, gl.act) * (1 - sstep(0.38, 0.45, gl.act))
     points.current.visible = vis > 0.01
     material.uniforms.uTime.value = s.clock.elapsedTime
     material.uniforms.uOpacity.value = smooth(material.uniforms.uOpacity.value, vis, 5, dt)
@@ -230,15 +233,15 @@ function TabletChapter({ onHotspots }: { onHotspots: (show: boolean) => void }) 
 
   useFrame((s, dt) => {
     if (!group.current) return
-    const vis = sstep(0.25, 0.32, gl.act) * (1 - sstep(0.5, 0.56, gl.act))
+    const vis = sstep(0.16, 0.23, gl.act) * (1 - sstep(0.37, 0.43, gl.act))
     group.current.visible = vis > 0.01
-    onHotspots(gl.act > 0.29 && gl.act < 0.53)
+    onHotspots(gl.act > 0.19 && gl.act < 0.4)
     if (!group.current.visible) return
     spin.current += gl.reduced ? dt * 0.02 : dt * (0.16 + gl.vel * 0.8)
     const target = spin.current + gl.px * 0.4
     group.current.rotation.y = smooth(group.current.rotation.y, target, 4, dt)
     group.current.rotation.x = smooth(group.current.rotation.x, 0.12 - gl.py * 0.2, 3, dt)
-    const enter = sstep(0.25, 0.34, gl.act)
+    const enter = sstep(0.16, 0.25, gl.act)
     group.current.scale.setScalar(0.82 + enter * 0.1)
     group.current.position.y = -0.12 + (gl.reduced ? 0 : Math.sin(s.clock.elapsedTime * 0.6) * 0.012)
   })
@@ -253,7 +256,7 @@ function TabletChapter({ onHotspots }: { onHotspots: (show: boolean) => void }) 
 }
 
 /* ------------------------------------------------------------------ *
- * 03 — Jumbo bag with printed brand panel
+ * 03 — printing: brand texture shared by the sack and the FIBC
  * ------------------------------------------------------------------ */
 function BrandTexture() {
   return useMemo(() => {
@@ -355,33 +358,50 @@ function useWovenTexture() {
   }, [])
 }
 
-function BagChapter() {
+/* 03 — packing station: 50 kg sack beside the FIBC, one slow revolution */
+function PackingChapter() {
   const group = useRef<THREE.Group>(null)
-  const { scene } = useGLTF('/models/jumbo-bag.glb')
+  const sackRef = useRef<THREE.Group>(null)
+  const bagRef = useRef<THREE.Group>(null)
+  const sack = useGLTF('/models/sack-50kg.glb')
+  const jumbo = useGLTF('/models/jumbo-bag.glb')
   const brand = BrandTexture()
   const woven = useWovenTexture()
-  const model = useMemo(() => {
-    const m = scene.clone(true)
+
+  const sackModel = useMemo(() => {
+    const m = sack.scene.clone(true)
     m.traverse((o) => {
       const mesh = o as THREE.Mesh
       if (!mesh.isMesh) return
       const n = mesh.name
       if (n.includes('brand_panel')) {
+        mesh.material = new THREE.MeshStandardMaterial({ map: brand, roughness: 0.8, transparent: true, envMapIntensity: 0.8 })
+      } else if (n.includes('body')) {
         mesh.material = new THREE.MeshStandardMaterial({
-          map: brand,
-          roughness: 0.78,
-          metalness: 0,
-          transparent: true,
-          envMapIntensity: 0.8,
+          color: '#fbfbf6', map: woven, roughness: 0.88, metalness: 0, envMapIntensity: 0.8, side: THREE.DoubleSide,
         })
+      } else if (n.includes('crease') || n.includes('seam')) {
+        mesh.material = new THREE.MeshStandardMaterial({ color: '#cfdde6', roughness: 0.9 })
+      } else if (n.includes('stitch')) {
+        mesh.material = new THREE.MeshStandardMaterial({ color: '#8f9aa2', roughness: 0.92 })
+      } else {
+        mesh.material = new THREE.MeshStandardMaterial({ color: '#e2ebf1', roughness: 0.85 })
+      }
+    })
+    return m
+  }, [sack.scene, brand, woven])
+
+  const bagModel = useMemo(() => {
+    const m = jumbo.scene.clone(true)
+    m.traverse((o) => {
+      const mesh = o as THREE.Mesh
+      if (!mesh.isMesh) return
+      const n = mesh.name
+      if (n.includes('brand_panel')) {
+        mesh.material = new THREE.MeshStandardMaterial({ map: brand, roughness: 0.78, metalness: 0, transparent: true, envMapIntensity: 0.8 })
       } else if (n.includes('fibc_body')) {
         mesh.material = new THREE.MeshStandardMaterial({
-          color: '#fbfbf6',
-          map: woven,
-          roughness: 0.86,
-          metalness: 0,
-          envMapIntensity: 0.8,
-          side: THREE.DoubleSide,
+          color: '#fbfbf6', map: woven, roughness: 0.86, metalness: 0, envMapIntensity: 0.8, side: THREE.DoubleSide,
         })
       } else if (n.includes('seams')) {
         mesh.material = new THREE.MeshStandardMaterial({ color: '#c6d8e4', roughness: 0.9 })
@@ -390,28 +410,33 @@ function BagChapter() {
       }
     })
     return m
-  }, [scene, brand, woven])
+  }, [jumbo.scene, brand, woven])
 
-  const rot = useRef(0)
   useFrame((s, dt) => {
-    if (!group.current) return
-    const vis = sstep(0.55, 0.64, gl.act) * (1 - sstep(0.86, 0.93, gl.act))
+    if (!group.current || !sackRef.current || !bagRef.current) return
+    // one station: fades in as the purity act clears, out before the globe
+    const vis = sstep(0.42, 0.5, gl.act) * (1 - sstep(0.72, 0.78, gl.act))
     group.current.visible = vis > 0.01
     if (!group.current.visible) return
-    // one slow, deliberate revolution to reveal the print + seams
-    const reveal = sstep(0.56, 0.92, gl.act)
-    rot.current = smooth(rot.current, reveal * Math.PI * 1.85 + gl.px * 0.18, 3, dt)
-    group.current.rotation.y = rot.current
-    group.current.rotation.x = smooth(group.current.rotation.x, -0.03 + gl.py * 0.06, 3, dt)
-    group.current.position.y = -0.06 + (gl.reduced ? 0 : Math.sin(s.clock.elapsedTime * 0.5) * 0.008)
-    const enter = sstep(0.55, 0.68, gl.act)
-    group.current.scale.setScalar(0.8 + enter * 0.06)
+    // 360°: a full revolution across the station, so print, seams and spout all pass
+    const turn = sstep(0.44, 0.76, gl.act) * Math.PI * 2 + gl.px * 0.2
+    sackRef.current.rotation.y = smooth(sackRef.current.rotation.y, -0.3 + turn * 0.92, 3, dt)
+    bagRef.current.rotation.y = smooth(bagRef.current.rotation.y, 0.42 - turn * 0.75, 3, dt)
+    const bob = gl.reduced ? 0 : Math.sin(s.clock.elapsedTime * 0.5) * 0.01
+    sackRef.current.position.y = -0.18 + bob
+    bagRef.current.position.y = -0.02 - bob
+    group.current.scale.setScalar(0.82 + sstep(0.42, 0.56, gl.act) * 0.06)
   })
 
   return (
     <group ref={group}>
-      <primitive object={model} />
-      <Glow size={4.6} intensity={0.8} />
+      <group ref={sackRef} position={[-1.24, -0.14, 0.2]} scale={1.0}>
+        <primitive object={sackModel} />
+      </group>
+      <group ref={bagRef} position={[-0.12, -0.02, -0.22]} scale={0.78}>
+        <primitive object={bagModel} />
+      </group>
+      <Glow size={4.8} intensity={0.8} />
     </group>
   )
 }
@@ -493,7 +518,7 @@ function Arc({ from, to, lifted = 0.45, color = '#4e9fce', width = 0.007 }: { fr
 
   useFrame((s, dt) => {
     material.uniforms.uTime.value = s.clock.elapsedTime
-    material.uniforms.uGrow.value = smooth(material.uniforms.uGrow.value, sstep(0.74, 0.92, gl.act), 2.2, dt)
+    material.uniforms.uGrow.value = smooth(material.uniforms.uGrow.value, sstep(0.76, 0.96, gl.act), 2.2, dt)
   })
 
   void drawCount
@@ -511,7 +536,7 @@ function SurfaceDot({ pos, color = '#a9d3eb', size = 0.014, phase = 0 }: { pos: 
     if (!ref.current) return
     const t = s.clock.elapsedTime
     const k = 1 + Math.sin(t * 2 + phase) * 0.28
-    ref.current.scale.setScalar(k * sstep(0.78, 0.9, gl.act))
+    ref.current.scale.setScalar(k * sstep(0.8, 0.92, gl.act))
   })
   return (
     <mesh ref={ref} position={pos}>
@@ -562,12 +587,12 @@ function GlobeChapter() {
 
   useFrame((s, dt) => {
     if (!group.current) return
-    const vis = sstep(0.9, 0.97, gl.act)
+    const vis = sstep(0.72, 0.8, gl.act)
     group.current.visible = vis > 0.01
     if (!group.current.visible) return
     // start with Sinai facing the camera, then rotate east towards Suez / Asia
     const start = -1.9
-    spin.current = smooth(spin.current, start + sstep(0.9, 1.0, gl.act) * 0.7 + gl.px * 0.35, 2.5, dt)
+    spin.current = smooth(spin.current, start + sstep(0.72, 0.95, gl.act) * 0.7 + gl.px * 0.35, 2.5, dt)
     group.current.rotation.y = spin.current + (gl.reduced ? 0 : s.clock.elapsedTime * 0.035)
     group.current.rotation.x = 0.22 + gl.py * 0.12
     group.current.scale.setScalar(0.86 + vis * 0.05)
@@ -607,12 +632,20 @@ function Rig() {
     const a = gl.act
     // framing per chapter: [act, camera height, distance]
     const key: [number, number, number][] = [
-      [0, 0.5, 5.5],
-      [0.2, 0.3, 5.2],
-      [0.42, 0.05, 5.0],
-      [0.58, 0.02, 5.6],
-      [0.86, 0.08, 5.4],
-      [1, 0.05, 5.0],
+      // 01 — the dolly pushes into the macro crystal
+      [0, 0.62, 6.6],
+      [0.07, 0.34, 4.4],
+      [0.13, 0.06, 2.9],
+      [0.175, 0.0, 1.85],
+      // 02 — out, and low across the tablets
+      [0.26, 0.05, 5.0],
+      [0.4, 0.05, 4.9],
+      // 03 — back a little for the full bag silhouette
+      [0.5, 0.02, 5.4],
+      [0.68, 0.04, 5.3],
+      // 04 — settle for the globe
+      [0.82, 0.1, 5.2],
+      [1, 0.06, 4.9],
     ]
     let z = key[0][2]
     let y = key[0][1]
@@ -662,6 +695,7 @@ function Loader({ onReady }: { onReady: () => void }) {
   useGLTF('/models/tablets.glb')
   useGLTF('/models/jumbo-bag.glb')
   useGLTF('/models/globe.glb')
+  useGLTF('/models/sack-50kg.glb')
   useEffect(() => {
     const t = setTimeout(onReady, 260)
     return () => clearTimeout(t)
@@ -731,7 +765,7 @@ export default function Stage({
         <Suspense fallback={null}>
           <CrystalChapter />
           <TabletChapter onHotspots={onHotspots} />
-          <BagChapter />
+          <PackingChapter />
           <GlobeChapter />
           <Preload all />
           <Loader onReady={onReady} />

@@ -286,7 +286,13 @@ function tablet({ r = 0.5, h = 0.26, groove = true } = {}) {
 /* ------------------------------------------------------------------ *
  * 03 — FIBC jumbo bag, 1 MT
  * ------------------------------------------------------------------ */
-const BAG = { a: 0.66, b: 0.66, h: 1.62, exp: 5 }
+let BAG = { a: 0.66, b: 0.66, h: 1.62, exp: 5 }
+/* current profile mode, shared by the body and the label projection */
+let CUR_STRAIGHT = false
+let CUR_PILLOW = false
+const BAG_JUMBO = { a: 0.66, b: 0.66, h: 1.62, exp: 5 }
+/* 50 kg export sack: narrower, taller aspect, same superellipse family */
+const BAG_50KG = { a: 0.315, b: 0.195, h: 0.96, exp: 4.4 }
 
 function superellipse(t, a, b, n) {
   const c = Math.cos(t), s = Math.sin(t)
@@ -294,7 +300,10 @@ function superellipse(t, a, b, n) {
   return [a * Math.sign(c) * Math.abs(c) ** p, b * Math.sign(s) * Math.abs(s) ** p]
 }
 
-function bagBody() {
+function bagBody(opts = {}) {
+  const { capTop = false, straight = false, pillow = false } = opts
+  CUR_STRAIGHT = straight
+  CUR_PILLOW = pillow
   const RINGS = 34
   const SEG = 96
   const tris = []
@@ -305,9 +314,11 @@ function bagBody() {
     const v = i / RINGS
     const y = -BAG.h / 2 + v * BAG.h
     // bulge + pleats, and gather towards the top spout
-    const gather = v > 0.86 ? 1 - ((v - 0.86) / 0.14) ** 1.6 * 0.72 : 1
-    const bulge = 1 + 0.055 * Math.sin(Math.PI * Math.min(1, v * 1.06)) - 0.03 * Math.max(0, v - 0.8)
-    const pleat = 0.012 * Math.sin(v * Math.PI * 5.5)
+    // a filled 50 kg sack pillows out and rounds over just under the seam
+    const gather = CUR_STRAIGHT ? 1 : v > 0.86 ? 1 - ((v - 0.86) / 0.14) ** 1.6 * 0.72 : 1
+    const pillow = CUR_PILLOW ? 1 + 0.06 * Math.sin(Math.PI * Math.min(1, v * 1.02)) - 0.06 * Math.max(0, v - 0.84) ** 1.25 : 1
+    const bulge = CUR_STRAIGHT ? pillow : (1 + 0.055 * Math.sin(Math.PI * Math.min(1, v * 1.06)) - 0.03 * Math.max(0, v - 0.8)) * pillow
+    const pleat = CUR_STRAIGHT ? 0 : 0.012 * Math.sin(v * Math.PI * 5.5)
     const row = []
     const uvRow = []
     for (let s = 0; s <= SEG; s++) {
@@ -329,16 +340,29 @@ function bagBody() {
       uvCoords.push(uvRows[i][s], uvRows[i][s + 1], uvRows[i + 1][s + 1], uvRows[i][s], uvRows[i + 1][s + 1], uvRows[i + 1][s])
     }
   }
-  // bottom cap
-  const by = -BAG.h / 2
-  for (let s = 0; s < SEG; s++) {
-    const t0 = (s / SEG) * Math.PI * 2
-    const t1 = ((s + 1) / SEG) * Math.PI * 2
-    const p0 = superellipse(t0, BAG.a * 0.96, BAG.b * 0.96, BAG.exp)
-    const p1 = superellipse(t1, BAG.a * 0.96, BAG.b * 0.96, BAG.exp)
-    tris.push([0, by, 0], [p1[0], by, p1[1]], [p0[0], by, p0[1]])
-    uvCoords.push([0, 0], [0, 0], [0, 0])
+  /* caps: fans built from the actual rim rings so the skin and the lid
+     always share their boundary (no gap, no floating ring).
+     Both windings are emitted with flat per-face normals, so the lid reads
+     solid from outside and inside alike. */
+  const capTris = []
+  const capNorm = []
+  const capFan = (ring, y, ny) => {
+    let cx = 0, cz = 0
+    for (const p of ring) { cx += p[0]; cz += p[2] }
+    cx /= ring.length; cz /= ring.length
+    for (let s = 0; s < ring.length - 1; s++) {
+      const p0 = ring[s], p1 = ring[s + 1]
+      const e = y + ny * 0.0004
+      capTris.push(
+        [cx, e, cz], [p1[0], e, p1[2]], [p0[0], e, p0[2]],
+        [cx, e, cz], [p0[0], e, p0[2]], [p1[0], e, p1[2]],
+      )
+      for (let k = 0; k < 6; k++) capNorm.push(0, ny, 0)
+    }
   }
+  capFan(rows[0], -BAG.h / 2, -1)
+  if (capTop) capFan(rows[RINGS], BAG.h / 2, 1)
+
   const g = G()
   for (let i = 0; i < tris.length; i++) {
     const p = tris[i]
@@ -355,7 +379,12 @@ function bagBody() {
   geom.computeVertexNormals()
   g.normals = Array.from(geom.getAttribute('normal').array)
   g.indices = idx
-  return finalize(g)
+  const caps = G()
+  for (const t of capTris) caps.positions.push(...t)
+  caps.uvs = new Array((caps.positions.length / 3) * 2).fill(0)
+  caps.normals = capNorm
+  caps.indices = Array.from({ length: caps.positions.length / 3 }, (_, i) => i)
+  return { ...finalize(g), caps: finalize(caps) }
 }
 
 function tube(points, radius, segments = 8, closed = false) {
@@ -401,78 +430,84 @@ function sphereTris(center, r, seg = 12, rings = 8) {
   return tris
 }
 
-function bag() {
-  const body = bagBody()
+function bag(CFG = BAG_JUMBO, opts = {}) {
+  const { withLoops = true, withSpouts = true } = opts
+  BAG = CFG
+  const body = bagBody(opts)
   const top = BAG.h / 2
   const bottom = -BAG.h / 2
 
   /* four corner lift loops — U straps standing on the top edge */
   const loops = G()
-  for (let i = 0; i < 4; i++) {
+  if (withLoops) for (let i = 0; i < 4; i++) {
     const a = (i / 4) * Math.PI * 2 + Math.PI / 4
-    const spread = 0.2
+    const spread = CFG.a > 0.5 ? 0.2 : 0.16
     const pts = [
-      skinPoint(a - spread, top - 0.5, 1.012),
+      skinPoint(a - spread, top - CFG.h * 0.3, 1.012),
       skinPoint(a - spread, top - 0.06, 1.02),
-      skinPoint(a - spread * 0.72, top + 0.16, 1.03),
-      skinPoint(a, top + 0.3, 0.99),
-      skinPoint(a + spread * 0.72, top + 0.16, 1.03),
+      skinPoint(a - spread * 0.72, top + CFG.h * 0.1, 1.03),
+      skinPoint(a, top + CFG.h * 0.19, 0.99),
+      skinPoint(a + spread * 0.72, top + CFG.h * 0.1, 1.03),
       skinPoint(a + spread, top - 0.06, 1.02),
-      skinPoint(a + spread, top - 0.5, 1.012),
+      skinPoint(a + spread, top - CFG.h * 0.3, 1.012),
     ]
-    merge(loops, tube(pts, 0.032, 7))
+    merge(loops, tube(pts, CFG.a * 0.05, 7))
     for (const end of [pts[0], pts[pts.length - 1]]) {
-      const cap = finalize(flatNormals(new THREE.SphereGeometry(0.032, 12, 8).toNonIndexed().getAttribute('position').array
-        ? sphereTris(end, 0.032) : []))
+      const cap = finalize(flatNormals(sphereTris(end, CFG.a * 0.05)))
       merge(loops, cap)
     }
   }
 
   /* top fill spout: collar + short neck */
+  const sr = CFG.a / 0.66
   const spout = revolved([
-    [0, top + 0.01], [0.15, top + 0.06], [0.145, top + 0.2], [0.16, top + 0.245],
-    [0.158, top + 0.29], [0.135, top + 0.29], [0.132, top + 0.24], [0.115, top + 0.2],
-    [0.11, top + 0.08], [0, top + 0.075],
+    [0, top + 0.01 * sr], [0.15 * sr, top + 0.06 * sr], [0.145 * sr, top + 0.2 * sr], [0.16 * sr, top + 0.245 * sr],
+    [0.158 * sr, top + 0.29 * sr], [0.135 * sr, top + 0.29 * sr], [0.132 * sr, top + 0.24 * sr], [0.115 * sr, top + 0.2 * sr],
+    [0.11 * sr, top + 0.08 * sr], [0, top + 0.075 * sr],
   ], 48)
 
   /* bottom discharge spout */
   const discharge = revolved([
-    [0, bottom - 0.01], [0.13, bottom - 0.06], [0.125, bottom - 0.16], [0.14, bottom - 0.2],
-    [0.138, bottom - 0.24], [0.115, bottom - 0.24], [0.112, bottom - 0.2], [0.098, bottom - 0.16],
-    [0.095, bottom - 0.07], [0, bottom - 0.065],
+    [0, bottom - 0.01 * sr], [0.13 * sr, bottom - 0.06 * sr], [0.125 * sr, bottom - 0.16 * sr], [0.14 * sr, bottom - 0.2 * sr],
+    [0.138 * sr, bottom - 0.24 * sr], [0.115 * sr, bottom - 0.24 * sr], [0.112 * sr, bottom - 0.2 * sr], [0.098 * sr, bottom - 0.16 * sr],
+    [0.095 * sr, bottom - 0.07 * sr], [0, bottom - 0.065 * sr],
   ], 48)
-  merge(loops, spout)
-  merge(loops, discharge)
+  if (withSpouts) {
+    merge(loops, spout)
+    merge(loops, discharge)
+  }
 
   /* sewn webbing: top and bottom hems plus four vertical corner straps */
   const seams = G()
-  for (const y of [top - 0.075, bottom + 0.075]) {
+  for (const y of withLoops ? [top - CFG.h * 0.046, bottom + CFG.h * 0.046] : []) {
     const ring = []
     for (let s = 0; s <= 64; s++) {
       const a = (s / 64) * Math.PI * 2
       ring.push(skinPoint(a, y, 1.006))
     }
-    merge(seams, tube(ring, 0.016, 5))
+    merge(seams, tube(ring, CFG.a * 0.025, 5))
   }
-  for (let i = 0; i < 4; i++) {
+  if (withLoops) for (let i = 0; i < 4; i++) {
     const a = (i / 4) * Math.PI * 2 + Math.PI / 4
     const col = []
     for (let s = 0; s <= 10; s++) {
       const v = s / 10
-      col.push(skinPoint(a, bottom + 0.1 + v * (BAG.h - 0.2), 1.006))
+      col.push(skinPoint(a, bottom + CFG.h * 0.06 + v * (CFG.h * 0.88), 1.006))
     }
-    merge(seams, tube(col, 0.02, 6))
+    merge(seams, tube(col, CFG.a * 0.03, 6))
   }
 
   /* printed brand panel, raycast onto the fabric so it hugs the bulge */
   const panel = G()
-  const py = 0.02, ph = 0.3, pw = 0.33, NU = 16, NV = 14
+  const py = 0.02, ph = CFG.h * 0.185, pw = CFG.a * 0.5, NU = 16, NV = 14
   const ray = new THREE.Raycaster()
   const surfZ = (x, y) => {
     const v = (y + BAG.h / 2) / BAG.h
-    const gather = v > 0.86 ? 1 - ((v - 0.86) / 0.14) ** 1.6 * 0.72 : 1
-    const bulge = 1 + 0.055 * Math.sin(Math.PI * Math.min(1, v * 1.06)) - 0.03 * Math.max(0, v - 0.8)
-    const pleat = 0.012 * Math.sin(v * Math.PI * 5.5)
+    // a filled 50 kg sack pillows out and rounds over just under the seam
+    const gather = CUR_STRAIGHT ? 1 : v > 0.86 ? 1 - ((v - 0.86) / 0.14) ** 1.6 * 0.72 : 1
+    const pillow = CUR_PILLOW ? 1 + 0.06 * Math.sin(Math.PI * Math.min(1, v * 1.02)) - 0.06 * Math.max(0, v - 0.84) ** 1.25 : 1
+    const bulge = CUR_STRAIGHT ? pillow : (1 + 0.055 * Math.sin(Math.PI * Math.min(1, v * 1.06)) - 0.03 * Math.max(0, v - 0.8)) * pillow
+    const pleat = CUR_STRAIGHT ? 0 : 0.012 * Math.sin(v * Math.PI * 5.5)
     const k = (bulge + pleat) * gather
     // solve superellipse for z given x
     const n = BAG.exp, p = 2 / n
@@ -510,7 +545,150 @@ function bag() {
     for (let k = 0; k < 3; k++) panel.normals.push(n.x, n.y, n.z)
   }
 
-  return { body, hardware: finalize(loops), seams: finalize(seams), panel: finalize(panel) }
+  return { body, caps: body.caps, hardware: finalize(loops), seams: finalize(seams), panel: finalize(panel) }
+}
+
+/* ------------------------------------------------------------------ *
+ * 03b — 50 kg export sack (flat gusseted, stitched top)
+ * ------------------------------------------------------------------ */
+function sack50() {
+  const CFG = BAG_50KG
+  const { body, caps, seams, panel } = bag(CFG, { withLoops: false, withSpouts: false, capTop: true, straight: true, pillow: true })
+  const loops = G()
+  const top = CFG.h / 2
+  const bottom = -CFG.h / 2
+
+  /* stitched top seam: a dense row of short dashes across the mouth */
+  const stitch = G()
+  const rowY = top + 0.003
+  const needle = []
+  for (let i = 0; i < 84; i++) {
+    const a = (i / 84) * Math.PI * 2
+    const [px, pz] = superellipse(a, CFG.a * 0.955, CFG.b * 0.955, CFG.exp)
+    needle.push([px, pz, a])
+  }
+  for (const [px, pz, a] of needle) {
+    const nx = Math.cos(a) * 0.016
+    const nz = Math.sin(a) * 0.016
+    const tx = -Math.sin(a) * 0.012
+    const tz = Math.cos(a) * 0.012
+    merge(stitch, flatNormals([
+      [px - tx, rowY, pz - tz], [px + tx, rowY, pz + tz], [px + tx + nx, rowY, pz + tz + nz],
+      [px - tx, rowY, pz - tz], [px + tx + nx, rowY, pz + tz + nz], [px - tx + nx, rowY, pz - tz + nz],
+    ]))
+  }
+
+  /* sewn mouth: a dashed seam running across the flat top, edge to edge */
+  const seamTop = G()
+  const segN = 26
+  for (let i = 0; i < segN; i++) {
+    const zz = -CFG.b * 0.9 + (i / (segN - 1)) * CFG.b * 1.8
+    if (Math.abs(zz) < 0.006) continue
+    const w = 0.006
+    merge(seamTop, flatNormals([
+      [-w, rowY + 0.001, zz - 0.012], [w, rowY + 0.001, zz + 0.012], [w, rowY + 0.001, zz + 0.004],
+      [-w, rowY + 0.001, zz - 0.012], [w, rowY + 0.001, zz + 0.004], [-w, rowY + 0.001, zz - 0.004],
+    ]))
+  }
+
+  /* side gusset folds: two vertical seams on each narrow face */
+  const crease = G()
+  for (const sz of [-1, 1]) {
+    for (const fx of [-0.36, 0.36]) {
+      const pts = []
+      for (let i = 0; i <= 14; i++) {
+        const v = i / 14
+        const y = bottom + CFG.h * 0.03 + v * CFG.h * 0.94
+        pts.push([CFG.a * fx, y, sz * CFG.b * 1.004])
+      }
+      merge(crease, tube(pts, 0.0042, 4))
+    }
+  }
+  void bottom
+
+  return {
+    body: finalize(body),
+    hardware: finalize(loops),
+    seams: finalize(seams),
+    panel: finalize(panel),
+    caps,
+    stitch: finalize(stitch),
+    seamTop: finalize(seamTop),
+    crease: finalize(crease),
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * 05 — Laboratory sample jar with a quality seal
+ * ------------------------------------------------------------------ */
+function sampleJar({ r = 0.3, h = 0.62 } = {}) {
+  /* glass body: straight cylinder with a rounded shoulder (lathe) */
+  const glass = revolved([
+    [0, -h / 2],
+    [r * 0.92, -h / 2],
+    [r, -h / 2 + 0.03],
+    [r, h / 2 - 0.13],
+    [r * 0.97, h / 2 - 0.07],
+    [r * 0.88, h / 2 - 0.035],
+    [r * 0.72, h / 2 - 0.02],
+    [r * 0.7, h / 2],
+    [0, h / 2],
+  ], 72)
+
+  /* salt fill: a slightly smaller cylinder of granules */
+  const fill = revolved([
+    [0, -h / 2 + 0.012],
+    [r * 0.9, -h / 2 + 0.012],
+    [r * 0.9, h * 0.16],
+    [r * 0.86, h * 0.21],
+    [0, h * 0.24],
+  ], 64)
+
+  /* screw cap with ribs */
+  const cap = revolved([
+    [0, h / 2 - 0.005],
+    [r * 0.74, h / 2],
+    [r * 0.76, h / 2 + 0.06],
+    [r * 0.7, h / 2 + 0.1],
+    [r * 0.5, h / 2 + 0.108],
+    [0, h / 2 + 0.11],
+  ], 64)
+
+  const ribs = G()
+  const RIB = 24
+  for (let i = 0; i < RIB; i++) {
+    const a = (i / RIB) * Math.PI * 2
+    const x0 = Math.cos(a) * r * 0.75
+    const z0 = Math.sin(a) * r * 0.75
+    const x1 = Math.cos(a) * r * 0.785
+    const z1 = Math.sin(a) * r * 0.785
+    merge(ribs, flatNormals([
+      [x0, h / 2 + 0.008, z0], [x1, h / 2 + 0.008, z1], [x1, h / 2 + 0.06, z1],
+      [x0, h / 2 + 0.008, z0], [x1, h / 2 + 0.06, z1], [x0, h / 2 + 0.06, z0],
+    ]))
+  }
+
+  /* the tamper seal band around the neck */
+  const seal = revolved([
+    [r * 0.73, h / 2 + 0.002],
+    [r * 0.8, h / 2 + 0.01],
+    [r * 0.8, h / 2 + 0.05],
+    [r * 0.73, h / 2 + 0.058],
+  ], 64)
+
+  /* label band on the jar */
+  /* label wrap: 0..1 around the jar so the printed artwork maps 1:1 */
+  const label = revolved([
+    [r * 1.004, -h * 0.3],
+    [r * 1.004, h * 0.1],
+  ], 72)
+  const y0 = -h * 0.3
+  const y1 = h * 0.1
+  for (let i = 0; i < label.uvs.length; i += 2) {
+    label.uvs[i + 1] = 1 - (label.uvs[i + 1] - y0) / (y1 - y0)
+  }
+
+  return { glass: finalize(glass), fill: finalize(fill), cap: finalize(cap), ribs: finalize(ribs), seal: finalize(seal), label: finalize(label) }
 }
 
 /* ------------------------------------------------------------------ *
@@ -823,6 +1001,54 @@ console.log('SinaiCore — building 3D assets')
     { name: 'anchor_label_front', position: [0, 0.06, 0.71] },
     { name: 'anchor_label_back', position: [0, 0.06, -0.71], rotation: [0, 1, 0, 0] },
     { name: 'anchor_top_spout', position: [0, BAG.h / 2 + 0.2, 0] },
+  ])
+}
+
+/* 03b 50 kg sack */
+{
+  const { body, caps, hardware, seams, panel, stitch, crease, seamTop } = sack50()
+  // re-use the same woven look: preview only, materials are set at runtime
+  renderPreview(path.join(OUT_PREVIEW, '03b-sack50.png'), [
+    { geo: body, color: [238, 236, 226], rough: 0.86 },
+    { geo: caps, color: [232, 230, 220], rough: 0.88 },
+    { geo: crease, color: [206, 214, 220] },
+    { geo: stitch, color: [120, 140, 150] },
+    { geo: seamTop, color: [110, 130, 142] },
+    { geo: hardware, color: [206, 220, 230], metal: 0.1, rough: 0.7 },
+    { geo: panel, color: [18, 40, 60] },
+  ], { eye: [1.5, 0.75, 1.85], target: [0, 0.02, 0], fov: 32 })
+  await writeGLB('sack-50kg.glb', [
+    {
+      name: 'sack_body', geo: body,
+      material: { name: 'woven_sack', color: [0.96, 0.96, 0.93], roughness: 0.86, doubleSided: true },
+    },
+    { name: 'sack_caps', geo: caps, material: { name: 'sack_cap', color: [0.94, 0.94, 0.9], roughness: 0.88 } },
+    { name: 'sack_seams', geo: seams, material: { name: 'sack_seam', color: [0.82, 0.86, 0.88], roughness: 0.9 } },
+    { name: 'sack_closure', geo: hardware, material: { name: 'sack_closure', color: [0.86, 0.9, 0.92], roughness: 0.8 } },
+    { name: 'sack_stitch', geo: finalize((() => { const t = G(); merge(t, stitch); merge(t, seamTop); return t })()), material: { name: 'sack_thread', color: [0.45, 0.52, 0.58], roughness: 0.9 } },
+    { name: 'sack_crease', geo: crease, material: { name: 'sack_crease', color: [0.78, 0.84, 0.88], roughness: 0.9 } },
+    { name: 'brand_panel', geo: panel, material: { name: 'print_panel', color: [1, 1, 1], roughness: 0.8, opacity: 0.999 } },
+  ])
+}
+
+/* 05 sample jar */
+{
+  const { glass, fill, cap, ribs, seal, label } = sampleJar()
+  renderPreview(path.join(OUT_PREVIEW, '05-jar.png'), [
+    { geo: fill, color: [250, 250, 246] },
+    { geo: glass, color: [214, 236, 245], opacity: 0.5 },
+    { geo: label, color: [14, 26, 43] },
+    { geo: seal, color: [194, 113, 47] },
+    { geo: cap, color: [236, 242, 246] },
+    { geo: ribs, color: [206, 218, 226] },
+  ], { eye: [0.95, 0.55, 1.15], target: [0, 0.02, 0], fov: 30 })
+  await writeGLB('sample-jar.glb', [
+    { name: 'jar_glass', geo: glass, material: { name: 'lab_glass', color: [0.86, 0.94, 0.97], roughness: 0.06, metallic: 0, opacity: 0.34 } },
+    { name: 'jar_salt', geo: fill, material: { name: 'salt_sample', color: [0.99, 0.99, 0.97], roughness: 0.9 } },
+    { name: 'jar_cap', geo: cap, material: { name: 'jar_cap', color: [0.94, 0.96, 0.97], roughness: 0.42 } },
+    { name: 'jar_ribs', geo: ribs, material: { name: 'jar_cap_ribs', color: [0.86, 0.9, 0.93], roughness: 0.5 } },
+    { name: 'jar_seal', geo: seal, material: { name: 'jar_seal', color: [0.76, 0.44, 0.18], roughness: 0.35, metallic: 0.35 } },
+    { name: 'jar_label', geo: label, material: { name: 'jar_label', color: [0.05, 0.1, 0.17], roughness: 0.7 } },
   ])
 }
 
