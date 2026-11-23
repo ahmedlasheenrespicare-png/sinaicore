@@ -211,7 +211,7 @@
   function checkPortrait(){
     if(!portrait || portraitDismissed) return;
     var isPortrait = window.innerHeight > window.innerWidth;
-    portrait.classList.toggle("show", isPortrait && window.innerWidth < 1100);
+    portrait.classList.toggle("show", isPortrait && window.innerWidth < 768);
   }
   window.addEventListener("resize", checkPortrait);
   if(portraitBtn) portraitBtn.addEventListener("click", function(){ portraitDismissed=true; portrait.classList.remove("show"); });
