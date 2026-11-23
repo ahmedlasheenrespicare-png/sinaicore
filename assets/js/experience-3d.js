@@ -11,6 +11,9 @@
     try{ renderer = new THREE.WebGLRenderer({canvas:canvas, alpha:true, antialias:true}); }
     catch(e){ return; }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    renderer.outputEncoding = THREE.sRGBEncoding;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;

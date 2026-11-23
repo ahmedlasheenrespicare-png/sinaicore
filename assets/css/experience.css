@@ -363,3 +363,21 @@ main{z-index:2}
 .side-rail a.active{background:#fff;color:var(--col1);border-color:#fff}
 .side-rail a.active b{color:var(--accent)}
 @media(max-width:1100px){.side-rail{display:none}}
+
+/* v19: polish — smoother reveals, larger serif, better spacing */
+.chapter h2{font-size:clamp(30px,3.4vw,44px);line-height:1.08}
+.chapter .wrap{padding:28px 48px}
+.chapter p{font-size:16.5px;line-height:1.75}
+.chapter .lead-para{font-size:19px;line-height:1.65}
+.chapter figure{margin:22px 0}
+.chapter figure img{border-radius:10px}
+.chapter .stat-row{margin:22px 0}
+.chapter .challenge-grid{margin:22px 0}
+.chapter blockquote{margin:26px 0}
+.chapter .side-note{margin:22px 0}
+.chapter .timeline{margin:22px 0}
+.chapter .final-cta{margin-top:28px}
+.chapter h3{margin-top:30px}
+.chapter .specs-table{margin:20px 0}
+.chapter .compare{margin:20px 0}
+.chapter .slider{margin:20px 0}

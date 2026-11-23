@@ -15,8 +15,8 @@
     gsap.registerPlugin(ScrollTrigger);
     var morph = window.__morph;
     function morphTl(trigger, from, to){
-      var tl = gsap.timeline({scrollTrigger:{trigger:trigger, scrub:true, start:"top bottom", end:"bottom top"}});
-      tl.fromTo(morph, {from:from, to:from, progress:0}, {from:from, to:to, progress:1, ease:"none"}, 0);
+      var tl = gsap.timeline({scrollTrigger:{trigger:trigger, scrub:1.2, start:"top bottom", end:"bottom top"}});
+      tl.fromTo(morph, {from:from, to:from, progress:0}, {from:from, to:to, progress:1, ease:"power1.inOut"}, 0);
       return tl;
     }
     morphTl("#ch1", 0, 0);
