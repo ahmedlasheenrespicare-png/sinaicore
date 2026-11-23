@@ -1,8 +1,8 @@
 import { chapters, stats } from '../data/content'
 
 /**
- * Chapter 00 — the title. Sits above the pinned WebGL act, then hands the
- * stage over to the crystal.
+ * Chapter 00 — the title. Uses the official tagline and the published
+ * positioning line, then hands the stage over to the crystal.
  */
 export default function Hero() {
   return (
@@ -12,14 +12,14 @@ export default function Hero() {
         <div className="hero-grid" />
       </div>
 
-      {/* small screens get a still of the crystal instead of the pinned stage */}
+      {/* small screens get a still of the worked salt instead of the 3D act */}
       <div className="hero-poster" aria-hidden="true">
-        <img src="/media/halite-poster.png" alt="" width={720} height={720} loading="eager" decoding="async" />
+        <img src="/img/raw-salt.jpg" alt="" width={1200} height={800} loading="eager" decoding="async" />
       </div>
 
       <div className="hero-inner shell">
         <div className="hero-eyebrow">
-          <span className="chip">SinaiCore · Halite Division</span>
+          <span className="chip">Salts &amp; Minerals · Egypt</span>
           <span className="hero-coord mono">31.13° N&nbsp;&nbsp;&nbsp;33.80° E</span>
         </div>
 
@@ -41,10 +41,10 @@ export default function Hero() {
           </h1>
 
           <div className="hero-side">
+            <p className="hero-tagline">At the Core of Quality and Purity</p>
             <p className="lead hero-lead" data-reveal>
-              من رمال وسبخات سيناء الشمالية، نستخرج بلورات الهاليت ونعالجها ونعبّئها في شكائر
-              جامبو سعة طن، ثم نشحنها من ميناءي العريش والسويس إلى مصانع المياه والغذاء
-              والكيمياء حول العالم.
+              حلول ملح مصري فاخر من سيناء الشمالية: توريد مُنسّق من مُنتجين مؤهّلين،
+              تحقّق مستقل من الجودة، تعبئة احترافية، وتصدير إلى الأسواق العالمية.
             </p>
 
             <ol className="hero-chapters" aria-label="محطات العرض">

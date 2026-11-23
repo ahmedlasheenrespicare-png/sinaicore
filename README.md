@@ -1,7 +1,11 @@
 # SinaiCore — ملح سيناء · 3D Scroll Experience
 
-An immersive, right-to-left scroll experience for a North Sinai salt producer:
-raw halite crystal → water-softening tablets → 1 MT jumbo bag → export routes.
+An immersive, right-to-left scroll experience for **SinaiCore for Salts & Minerals**:
+marine halite sourcing → purity & water-softening tablets → FIBC jumbo bags → FOB export routes.
+
+All copy, figures, product grades, packaging formats, Incoterms, offices and contact
+details come from the official SinaiCore site. The brand lockup and photography are the
+supplied assets (`public/brand`, `public/img`).
 
 Built with React 19 + three.js (react-three-fiber) and a real-time Draco-compressed
 GLB pipeline that runs entirely in this repo — no external model downloads.
@@ -18,10 +22,23 @@ node scripts/build-assets.mjs   # regenerate the 3D assets + preview renders
 
 | # | Chapter | Model | Interaction |
 |---|---------|-------|-------------|
-| 01 | `crystal` — البلورة الخام | `crystal.glb` (halite cluster on host rock) | rotates with scroll + pointer; custom refraction/dispersion shader |
-| 02 | `purity` — النقاء والمعالجة | `tablets.glb` (3 softening tablets) | grain field morph, hotspots for NaCl 99.5% and quality specs |
-| 03 | `packing` — التعبئة | `jumbo-bag.glb` (FIBC 1 MT) | one slow revolution to reveal print, seams and lift loops |
-| 04 | `export` — خطوط التصدير | `globe.glb` (ocean + land ribbons) | animated export arcs from El Arish / Suez to 10 markets |
+| 01 | `crystal` — المصدر البحري | `crystal.glb` (halite cluster on host rock) | rotates with scroll + pointer; custom refraction/dispersion shader |
+| 02 | `purity` — النقاء والمعالجة | `tablets.glb` (3 softening tablets) | grain field morph, hotspots for NaCl ≥99.5% and batch control |
+| 03 | `packing` — التعبئة | `jumbo-bag.glb` (FIBC 1–1.5 MT) | one slow revolution; the face carries the printed SinaiCore lockup |
+| 04 | `export` — خطوط التصدير | `globe.glb` (ocean + land ribbons) | animated FOB arcs from El Arish / Suez to six continents |
+
+Below the act: the five published product grades with their real NaCl/moisture specs,
+the three trust pillars, the technical sheet, the six-step inquiry-to-delivery line,
+and both offices (El Arish & New Cairo) with live contact details.
+
+## Brand
+
+- Palette taken from the logo and the published site: navy `#0E1A2B`, primary blue
+  `#1A6B9C`, copper accent `#C2712F`, product white `#F4F3ED`.
+- `public/brand/logo-header.png` — supplied header lockup (header + footer)
+- `public/brand/logo-mark.png` — extracted mark, used in 3D prints, spec panel and favicon
+- `public/img/*` — supplied product/facility photography for the portfolio cards,
+  the mobile hero and the refined-grade plate
 
 Everything lives in one pinned viewport (`.journey`, ~4.6 viewports of scroll) with a
 sticky WebGL canvas behind it. The copy panels swap as the shared progress value

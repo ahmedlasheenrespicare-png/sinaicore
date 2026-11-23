@@ -21,10 +21,10 @@ function StudioEnvironment() {
     c.height = 512
     const ctx = c.getContext('2d')!
     const g = ctx.createLinearGradient(0, 0, 0, 512)
-    g.addColorStop(0, '#0a1416')
-    g.addColorStop(0.42, '#1d2a2b')
-    g.addColorStop(0.52, '#3d5a58')
-    g.addColorStop(0.62, '#182423')
+    g.addColorStop(0, '#081420')
+    g.addColorStop(0.42, '#152a3a')
+    g.addColorStop(0.52, '#2f5f7d')
+    g.addColorStop(0.62, '#16232e')
     g.addColorStop(1, '#05090a')
     ctx.fillStyle = g
     ctx.fillRect(0, 0, 1024, 512)
@@ -62,7 +62,7 @@ function useAct() {
   return (a: number, b: number, c = 0, d = 1) => remap(gl.act, a, b, c, d)
 }
 
-function Glow({ color = '#7fd9c4', intensity = 1, size = 4 }: { color?: string; intensity?: number; size?: number }) {
+function Glow({ color = '#4e9fce', intensity = 1, size = 4 }: { color?: string; intensity?: number; size?: number }) {
   return (
     <mesh position={[0, 0.1, -1.1]} scale={size}>
       <sphereGeometry args={[1, 16, 16]} />
@@ -215,13 +215,13 @@ function TabletChapter({ onHotspots }: { onHotspots: (show: boolean) => void }) 
       const mesh = o as THREE.Mesh
       if (!mesh.isMesh) return
       mesh.material = new THREE.MeshPhysicalMaterial({
-        color: '#eef2ef',
-        roughness: 0.62,
+        color: '#f4f4ef',
+        roughness: 0.64,
         metalness: 0,
         clearcoat: 0.4,
         clearcoatRoughness: 0.5,
         sheen: 0.5,
-        sheenColor: new THREE.Color('#bff2e6'),
+        sheenColor: new THREE.Color('#cfe6f3'),
         envMapIntensity: 1.1,
       })
     })
@@ -261,54 +261,96 @@ function BrandTexture() {
     c.width = 1024
     c.height = 1024
     const x = c.getContext('2d')!
-    x.fillStyle = '#e9e7dc'
+    // woven polypropylene ground
+    x.fillStyle = '#f2f1ea'
     x.fillRect(0, 0, 1024, 1024)
-    // subtle woven tint
     for (let i = 0; i < 1024; i += 8) {
-      x.fillStyle = i % 16 === 0 ? 'rgba(0,0,0,0.018)' : 'rgba(255,255,255,0.03)'
+      x.fillStyle = i % 16 === 0 ? 'rgba(26,107,156,0.035)' : 'rgba(0,0,0,0.02)'
       x.fillRect(0, i, 1024, 4)
       x.fillRect(i, 0, 4, 1024)
     }
-    // brand block
-    x.fillStyle = '#0c2222'
-    x.fillRect(0, 0, 1024, 1024)
-    x.fillStyle = '#e9e7dc'
-    x.fillRect(48, 48, 928, 928)
+    // printed plate
+    const navy = '#0e1a2b'
+    const blue = '#1a6b9c'
+    const copper = '#c2712f'
+    x.strokeStyle = 'rgba(26,107,156,0.5)'
+    x.lineWidth = 4
+    x.strokeRect(96, 84, 832, 856)
 
-    x.fillStyle = '#0c2222'
-    x.font = '700 132px Archivo, Helvetica, Arial, sans-serif'
-    x.textAlign = 'center'
-    x.textBaseline = 'middle'
-    x.fillText('SINAI', 512, 400)
-    x.fillText('CORE', 512, 530)
-    x.strokeStyle = '#0c2222'
-    x.lineWidth = 6
-    x.beginPath()
-    x.moveTo(300, 620)
-    x.lineTo(724, 620)
-    x.stroke()
+    // the mark is drawn once the asset is decoded; the plate ships with text only
+    const img = new Image()
+    img.onload = () => {
+      const ratio = img.width / img.height
+      const w = 470
+      const h = w / ratio
+      x.drawImage(img, 512 - w / 2, 140, w, h)
+      x.textAlign = 'center'
+      x.fillStyle = copper
+      x.font = '700 96px Archivo, Helvetica, Arial, sans-serif'
+      x.fillText('SINAI', 512 - 118, 140 + h + 104)
+      x.fillStyle = blue
+      x.fillText('CORE', 512 + 118, 140 + h + 104)
+      x.fillStyle = navy
+      x.font = '400 34px Archivo, Helvetica, Arial, sans-serif'
+      x.fillText('At the Core of Quality and Purity', 512, 140 + h + 158)
 
-    x.font = '500 46px Archivo, Helvetica, Arial, sans-serif'
-    x.fillStyle = '#1f4a45'
-    x.fillText('NORTH SINAI  ·  EGYPT', 512, 690)
-    x.fillText('HALITE  ·  NaCl 99.5%', 512, 752)
+      x.font = '700 46px Archivo, Helvetica, Arial, sans-serif'
+      x.fillText('REFINED IODIZED SALT', 512, 640)
+      x.font = '400 34px Archivo, Helvetica, Arial, sans-serif'
+      x.fillStyle = '#33556e'
+      x.fillText('PREMIUM VACUUM REFINED  ·  FOOD & INDUSTRIAL', 512, 690)
 
-    x.font = '400 34px monospace'
-    x.fillStyle = '#3c5a55'
-    x.fillText('FIBC 1 MT  ·  SWL 5:1', 512, 820)
-    x.fillText('LOT  AR-2411-0087', 512, 868)
+      x.fillStyle = navy
+      x.font = '700 58px Archivo, Helvetica, Arial, sans-serif'
+      x.fillText('FIBC 1 MT', 512, 790)
+      x.font = '400 32px monospace'
+      x.fillStyle = '#3c5a55'
+      x.fillText('NaCl ≥ 99.5%  ·  SWL 5:1  ·  PRODUCT OF EGYPT', 512, 842)
 
-    // barcode
-    let bx = 340
-    for (let i = 0; i < 42; i++) {
-      const w = (i % 3) + 1
-      x.fillStyle = i % 2 ? '#0c2222' : '#e9e7dc'
-      x.fillRect(bx, 900, w * 2, 70)
-      bx += w * 2 + 3
+      let bx = 372
+      for (let i = 0; i < 40; i++) {
+        const bw = (i % 3) + 1
+        x.fillStyle = i % 2 ? navy : '#f2f1ea'
+        x.fillRect(bx, 880, bw * 2, 44)
+        bx += bw * 2 + 3
+      }
+      tex.needsUpdate = true
     }
+    img.src = '/brand/logo-mark.png'
+
+    const tex = new THREE.CanvasTexture(c)
+    tex.colorSpace = THREE.SRGBColorSpace
+    tex.anisotropy = 8
+    return tex
+  }, [])
+}
+
+/* Woven PP fabric: a seamless tile of threads plus the brand's blue weft stripe. */
+function useWovenTexture() {
+  return useMemo(() => {
+    const N = 256
+    const c = document.createElement('canvas')
+    c.width = c.height = N
+    const x = c.getContext('2d')!
+    x.fillStyle = '#f0f0ea'
+    x.fillRect(0, 0, N, N)
+    // warp / weft threads
+    for (let i = 0; i < N; i += 4) {
+      x.fillStyle = i % 8 === 0 ? 'rgba(26,107,156,0.10)' : 'rgba(120,130,140,0.05)'
+      x.fillRect(0, i, N, 2)
+      x.fillStyle = i % 8 === 0 ? 'rgba(26,107,156,0.07)' : 'rgba(150,160,170,0.04)'
+      x.fillRect(i, 0, 2, N)
+    }
+    // the printed blue stripe seen on the real FIBCs
+    x.fillStyle = 'rgba(26,107,156,0.55)'
+    x.fillRect(N * 0.46, 0, 8, N)
+    x.fillStyle = 'rgba(194,113,47,0.35)'
+    x.fillRect(N * 0.56, 0, 4, N)
     const t = new THREE.CanvasTexture(c)
     t.colorSpace = THREE.SRGBColorSpace
-    t.anisotropy = 8
+    t.wrapS = t.wrapT = THREE.RepeatWrapping
+    t.repeat.set(2, 2)
+    t.anisotropy = 4
     return t
   }, [])
 }
@@ -317,6 +359,7 @@ function BagChapter() {
   const group = useRef<THREE.Group>(null)
   const { scene } = useGLTF('/models/jumbo-bag.glb')
   const brand = BrandTexture()
+  const woven = useWovenTexture()
   const model = useMemo(() => {
     const m = scene.clone(true)
     m.traverse((o) => {
@@ -333,20 +376,21 @@ function BagChapter() {
         })
       } else if (n.includes('fibc_body')) {
         mesh.material = new THREE.MeshStandardMaterial({
-          color: '#e7e4d8',
-          roughness: 0.82,
+          color: '#fbfbf6',
+          map: woven,
+          roughness: 0.86,
           metalness: 0,
-          envMapIntensity: 0.9,
+          envMapIntensity: 0.8,
           side: THREE.DoubleSide,
         })
       } else if (n.includes('seams')) {
-        mesh.material = new THREE.MeshStandardMaterial({ color: '#c3bfae', roughness: 0.9 })
+        mesh.material = new THREE.MeshStandardMaterial({ color: '#c6d8e4', roughness: 0.9 })
       } else {
-        mesh.material = new THREE.MeshStandardMaterial({ color: '#cfc4a4', roughness: 0.72 })
+        mesh.material = new THREE.MeshStandardMaterial({ color: '#dde7ee', roughness: 0.8 })
       }
     })
     return m
-  }, [scene, brand])
+  }, [scene, brand, woven])
 
   const rot = useRef(0)
   useFrame((s, dt) => {
@@ -383,7 +427,7 @@ function llToVec(lat: number, lon: number, r = R) {
   return new THREE.Vector3(-r * Math.sin(phi) * Math.cos(theta), r * Math.cos(phi), r * Math.sin(phi) * Math.sin(theta))
 }
 
-function Arc({ from, to, lifted = 0.45, color = '#7fd9c4', width = 0.007 }: { from: THREE.Vector3; to: THREE.Vector3; lifted?: number; color?: string; width?: number }) {
+function Arc({ from, to, lifted = 0.45, color = '#4e9fce', width = 0.007 }: { from: THREE.Vector3; to: THREE.Vector3; lifted?: number; color?: string; width?: number }) {
   const { geometry, drawCount } = useMemo(() => {
     const mid = from.clone().add(to).multiplyScalar(0.5)
     const dist = from.distanceTo(to)
@@ -461,7 +505,7 @@ function Arc({ from, to, lifted = 0.45, color = '#7fd9c4', width = 0.007 }: { fr
   return <primitive object={line} />
 }
 
-function SurfaceDot({ pos, color = '#a8f0dc', size = 0.014, phase = 0 }: { pos: THREE.Vector3; color?: string; size?: number; phase?: number }) {
+function SurfaceDot({ pos, color = '#a9d3eb', size = 0.014, phase = 0 }: { pos: THREE.Vector3; color?: string; size?: number; phase?: number }) {
   const ref = useRef<THREE.Mesh>(null)
   useFrame((s) => {
     if (!ref.current) return
@@ -488,7 +532,7 @@ function GlobeChapter() {
       if (!mesh.isMesh) return
       if (mesh.name.includes('ocean')) {
         mesh.material = new THREE.MeshPhysicalMaterial({
-          color: '#0a1f22',
+          color: '#0b1b2c',
           roughness: 0.52,
           metalness: 0.18,
           clearcoat: 0.35,
@@ -496,7 +540,7 @@ function GlobeChapter() {
           envMapIntensity: 0.8,
         })
       } else {
-        mesh.material = new THREE.MeshBasicMaterial({ color: '#6fd8c4', toneMapped: false, transparent: true, opacity: 0.92 })
+        mesh.material = new THREE.MeshBasicMaterial({ color: '#4e9fce', toneMapped: false, transparent: true, opacity: 0.92 })
       }
     })
     return m
@@ -540,14 +584,14 @@ function GlobeChapter() {
         <Arc key={i} from={a.from} to={a.to} lifted={a.lifted} color={i === arcs.length - 1 ? '#e0c79a' : '#7fd9c4'} />
       ))}
       <SurfaceDot pos={origin} color="#ffffff" size={0.013} />
-      <SurfaceDot pos={suez} color="#e0c79a" size={0.011} phase={1.4} />
+      <SurfaceDot pos={suez} color="#d9a273" size={0.011} phase={1.4} />
       {dests.map((p, i) => (
-        <SurfaceDot key={i} pos={p} color="#a8f0dc" size={0.008} phase={i} />
+        <SurfaceDot key={i} pos={p} color="#a9d3eb" size={0.008} phase={i} />
       ))}
       {/* atmosphere */}
       <mesh scale={1.075}>
         <sphereGeometry args={[R, 48, 32]} />
-        <meshBasicMaterial color="#2f9d92" transparent opacity={0.05} side={THREE.BackSide} depthWrite={false} blending={THREE.AdditiveBlending} />
+        <meshBasicMaterial color="#1a6b9c" transparent opacity={0.06} side={THREE.BackSide} depthWrite={false} blending={THREE.AdditiveBlending} />
       </mesh>
     </group>
   )
@@ -600,11 +644,11 @@ function Rig() {
 function Lights() {
   return (
     <>
-      <ambientLight intensity={0.26} />
-      <directionalLight position={[-3, 5, 4]} intensity={1.45} color="#f2fffc" />
-      <directionalLight position={[4, 1.5, 2]} intensity={0.65} color="#a8e9dd" />
-      <spotLight position={[2.5, 6, -1]} angle={0.8} penumbra={1} intensity={70} color="#bff3e8" distance={20} />
-      <pointLight position={[0, -2.6, 2]} intensity={9} color="#2f9d92" distance={8} />
+      <ambientLight intensity={0.3} />
+      <directionalLight position={[-3, 5, 4]} intensity={1.45} color="#f4fbff" />
+      <directionalLight position={[4, 1.5, 2]} intensity={0.6} color="#a9d3eb" />
+      <spotLight position={[2.5, 6, -1]} angle={0.8} penumbra={1} intensity={70} color="#d4e9f5" distance={20} />
+      <pointLight position={[0, -2.6, 2]} intensity={9} color="#1a6b9c" distance={8} />
     </>
   )
 }
@@ -676,7 +720,7 @@ export default function Stage({
         onCreated={({ gl: r }) => {
           r.setClearColor(0x000000, 0)
           r.toneMapping = THREE.ACESFilmicToneMapping
-          r.toneMappingExposure = 0.92
+          r.toneMappingExposure = 0.98
         }}
         style={{ position: 'absolute', inset: 0 }}
       >

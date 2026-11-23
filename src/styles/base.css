@@ -1,17 +1,25 @@
 :root {
-  /* ---------- palette: industrial salt, North Sinai ---------- */
-  --ink: #070a0a;
-  --ink-2: #0b1011;
-  --ink-3: #121a1b;
-  --salt: #f4f3ed;
-  --salt-dim: #cfd2c9;
-  --mist: #9aa6a1;
-  --mist-2: #6d7a76;
-  --brine: #7fd9c4;
-  --brine-deep: #2f9d92;
-  --brine-glow: #a8f0dc;
-  --sand: #c9a879;
-  --rust: #b2613f;
+  /* ---------- palette: the SinaiCore identity ----------
+     navy  #0E1A2B  ·  deep ink
+     blue  #1A6B9C  ·  primary (sea / wave)
+     copper#C2712F  ·  accent (sinai rock)
+     salt  #F4F3ED  ·  product white
+  --------------------------------------------------------- */
+  --ink: #070c14;
+  --ink-2: #0b1320;
+  --ink-3: #101d2c;
+  --salt: #f6f5ef;
+  --salt-dim: #d6dae0;
+  --mist: #96a6b6;
+  --mist-2: #6c7f92;
+  --brine: #4e9fce;
+  --brine-deep: #1a6b9c;
+  --brine-light: #a9d3eb;
+  --brine-glow: #d6ecf9;
+  --copper: #c2712f;
+  --copper-light: #e8b07a;
+  --sand: #e8b07a;
+  --rust: #a8531f;
   --line: color-mix(in oklab, var(--mist) 26%, transparent);
   --line-soft: color-mix(in oklab, var(--mist) 14%, transparent);
 
@@ -70,8 +78,8 @@ body.is-booting {
 }
 
 ::selection {
-  background: color-mix(in oklab, var(--brine) 40%, transparent);
-  color: var(--salt);
+  background: color-mix(in oklab, var(--copper) 45%, transparent);
+  color: #fff;
 }
 
 /* thin, quiet scrollbar ------------------------------------------------ */

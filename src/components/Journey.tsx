@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { gl } from '../three/state'
-import { chapters, hotspots, packaging, ports, destinations, specs } from '../data/content'
+import { chapters, hotspots, packaging, ports, destinations } from '../data/content'
 
 /**
  * The pinned act: one sticky viewport that the four chapters scroll through.
@@ -21,8 +21,6 @@ export default function Journey({ hotspotsOn }: { hotspotsOn: boolean }) {
         last = id
         ref.current.dataset.live = id
         window.dispatchEvent(new CustomEvent('sinaicore:chapter', { detail: id }))
-        // let the panels' CSS transitions know where they are in the dwell
-        ref.current.style.setProperty('--enter', '0')
       }
       raf = requestAnimationFrame(tick)
     }
@@ -38,30 +36,29 @@ export default function Journey({ hotspotsOn }: { hotspotsOn: boolean }) {
           <div className="panel-copy">
             <header className="panel-head">
               <span className="panel-num mono">01</span>
-              <span className="kicker">THE RAW CRYSTAL</span>
+              <span className="kicker">STRATEGIC MARINE SOURCING</span>
             </header>
             <h2 className="h-scene">
               بلورة هاليت
               <br />
-              من قلب سيناء
+              من سيناء الشمالية
             </h2>
             <p className="lead">
-              نظام بلوري مكعبي تشكّل تحت ضغط البحر قبل ملايين السنين. نستخرجه من الطبقات
-              الملحية في وسط سيناء، ثم نغسله ونعاود بلورته لنحصل على حبيبة نقية، بيضاء،
-              وخالية من الشوائب.
+              ننسّق التوريد من مُنتجي ملح بحري مؤهّلين في سيناء الشمالية، حيث يتبلور الهاليت
+              عبر تبخير شمسي طبيعي. النتيجة: كميات موثوقة، مواصفات مرنة، ومنتج جاهز للتصدير.
             </p>
             <dl className="facts">
               <div>
                 <dt className="mono">SYSTEM</dt>
-                <dd>Cubic · Fm3m</dd>
+                <dd>Cubic · NaCl</dd>
               </div>
               <div>
-                <dt className="mono">PURITY</dt>
-                <dd>99.5% NaCl</dd>
+                <dt className="mono">METHOD</dt>
+                <dd>تبخير شمسي</dd>
               </div>
               <div>
                 <dt className="mono">ORIGIN</dt>
-                <dd>وسط سيناء</dd>
+                <dd>سيناء الشمالية</dd>
               </div>
             </dl>
           </div>
@@ -73,6 +70,7 @@ export default function Journey({ hotspotsOn }: { hotspotsOn: boolean }) {
               </svg>
               <span>يتبع دورانك</span>
             </div>
+            <span className="panel-counter mono">01 / 04</span>
           </div>
         </section>
 
@@ -81,7 +79,7 @@ export default function Journey({ hotspotsOn }: { hotspotsOn: boolean }) {
           <div className="panel-copy">
             <header className="panel-head">
               <span className="panel-num mono">02</span>
-              <span className="kicker">PURITY · PROCESSING</span>
+              <span className="kicker">QUALITY &amp; BATCH CONTROL</span>
             </header>
             <h2 className="h-scene">
               من الحبيبة
@@ -89,8 +87,8 @@ export default function Journey({ hotspotsOn }: { hotspotsOn: boolean }) {
               إلى قرص التطرية
             </h2>
             <p className="lead">
-              نضغط الملح المعالج في أقراص أسطوانية متجانسة تُستخدم في وحدات تطرية المياه
-              المنزلية والصناعية. كل قرص يحمل مواصفة ثابتة: مقاس، صلادة، وسرعة ذوبان متوقّعة.
+              نضغط الملح المكرر في أقراص أسطوانية متجانسة لتجديد راتنج وحدات تطرية المياه.
+              المواصفات مضبوطة على كل تشغيلة، وبدعم تحليل معامل مستقلة عند الطلب.
             </p>
 
             <div className="hotspot-list" role="list">
@@ -109,7 +107,7 @@ export default function Journey({ hotspotsOn }: { hotspotsOn: boolean }) {
             </div>
           </div>
           <div className="panel-note">
-            <span className="note-tag">NaCl 99.5%</span>
+            <span className="note-tag">NaCl ≥ 99.5%</span>
             <span className="mono panel-counter">02 / 04</span>
           </div>
         </section>
@@ -119,10 +117,13 @@ export default function Journey({ hotspotsOn }: { hotspotsOn: boolean }) {
           <div className="panel-copy">
             <header className="panel-head">
               <span className="panel-num mono">03</span>
-              <span className="kicker">PACKING · FIBC 1 MT</span>
+              <span className="kicker">PACKAGING · FIBC 1–1.5 MT</span>
             </header>
             <h2 className="h-scene">{packaging.title}</h2>
-            <p className="lead">{packaging.features[0]} كل شكارة تُخاط وتُرقّم قبل أن تغادر خط التعبئة.</p>
+            <p className="lead">
+              شكائر صناعية بأذرع رفع مقوّاة وفتحة تفريغ سفلية، تُشحن بالحاويات أو على متن
+              سفن سائبة. متاحة أيضاً أكياس ٢٥ و٥٠ كجم وأكياس سلاينج.
+            </p>
 
             <div className="spec-table">
               {packaging.rows.map((r) => (
@@ -135,7 +136,7 @@ export default function Journey({ hotspotsOn }: { hotspotsOn: boolean }) {
             </div>
 
             <ul className="pack-feats">
-              {packaging.features.slice(1).map((f) => (
+              {packaging.features.slice(0, 3).map((f) => (
                 <li key={f}>{f}</li>
               ))}
             </ul>
@@ -151,7 +152,7 @@ export default function Journey({ hotspotsOn }: { hotspotsOn: boolean }) {
           <div className="panel-copy">
             <header className="panel-head">
               <span className="panel-num mono">04</span>
-              <span className="kicker">EXPORT ROUTES</span>
+              <span className="kicker">EXPORT LOGISTICS · FOB</span>
             </header>
             <h2 className="h-scene">
               من العريش
@@ -159,8 +160,8 @@ export default function Journey({ hotspotsOn }: { hotspotsOn: boolean }) {
               إلى العالم
             </h2>
             <p className="lead">
-              ننقل الشحنة براً إلى ميناء العريش على المتوسط، أو عبر السويس إلى البحر الأحمر.
-              خطوط مباشرة إلى أوروبا وآسيا وأفريقيا والأمريكتين.
+              شحن FOB من ميناء العريش للسوائب والسفن المستأجرة، أو من السويس وشرق بورسعيد
+              التفريعة للحاويات. الشروط وفق قواعد غرفة التجارة الدولية (ICC).
             </p>
 
             <div className="ports">
@@ -169,7 +170,7 @@ export default function Journey({ hotspotsOn }: { hotspotsOn: boolean }) {
                   <span className="port-dot" aria-hidden="true" />
                   <div>
                     <b>{p.name}</b>
-                    <i className="mono">{p.nameLat} · {p.coords}</i>
+                    <i className="mono">{p.nameLat}</i>
                   </div>
                   <span className="port-role">{p.role}</span>
                 </div>
@@ -188,12 +189,12 @@ export default function Journey({ hotspotsOn }: { hotspotsOn: boolean }) {
             </div>
           </div>
           <div className="panel-note">
-            <span className="note-tag">10+ MARKETS</span>
+            <span className="note-tag">FOB · CIF</span>
             <span className="mono panel-counter">04 / 04</span>
           </div>
         </section>
 
-        {/* hotspot dots over the 3D tablets */}
+        {/* marker dots over the 3D tablets */}
         <HotspotOverlay visible={hotspotsOn} />
       </div>
 

@@ -136,9 +136,9 @@ export function createHaliteMaterial() {
       uTime: { value: 0 },
       uPulse: { value: 0 },
       uOpacity: { value: 0.94 },
-      uDeep: { value: new THREE.Color('#0a2a2b') },
-      uBright: { value: new THREE.Color('#9fe6da') },
-      uAccent: { value: new THREE.Color('#c8fff0') },
+      uDeep: { value: new THREE.Color('#08263a') },
+      uBright: { value: new THREE.Color('#b9e4f7') },
+      uAccent: { value: new THREE.Color('#eaf4ff') },
     },
   })
 }

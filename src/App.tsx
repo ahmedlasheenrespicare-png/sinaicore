@@ -3,7 +3,7 @@ import { journal } from './lib/journal'
 import { gl, sstep } from './three/state'
 import Hero from './components/Hero'
 import Journey from './components/Journey'
-import { Quality, Contact, Footer } from './components/Sections'
+import { Products, Quality, Contact, Footer } from './components/Sections'
 import { Header, ChapterRail } from './components/Chrome'
 import Curtain from './components/Curtain'
 
@@ -97,6 +97,7 @@ export default function App() {
           <Journey hotspotsOn={hotspotsOn} />
         </div>
 
+        <Products />
         <Quality />
         <Contact />
       </main>

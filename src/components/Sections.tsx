@@ -1,34 +1,115 @@
-import { specs } from '../data/content'
+import { products, pillars, process, specs, compliance, contact } from '../data/content'
 
-/** Below the act — the lab sheet: full specification, then the process line. */
+/** Product portfolio, five grades exactly as published. */
+export function Products() {
+  return (
+    <section className="products" id="products">
+      <div className="shell">
+        <header className="sec-head">
+          <div>
+            <span className="kicker">PRODUCT PORTFOLIO</span>
+            <h2 className="h-scene">
+              حلول ملح
+              <br />
+              للأسواق العالمية
+            </h2>
+          </div>
+          <p className="lead">
+            محفظة المنتجات تُورَّد من مُنتجين مؤهّلين في سيناء الشمالية وتُدار عبر معالجة
+            وتحقّق جودة وتعبئة وإجراءات تصدير مطابقة لمواصفات العميل.
+          </p>
+        </header>
+
+        <div className="prod-grid">
+          {products.map((p, i) => (
+            <article className="prod-card" key={p.id} data-reveal style={{ '--d': `${i * 70}ms` } as React.CSSProperties}>
+              <div className={`prod-media prod-media--${p.id}`}>
+                <img src={p.img} alt={p.title} loading="lazy" decoding="async" />
+                <span className="prod-tag mono">{p.tagEn}</span>
+                <span className="prod-grade mono">{p.grade}</span>
+              </div>
+              <div className="prod-body">
+                <h3>{p.title}</h3>
+                <p>{p.body}</p>
+                <div className="prod-specs">
+                  <span>
+                    <em>NaCl</em>
+                    <b className="ar-num">{p.nacl}</b>
+                  </span>
+                  <span>
+                    <em>MOISTURE</em>
+                    <b className="ar-num">{p.moisture}</b>
+                  </span>
+                </div>
+                <a className="prod-link" href="#contact">
+                  اطلب COA &amp; TDS
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M13 8H4M7.5 4l-4 4 4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="square" />
+                  </svg>
+                </a>
+              </div>
+            </article>
+          ))}
+
+          <article className="prod-card prod-card--cta" data-reveal>
+            <div className="prod-cta-inner">
+              <span className="kicker">CUSTOM SPECIFICATION</span>
+              <h3>مقاسك الخاص؟</h3>
+              <p>نضبط المقاس الحبيبي ومضادات التكتّل والتعبئة حسب التطبيق.</p>
+              <a className="cf-submit" href="#contact">
+                <span>تحدّث إلى الفريق</span>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M13 8H4M7.5 4l-4 4 4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="square" />
+                </svg>
+              </a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/** Why SinaiCore — the three published pillars + quality sheet. */
 export function Quality() {
   return (
     <section className="quality" id="quality">
       <div className="shell">
         <header className="sec-head">
           <div>
-            <span className="kicker">TECHNICAL DATA SHEET</span>
+            <span className="kicker">WHY SINAICORE</span>
             <h2 className="h-scene">
-              ورقة المواصفات
+              ثلاث ركائز
               <br />
-              لكل تشغيلة
+              للثقة
             </h2>
           </div>
           <p className="lead">
-            كل شحنة تُرفق بتحليل معملي مستقل. الأرقام أدناه هي الحدود التي نلتزم بها في كل
-            حاوية تغادر سيناء، لا متوسطات تسويقية.
+            التزامنا يغطي كل مرحلة من سلسلة توريد الملح البحري: المصدر، ضبط التشغيلة،
+            والتوثيق حتى لحظة التحميل.
           </p>
         </header>
+
+        <div className="pillars">
+          {pillars.map((p, i) => (
+            <article className="pillar" key={p.n} data-reveal style={{ '--d': `${i * 90}ms` } as React.CSSProperties}>
+              <span className="pillar-num mono">{p.n}</span>
+              <h3>{p.title}</h3>
+              <span className="pillar-en mono">{p.titleEn}</span>
+              <p>{p.body}</p>
+            </article>
+          ))}
+        </div>
 
         <div className="spec-grid">
           <div className="spec-sheet">
             <div className="sheet-head">
-              <span className="mono">LOT AR-2411-0087</span>
-              <span className="mono">ISSUED 2026-11</span>
+              <span className="mono">TECHNICAL SPECIFICATIONS</span>
+              <span className="mono">5 GRADES</span>
             </div>
             <div className="sheet-body">
               {specs.map((s, i) => (
-                <div className="sheet-row" key={s.k} data-reveal style={{ '--d': `${i * 45}ms` } as React.CSSProperties}>
+                <div className="sheet-row" key={`${s.k}-${i}`}>
                   <span className="sr-key mono">{s.k}</span>
                   <i className="sr-dots" aria-hidden="true" />
                   <b className="ar-num">{s.v}</b>
@@ -37,53 +118,44 @@ export function Quality() {
               ))}
             </div>
             <div className="sheet-foot">
-              <span>طريقة الاختبار: ASTM E534 · ISO 2483</span>
-              <span className="mono">SGS · INTERTEK</span>
+              <span>Granulometry per application · anti-caking monitored</span>
+              <span className="mono">ISO · ASTM · EN</span>
             </div>
           </div>
 
           <aside className="lab-note">
             <div className="lab-badge" aria-hidden="true">
-              <svg viewBox="0 0 120 120" width="120" height="120" fill="none">
-                <circle cx="60" cy="60" r="58" stroke="currentColor" strokeWidth="0.6" opacity=".3" />
-                <circle cx="60" cy="60" r="46" stroke="currentColor" strokeWidth="0.6" strokeDasharray="2 5" opacity=".5" />
-                <path d="M60 18v84M18 60h84" stroke="currentColor" strokeWidth="0.4" opacity=".25" />
-                <text x="60" y="56" textAnchor="middle" fill="currentColor" fontFamily="Archivo" fontSize="20" fontWeight="600">
-                  99.5
-                </text>
-                <text x="60" y="72" textAnchor="middle" fill="currentColor" fontFamily="monospace" fontSize="8" letterSpacing="2">
-                  NaCl %
-                </text>
-              </svg>
+              <img src="/brand/logo-mark.png" alt="" width={220} height={120} loading="lazy" decoding="async" />
             </div>
-            <h3>لماذا نقاء البلورة يهم؟</h3>
+            <h3>من المصدر إلى الشحنة</h3>
             <p>
-              في وحدات التطرية، كل ٠٫١٪ شوائب تعني راتنجاً يُستهلك أسرع ورسوبيات أكثر في
-              الأنابيب. وفي الصناعة الغذائية، تحدد الشوائب طعم المنتج ولونه. لذلك نبيع
-              الرقم، لا الكمية فقط.
+              يُحصد الملح البحري عبر تبخير شمسي طبيعي، ويُراقَب بإجراءات رقابة منظمة في كل
+              مرحلة — من الاستخراج حتى تحميل التصدير. كل تشغيلة تخضع لتحليل كيميائي وفيزيائي.
             </p>
             <ul>
-              <li>تحليل معمل مستقل لكل تشغيلة</li>
-              <li>سجل تعقّب من المحجر إلى الحاوية</li>
-              <li>عينة محفوظة ٢٤ شهراً لكل LOT</li>
+              <li>ضبط النقاء الكيميائي (NaCl)</li>
+              <li>تقارير توزيع حجمي بالمناخل</li>
+              <li>متابعة الرطوبة ومضادات التكتّل</li>
+              <li>تعقّب كامل للتشغيلة</li>
             </ul>
+            <div className="compliance">
+              {compliance.map((c) => (
+                <span key={c.k} className="comp-chip">
+                  <b className="mono">{c.k}</b>
+                  <em>{c.v}</em>
+                </span>
+              ))}
+            </div>
           </aside>
         </div>
 
         <div className="process">
           <h3 className="process-title">
-            <span className="kicker">FROM DEPOSIT TO DECK</span>
-            خط المعالجة
+            <span className="kicker">HOW IT WORKS</span>
+            من الاستفسار إلى التسليم
           </h3>
           <ol className="process-line">
-            {[
-              { n: '01', t: 'الاستخراج', d: 'تفجير وحفر انتقائي في طبقات الهاليت بوسط سيناء.', tag: 'MINING' },
-              { n: '02', t: 'الغسل والترسيب', d: 'محلول مشبّع يذيب الشوائب ويعيد بلورة الملح النقي.', tag: 'REFINING' },
-              { n: '03', t: 'التجفيف والغربلة', d: 'هواء ساخن مضبوط ثم غرابيل متعددة المقاسات.', tag: 'DRYING' },
-              { n: '04', t: 'الضغط والتشكيل', d: 'كبس الأقراص أو تعبئة الحبيبات حسب طلب المصنع.', tag: 'FORMING' },
-              { n: '05', t: 'التعبئة والفحص', d: 'شكائر ١ طن، خياطة، ترقيم، وفحص وزن آلي.', tag: 'PACKING' },
-              { n: '06', t: 'الشحن', d: 'نقل بري إلى العريش أو السويس، ثم حاويات ٢٠/٤٠ قدم.', tag: 'LOGISTICS' },
-            ].map((p, i) => (
+            {process.map((p, i) => (
               <li className="process-step" key={p.n} data-reveal style={{ '--d': `${i * 70}ms` } as React.CSSProperties}>
                 <span className="ps-num mono">{p.n}</span>
                 <span className="ps-dot" aria-hidden="true" />
@@ -112,22 +184,34 @@ export function Contact() {
             للشحنة القادمة
           </h2>
           <p className="lead">
-            أرسل المقاس المطلوب والكمية الشهرية وميناء الوصول، ونرد بعرض سعر ومواصفة خلال
-            يوم عمل واحد.
+            أرسل المقاس المطلوب والكمية الشهرية وميناء الوصول، ونرد بعرض سعر ومواصفة
+            خلال يوم عمل واحد.
           </p>
-          <div className="contact-meta">
-            <div>
+
+          <div className="contact-direct">
+            <a href={`mailto:${contact.email}`}>
               <span className="mono">EMAIL</span>
-              <a href="mailto:export@sinaicore.com">export@sinaicore.com</a>
-            </div>
-            <div>
-              <span className="mono">OFFICE</span>
-              <p>العريش · سيناء الشمالية · مصر</p>
-            </div>
-            <div>
-              <span className="mono">PORT</span>
-              <p>العريش — السويس</p>
-            </div>
+              {contact.email}
+            </a>
+            <a href={`tel:${contact.phone.replace(/\s/g, '')}`} dir="ltr">
+              <span className="mono">PHONE</span>
+              {contact.phone}
+            </a>
+          </div>
+
+          <div className="offices">
+            {contact.offices.map((o) => (
+              <div className="office" key={o.id}>
+                <span className="office-name">
+                  {o.name} <i className="mono">{o.nameEn}</i>
+                </span>
+                <p>
+                  {o.lines.map((l) => (
+                    <span key={l}>{l}</span>
+                  ))}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -145,10 +229,12 @@ export function Contact() {
           <div className="cf-row">
             <label>
               <span>المنتج</span>
-              <select name="product" defaultValue="tablets">
-                <option value="raw">ملح خام — Halite</option>
-                <option value="tablets">أقراص تطرية المياه</option>
-                <option value="granules">حبيبات معالجة</option>
+              <select name="product" defaultValue="refined">
+                <option value="refined">ملح مكرر فاخر — ≥ 99.5%</option>
+                <option value="softening">أقراص تطرية المياه — ≥ 99.5%</option>
+                <option value="washed">ملح مغسول صناعي — ≥ 98.5%</option>
+                <option value="deicing">ملح إذابة الجليد — ≥ 98.0%</option>
+                <option value="marine">ملح بحري طبيعي — ≥ 97.0%</option>
               </select>
             </label>
             <label>
@@ -156,14 +242,30 @@ export function Contact() {
               <input type="text" name="qty" placeholder="500" inputMode="numeric" dir="ltr" />
             </label>
           </div>
+          <div className="cf-row">
+            <label>
+              <span>التعبئة</span>
+              <select name="packing" defaultValue="jumbo">
+                <option value="jumbo">شكائر جامبو ١ – ١.٥ طن</option>
+                <option value="50kg">أكياس ٥٠ كجم</option>
+                <option value="25kg">أكياس ٢٥ كجم</option>
+                <option value="sling">أكياس سلاينج</option>
+                <option value="bulk">سائب — سفينة</option>
+              </select>
+            </label>
+            <label>
+              <span>ميناء الوصول / الشرط</span>
+              <input type="text" name="port" placeholder="FOB Arish" dir="ltr" />
+            </label>
+          </div>
           <label>
             <span>تفاصيل إضافية</span>
-            <textarea name="notes" rows={3} placeholder="ميناء الوصول، المقاس المطلوب، شروط التعبئة…" />
+            <textarea name="notes" rows={3} placeholder="المقاس الحبيبي، متطلبات COA، جدول الشحن…" />
           </label>
           <button type="submit" className="cf-submit">
             <span>إرسال الطلب</span>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M3 8h9M8.5 4l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="square" />
+              <path d="M13 8H4M7.5 4l-4 4 4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="square" />
             </svg>
           </button>
           <p className="cf-note mono">NO SPAM · RESPONSE WITHIN 1 BUSINESS DAY</p>
@@ -179,21 +281,23 @@ export function Footer() {
       <div className="shell">
         <div className="footer-top">
           <div className="footer-brand">
-            <b>SINAI<span>CORE</span></b>
-            <p>ملح سيناء الخام، معالج ومعبّأ للتصدير.</p>
+            <img src="/brand/logo-header.png" alt="SinaiCore" width={260} height={38} loading="lazy" decoding="async" />
+            <p>SinaiCore for Salts &amp; Minerals — An Egyptian salt exporter coordinating qualified sourcing, quality verification, packaging, documentation, and logistics for global markets.</p>
           </div>
           <nav className="footer-nav" aria-label="روابط التذييل">
-            <a href="#crystal">السلسلة</a>
+            <a href="#crystal">المصدر</a>
             <a href="#purity">النقاء</a>
             <a href="#packing">التعبئة</a>
             <a href="#export">التصدير</a>
+            <a href="#products">المنتجات</a>
             <a href="#quality">المواصفات</a>
             <a href="#contact">تواصل</a>
           </nav>
         </div>
         <div className="footer-bottom">
           <span className="mono">© 2026 SINAI CORE · NORTH SINAI, EGYPT</span>
-          <span className="mono">31.13°N 33.80°E · UTC+2</span>
+          <span className="mono">info@sinaicore.com · +20 110 753 9914</span>
+          <span className="mono">FOB ARISH · SUEZ</span>
         </div>
       </div>
     </footer>

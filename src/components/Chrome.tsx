@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { chapters } from '../data/content'
 
-/** Fixed top header: wordmark, live status, and the "order" action. */
+/** Fixed top header: official lockup, live status, and the quote action. */
 export function Header() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
@@ -13,33 +13,31 @@ export function Header() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  useEffect(() => {
+    document.documentElement.style.overflow = open ? 'hidden' : ''
+    return () => {
+      document.documentElement.style.overflow = ''
+    }
+  }, [open])
+
   return (
     <header className={`site-header ${scrolled ? 'is-scrolled' : ''}`}>
       <a href="#top" className="brand" aria-label="SinaiCore — الصفحة الرئيسية">
-        <span className="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 32 32" width="26" height="26" fill="none">
-            <path d="M16 2.5 27.7 9.3v13.4L16 29.5 4.3 22.7V9.3L16 2.5Z" stroke="currentColor" strokeWidth="1.2" />
-            <path d="M16 2.5v27M4.3 9.3l11.7 6.8 11.7-6.8M4.3 22.7l11.7-6.6 11.7 6.6" stroke="currentColor" strokeWidth="0.7" opacity=".45" />
-          </svg>
-        </span>
-        <span className="brand-word">
-          <b>SINAI<span>CORE</span></b>
-          <i>ملح سيناء الخام · North Sinai</i>
-        </span>
+        <img className="brand-lockup" src="/brand/logo-header.png" alt="SinaiCore — At the Core of Quality and Purity" width={300} height={44} />
       </a>
 
       <div className="header-right">
         <span className="header-status mono">
-          <em /> EXPORT READY · AR-2026
+          <em /> FOB ARISH · SUEZ
         </span>
         <a className="header-cta" href="#contact">
           <span className="cta-long">طلب عرض سعر</span>
           <span className="cta-short">عرض سعر</span>
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M3 8h9M8.5 4l4 4-4 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="square" />
+            <path d="M13 8H4M7.5 4l-4 4 4 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="square" />
           </svg>
         </a>
-        <button className={`menu-btn ${open ? 'is-open' : ''}`} onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-controls="site-menu">
+        <button className={`menu-btn ${open ? 'is-open' : ''}`} onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-controls="site-menu" aria-label="القائمة">
           <span />
           <span />
         </button>
@@ -53,8 +51,12 @@ export function Header() {
             <i>{c.label}</i>
           </a>
         ))}
-        <a href="#contact" onClick={() => setOpen(false)}>
+        <a href="#products" onClick={() => setOpen(false)}>
           <span className="mono">05</span>
+          المنتجات<i>Products</i>
+        </a>
+        <a href="#contact" onClick={() => setOpen(false)}>
+          <span className="mono">06</span>
           تواصل معنا<i>Contact</i>
         </a>
       </nav>
