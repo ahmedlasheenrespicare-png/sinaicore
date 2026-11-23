@@ -18,6 +18,12 @@ export default defineConfig({
   },
   build: {
     target: 'es2020',
+    rollupOptions: {
+      input: {
+        main: 'index.html',
+        alt: 'alt.html',
+      },
+    },
     assetsInlineLimit: 2048,
     chunkSizeWarningLimit: 1200,
   },

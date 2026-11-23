@@ -1,0 +1,400 @@
+/* ==================================================================
+   Alternate cut — the container is the hero
+   Standalone sheet: shares tokens from base.css, nothing from app.css.
+   ================================================================== */
+
+.alt {
+  position: relative;
+  background: var(--ink);
+  color: var(--salt);
+  overflow-x: clip;
+}
+
+/* ---------------------------------------------------------- header */
+.alt-header {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: clamp(0.85rem, 1.5vw, 1.3rem) clamp(1rem, 3.4vw, 3.4rem);
+  background: linear-gradient(180deg, color-mix(in oklab, var(--ink) 88%, transparent), transparent);
+  backdrop-filter: blur(6px);
+}
+.alt-brand img {
+  height: clamp(32px, 3.6vw, 42px);
+  width: auto;
+  display: block;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+}
+.alt-header-right {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.6rem, 1.6vw, 1.4rem);
+}
+.alt-tag {
+  font-size: 0.5rem;
+  letter-spacing: 0.22em;
+  color: var(--mist-2);
+}
+.alt-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.6rem 1rem;
+  border: 1px solid color-mix(in oklab, var(--brine) 40%, transparent);
+  color: var(--salt);
+  font-size: 0.74rem;
+  text-decoration: none;
+  transition: background 0.35s, border-color 0.35s, color 0.35s;
+}
+.alt-cta:hover {
+  background: color-mix(in oklab, var(--brine) 14%, transparent);
+  border-color: var(--brine);
+}
+.alt-cta svg { transform: scaleX(-1); }
+@media (max-width: 700px) {
+  .alt-tag { display: none; }
+  .alt-cta span { display: none; }
+}
+
+/* ---------------------------------------------------------- the act */
+.alt-act {
+  position: relative;
+  height: 520vh;
+}
+.alt-sticky {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: hidden;
+}
+.alt-canvas {
+  position: absolute;
+  inset: 0;
+}
+.alt-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 62% 58% at 50% 46%, transparent 30%, color-mix(in oklab, var(--ink) 84%, transparent) 100%),
+    linear-gradient(180deg, var(--ink) 0%, transparent 18%, transparent 76%, var(--ink) 100%);
+}
+.alt-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, var(--mist) 8%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--mist) 8%, transparent) 1px, transparent 1px);
+  background-size: 110px 110px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, #000 20%, transparent 80%);
+}
+
+.alt-curtain {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 1.1rem;
+  background: var(--ink);
+  animation: alt-curtain-out 0.6s var(--ease) forwards;
+}
+.alt-curtain img { height: 78px; width: auto; }
+.alt-curtain span {
+  font-size: 0.52rem;
+  letter-spacing: 0.24em;
+  color: var(--mist-2);
+}
+@keyframes alt-curtain-out {
+  to { opacity: 0; visibility: hidden; }
+}
+
+/* ---------------------------------------------------------- copy */
+.alt-copy {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.alt-stop {
+  position: absolute;
+  inset-block-end: clamp(4.5rem, 11vh, 8rem);
+  inset-inline-start: clamp(1rem, 4.4vw, 4.6rem);
+  width: min(30rem, 42vw);
+  display: grid;
+  gap: 0.9rem;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(24px);
+  transition: opacity 0.7s var(--ease), transform 0.9s var(--ease), visibility 0.7s;
+}
+.alt-stop.is-live {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+.alt-stop-head {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.alt-num {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  color: var(--brine);
+  border: 1px solid color-mix(in oklab, var(--brine) 36%, transparent);
+  padding: 0.24rem 0.46rem;
+  line-height: 1;
+}
+.alt-kicker {
+  font-size: 0.52rem;
+  letter-spacing: 0.24em;
+  color: var(--mist-2);
+  text-transform: uppercase;
+}
+.alt-title {
+  display: grid;
+  gap: 0.06em;
+  font-family: var(--f-ar);
+  font-weight: 600;
+  font-size: clamp(1.7rem, 3.4vw, 3.1rem);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.alt-body {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.9;
+  color: var(--mist);
+  max-width: 38ch;
+}
+.alt-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.8rem;
+  margin: 0.2rem 0 0;
+  padding-block-start: 0.9rem;
+  border-top: 1px solid var(--line-soft);
+}
+.alt-facts div { display: grid; gap: 0.25rem; }
+.alt-facts dt {
+  font-size: 0.48rem;
+  letter-spacing: 0.2em;
+  color: var(--mist-2);
+}
+.alt-facts dd {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--salt-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------- hud + rail */
+.alt-hud {
+  position: absolute;
+  inset-block-start: clamp(5rem, 12vh, 7rem);
+  inset-inline-end: clamp(1rem, 3.4vw, 3.2rem);
+  display: grid;
+  gap: 0.5rem;
+  justify-items: end;
+  font-size: 0.54rem;
+  letter-spacing: 0.16em;
+  color: var(--mist-2);
+}
+.hud-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  transition: color 0.4s;
+}
+.hud-item i { font-style: normal; opacity: 0.7; }
+.hud-item b {
+  font-weight: 500;
+  min-width: 6.2rem;
+  text-align: end;
+  color: var(--mist);
+  transition: color 0.4s;
+}
+.hud-item.is-on b { color: var(--brine); }
+
+.alt-rail {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: clamp(0.6rem, 1.4vw, 1.4rem);
+  transform: translateY(-50%);
+  display: grid;
+  gap: 1.1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.alt-rail li {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  color: var(--mist-2);
+  font-size: 0.56rem;
+  letter-spacing: 0.16em;
+  transition: color 0.4s;
+}
+.alt-rail li.is-active { color: var(--salt); }
+.alt-rail li.is-active .mono { color: var(--brine); }
+.alt-rail-label {
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 0.4s, transform 0.5s var(--ease);
+  white-space: nowrap;
+}
+.alt-rail li.is-active .alt-rail-label,
+.alt-rail:hover .alt-rail-label { opacity: 1; transform: none; }
+@media (max-width: 900px) {
+  .alt-rail { display: none; }
+  .alt-hud {
+    inset-block-start: auto;
+    inset-block-end: 0.9rem;
+    inset-inline: 1rem;
+    grid-auto-flow: column;
+    justify-content: space-between;
+    justify-items: start;
+    font-size: 0.46rem;
+    letter-spacing: 0.1em;
+  }
+  .hud-item { gap: 0.35rem; }
+  .hud-item b { min-width: 0; white-space: nowrap; }
+  .alt-stop {
+    inset-inline: 1rem;
+    width: auto;
+    inset-block-end: 4.6rem;
+    padding: 1rem 1.1rem;
+    background: color-mix(in oklab, var(--ink) 78%, transparent);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--line-soft);
+  }
+  .alt-title { font-size: clamp(1.45rem, 6.4vw, 2rem); }
+  .alt-body { font-size: 0.82rem; line-height: 1.8; }
+  .alt-facts { gap: 0.5rem 1.2rem; }
+  .alt-act { height: 420vh; }
+}
+
+/* ---------------------------------------------------------- ports */
+.alt-ports {
+  position: relative;
+  padding-block: clamp(4rem, 11vh, 8rem);
+  border-top: 1px solid var(--line-soft);
+  background:
+    radial-gradient(ellipse 60% 50% at 80% 0%, color-mix(in oklab, var(--brine) 7%, transparent), transparent 62%),
+    var(--ink);
+}
+.alt-shell {
+  width: min(1240px, 92vw);
+  margin-inline: auto;
+  display: grid;
+  gap: clamp(1.6rem, 4vw, 3rem);
+  justify-items: stretch;
+}
+.alt-ports-head { display: grid; gap: 0.9rem; max-width: 48rem; justify-self: start; }
+.alt-ports-head h2 {
+  margin: 0;
+  font-family: var(--f-ar);
+  font-weight: 600;
+  font-size: clamp(1.6rem, 3.2vw, 2.6rem);
+  letter-spacing: -0.02em;
+}
+.alt-ports-head p {
+  margin: 0;
+  color: var(--mist);
+  font-size: 0.9rem;
+  line-height: 1.9;
+  max-width: 56ch;
+}
+.alt-port-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+.alt-port-card {
+  display: grid;
+  gap: 0.4rem;
+  padding: 1.2rem 1.3rem;
+  border: 1px solid var(--line-soft);
+  background: color-mix(in oklab, var(--ink-2) 60%, transparent);
+}
+.alt-port-card span { font-size: 0.5rem; letter-spacing: 0.22em; color: var(--mist-2); }
+.alt-port-card b { font-size: 1.05rem; font-weight: 600; }
+.alt-port-card i { font-style: normal; font-size: 0.72rem; color: var(--mist); direction: ltr; text-align: start; }
+
+.alt-route-list {
+  display: grid;
+  border-top: 1px solid var(--line-soft);
+}
+.alt-route {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.6fr) minmax(0, 0.7fr);
+  align-items: center;
+  gap: 1rem;
+  padding-block: 0.95rem;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 0.84rem;
+}
+.alt-route b { font-weight: 550; }
+.alt-route i {
+  font-style: normal;
+  font-size: 0.54rem;
+  letter-spacing: 0.2em;
+  color: var(--mist-2);
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.alt-route span { color: var(--mist); text-align: end; white-space: nowrap; }
+.alt-route-days {
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  color: var(--brine) !important;
+  text-align: start !important;
+}
+
+/* ---------------------------------------------------------- footer */
+.alt-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1.6rem clamp(1rem, 3.4vw, 3.4rem) 2rem;
+  border-top: 1px solid var(--line-soft);
+  background: #04080a;
+}
+.alt-footer img { height: 34px; width: auto; }
+.alt-footer span { font-size: 0.5rem; letter-spacing: 0.2em; color: var(--mist-2); }
+
+.alt-progress {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: 2px;
+  background: color-mix(in oklab, var(--mist) 12%, transparent);
+  z-index: 55;
+}
+.alt-progress i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: top;
+  background: linear-gradient(180deg, var(--brine), var(--copper));
+  opacity: 0.8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alt-stop, .alt-rail-label { transition: none; }
+  .alt-curtain { animation-duration: 0.01s; }
+}

@@ -80,6 +80,26 @@ re-render per frame. The canvas switches to `frameloop="never"` when the pinned 
 scrolls off screen, DPR is capped (and lowered automatically by `PerformanceMonitor`),
 and `prefers-reduced-motion` disables idle drift, marquees and reveal transitions.
 
+## Alternate cut — the container
+
+`alt.html` (built alongside `index.html`, served at `/alt.html`) is a **separate**
+preview of a second design direction. The five-station experience above is untouched;
+this page shares only the brand, the type and the palette.
+
+The hero is a 20/40 ft box that carries the SinaiCore print. One pinned act, four beats:
+
+| Beats | What happens |
+|-------|--------------|
+| 01 `open` | the container sits open and centred, doors folded back against its sides |
+| 02 `load` | eight 1.5 MT FIBC bags slide in through the doors in a 4 × 2 grid, then ten 50 kg sacks top up the void above them |
+| 03 `seal` | the doors swing shut, the bars latch and a copper bolt seal drops onto the seam |
+| 04 `sail` | the box shrinks and is hoisted aboard a container ship that sails the 3D globe from El Arish / Port Said toward the export lanes |
+
+A live HUD reports fill %, door state, seal and voyage, and the copy panel steps through the
+four beats. Below the act sits a plain table of the two load ports and four sailing lanes.
+Assets: `container.glb` (frame, corrugated sheet, floor, one hinged leaf, print plate) and
+`cargo-ship.glb` (lofted hull, bridge, deck stacks).
+
 ## Assets
 
 The models are authored procedurally in `scripts/build-assets.mjs`:

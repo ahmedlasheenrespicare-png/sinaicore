@@ -819,6 +819,269 @@ function sampleJar({ r = 0.3, h = 0.62 } = {}) {
 }
 
 /* ------------------------------------------------------------------ *
+ * Alt cut — 20ft shipping container (doors hinged on separate nodes)
+ * ------------------------------------------------------------------ */
+/* mirror a finalized part across x, fixing winding and normals */
+function mirrorX(geo) {
+  const positions = new Float32Array(geo.positions)
+  const normals = new Float32Array(geo.normals)
+  for (let i = 0; i < positions.length; i += 3) {
+    positions[i] = -positions[i]
+    normals[i] = -normals[i]
+  }
+  const indices = new Uint32Array(geo.indices.length)
+  for (let i = 0; i < geo.indices.length; i += 3) {
+    indices[i] = geo.indices[i]
+    indices[i + 1] = geo.indices[i + 2]
+    indices[i + 2] = geo.indices[i + 1]
+  }
+  return { positions, normals, uvs: new Float32Array(geo.uvs), indices }
+}
+
+/* flatNormals takes one flat sequence of points: these helpers collect
+   triangles as [p,p,p] then flatten once. */
+function flatTris(tris) {
+  const out = []
+  for (const t of tris) out.push(t[0], t[1], t[2])
+  return flatNormals(out)
+}
+
+function slab(tris, pts, n) {
+  // quad -> two triangles, normal given, so the box reads as machined steel
+  const [a, b, c, d] = pts
+  tris.push([a, b, c], [a, c, d])
+  void n
+}
+
+function boxSolid(box, { skip = [] } = {}) {
+  const { x0, x1, y0, y1, z0, z1 } = box
+  const tris = []
+  if (!skip.includes('front')) slab(tris, [[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]])
+  if (!skip.includes('back')) slab(tris, [[x1, y0, z0], [x0, y0, z0], [x0, y1, z0], [x1, y1, z0]])
+  if (!skip.includes('left')) slab(tris, [[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]])
+  if (!skip.includes('right')) slab(tris, [[x1, y0, z1], [x1, y0, z0], [x1, y1, z0], [x1, y1, z1]])
+  if (!skip.includes('bottom')) slab(tris, [[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]])
+  if (!skip.includes('top')) slab(tris, [[x0, y1, z1], [x1, y1, z1], [x1, y1, z0], [x0, y1, z0]])
+  return flatTris(tris)
+}
+
+/* corrugated side sheet: a proper trapezoidal rib profile, like real container
+   sheet steel — flat land, sloped shoulder, flat rib crown */
+function corrugated({ x0, x1, y0, y1, z, ribs = 9, depth = 0.02, outward = 1 }) {
+  const tris = []
+  const span = x1 - x0
+  const pitch = span / ribs
+  const prof = (t) => {
+    // t in 0..1 across one pitch: 0..0.22 land, .22..0.38 rise, .38..0.62 crown, .62..0.78 fall
+    if (t < 0.22) return 0
+    if (t < 0.38) return (t - 0.22) / 0.16
+    if (t < 0.62) return 1
+    if (t < 0.78) return 1 - (t - 0.62) / 0.16
+    return 0
+  }
+  const steps = 16
+  const zz = (d) => z + outward * d * depth
+  for (let i = 0; i < ribs; i++) {
+    for (let k = 0; k < steps; k++) {
+      const ta = k / steps
+      const tb = (k + 1) / steps
+      const xa = x0 + i * pitch + ta * pitch
+      const xb = x0 + i * pitch + tb * pitch
+      const da = prof(ta)
+      const db = prof(tb)
+      if (Math.abs(xb - xa) < 1e-6) continue
+      tris.push([
+        [xa, y0, zz(da)], [xb, y0, zz(db)], [xb, y1, zz(db)],
+      ], [
+        [xa, y0, zz(da)], [xb, y1, zz(db)], [xa, y1, zz(da)],
+      ])
+    }
+  }
+  return flatTris(tris)
+}
+
+function shippingContainer({ L = 6.06, W = 2.44, H = 2.59 } = {}) {
+  const hx = L / 2, hz = W / 2
+  const t = 0.055 // sheet thickness
+
+  /* frame: corner posts + rails + top/bottom side rails, the dark steel */
+  const frame = G()
+  const post = 0.16
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+    merge(frame, boxSolid({ x0: sx * hx - post / 2, x1: sx * hx + post / 2, y0: 0, y1: H, z0: sz * hz - post / 2, z1: sz * hz + post / 2 }))
+  }
+  for (const sy of [0.08, H - 0.14]) {
+    for (const sz of [-1, 1]) {
+      merge(frame, boxSolid({ x0: -hx, x1: hx, y0: sy, y1: sy + 0.14, z0: sz * hz - 0.05, z1: sz * hz + 0.05 }))
+    }
+  }
+  for (const sx of [-1, 1]) {
+    merge(frame, boxSolid({ x0: sx * hx - 0.05, x1: sx * hx + 0.05, y0: H - 0.14, z1: hz, z0: -hz, y1: H }))
+  }
+
+  /* corrugated sides and roof */
+  const sides = G()
+  merge(sides, corrugated({ x0: -hx + post, x1: hx - post, y0: 0.2, y1: H - 0.16, z: hz - t / 2, ribs: 11, depth: 0.022, outward: 1 }))
+  merge(sides, corrugated({ x0: -hx + post, x1: hx - post, y0: 0.2, y1: H - 0.16, z: -hz + t / 2, ribs: 11, depth: 0.022, outward: -1 }))
+  // roof: a sheet with shallow ribs across it
+  merge(sides, boxSolid({ x0: -hx + post, x1: hx - post, y0: H - t, y1: H, z0: -hz + post, z1: hz - post }))
+  for (let i = 0; i < 9; i++) {
+    const xa = -hx + post + (i + 0.5) * ((2 * hx - 2 * post) / 9)
+    merge(sides, boxSolid({ x0: xa - 0.035, x1: xa + 0.035, y0: H, y1: H + 0.02, z0: -hz + post, z1: hz - post }))
+  }
+  // the far door end stays closed: a flat steel wall
+  merge(sides, boxSolid({ x0: -hx + 0.03, x1: -hx + 0.07, y0: 0.18, y1: H - 0.14, z0: -hz + post, z1: hz - post }))
+
+  /* floor: dark planking */
+  const floor = G()
+  merge(floor, boxSolid({ x0: -hx + 0.04, x1: hx - 0.04, y0: 0.1, y1: 0.19, z0: -hz + 0.05, z1: hz - 0.05 }))
+
+  /* door leaves, hinged at the two outer edges of the opening */
+  /* door leaves live in hinge-local space: hinge at the origin, leaf along +z,
+     so the app can swing them open/closed at runtime */
+  /* one leaf shape: hinge at the origin (z=0), panel along +z */
+  const doorLeaf = () => {
+    const g = G()
+    const z0 = 0.02
+    const z1 = W / 2 - 0.04
+    merge(g, boxSolid({ x0: -0.04, x1: 0.03, y0: 0.16, y1: H - 0.14, z0, z1 }))
+    // corrugation ridges on the door face
+    for (let i = 0; i < 5; i++) {
+      const zz = z0 + (i + 0.5) * ((z1 - z0) / 5)
+      merge(g, boxSolid({ x0: 0.03, x1: 0.05, y0: 0.14, y1: H - 0.28, z0: zz - 0.02, z1: zz + 0.02 }))
+    }
+    // locking bars with their shoes
+    for (const f of [0.26, 0.72]) {
+      const zz = z0 + f * (z1 - z0)
+      merge(g, boxSolid({ x0: 0.05, x1: 0.08, y0: 0.06, y1: H - 0.2, z0: zz - 0.022, z1: zz + 0.022 }))
+      for (const yy of [0.2, H - 0.34]) {
+        merge(g, boxSolid({ x0: 0.08, x1: 0.105, y0: yy, y1: yy + 0.09, z0: zz - 0.055, z1: zz + 0.055 }))
+      }
+    }
+    return g
+  }
+
+  /* exterior brand print, one flat panel per side */
+  const plates = G()
+  const ph = H * 0.34
+  const py = 0.34
+  for (const sz of [-1, 1]) {
+    const z = sz * (hz + 0.001)
+    const w = L * 0.34
+    plates.positions.push(-w, py, z, w, py, z, w, py + ph, z, -w, py, z, w, py + ph, z, -w, py + ph, z)
+    for (let i = 0; i < 6; i++) plates.normals.push(0, 0, sz)
+    plates.uvs.push(0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1)
+  }
+  plates.indices = Array.from({ length: plates.positions.length / 3 }, (_, i) => i)
+
+  return {
+    frame: finalize(frame),
+    sides: finalize(sides),
+    floor: finalize(floor),
+    doorA: finalize(doorLeaf()),
+    doorB: finalize(doorLeaf()),
+    plate: finalize(plates),
+    dims: { L, W, H },
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Alt cut — small container ship for the loading shot
+ * ------------------------------------------------------------------ */
+function cargoShip({ L = 26, W = 5.2, D = 2.7 } = {}) {
+  /* lofted hull: rectangular-ish sections that taper to the bow and rise at
+     the stern, capped at both ends so it reads solid from any angle */
+  const N = 14 // stations along the length
+  const M = 12 // points per section ring
+  const station = (i) => {
+    const t = i / N // 0 = stern, 1 = bow
+    const x = -L / 2 + t * L
+    // width: full through the body, tapering over the fore quarter
+    const taper = t < 0.78 ? 1 : Math.cos(((t - 0.78) / 0.22) * (Math.PI / 2)) ** 0.7
+    const hw = (W / 2) * taper
+    // sheer: the deck rises slightly at both ends
+    const lift = 0.22 * Math.max(0, t - 0.82) / 0.18 + 0.16 * Math.max(0, 0.1 - t) / 0.1
+    const depth = D * (t > 0.9 ? 0.55 + 0.45 * taper : 1)
+    return { x, hw, depth, lift }
+  }
+  const ring = (st) => {
+    const { x, hw, depth, lift } = st
+    const pts = []
+    // half-ring from the keel up the side to the deck edge and back over
+    const prof = [
+      [-hw * 0.62, depth * 0.06],
+      [-hw * 0.94, depth * 0.3],
+      [-hw, depth * 0.62],
+      [-hw * 0.985, depth * 0.95],
+      [-hw * 0.9, depth + lift],
+      [0, depth + lift + 0.05],
+      [hw * 0.9, depth + lift],
+      [hw * 0.985, depth * 0.95],
+      [hw, depth * 0.62],
+      [hw * 0.94, depth * 0.3],
+      [hw * 0.62, depth * 0.06],
+      [0, 0],
+    ]
+    // keel below the waterline, deck above it: origin sits at the waterline
+    const yShift = depth * 0.38
+    for (let k = 0; k < M; k++) {
+      const [z, y] = prof[k]
+      pts.push([x, y - yShift, z])
+    }
+    return pts
+  }
+
+  const tris = []
+  const rings = []
+  for (let i = 0; i <= N; i++) rings.push(ring(station(i)))
+  for (let i = 0; i < N; i++) {
+    const A = rings[i]
+    const B = rings[i + 1]
+    for (let k = 0; k < M; k++) {
+      const k2 = (k + 1) % M
+      tris.push([A[k], B[k2], B[k]], [A[k], A[k2], B[k2]])
+    }
+  }
+  // caps
+  for (let k = 0; k < M; k++) {
+    const k2 = (k + 1) % M
+    tris.push([rings[0][k], [rings[0][0][0], 0, 0], rings[0][k2]])
+    const b = rings[N]
+    tris.push([b[k2], [b[0][0], 0, 0], b[k]])
+  }
+  const hull = flatTris(tris)
+
+  /* deck plating, bridge block, funnel, and three bays of boxes */
+  const st = station(Math.round(N * 0.5))
+  const deckY = st.depth + st.lift - st.depth * 0.38
+  const white = G()
+  merge(white, boxSolid({ x0: -L * 0.44, x1: -L * 0.3, y0: deckY, y1: deckY + 1.5, z0: -W * 0.3, z1: W * 0.3 }))
+  merge(white, boxSolid({ x0: -L * 0.42, x1: -L * 0.32, y0: deckY + 1.5, y1: deckY + 2.3, z0: -W * 0.24, z1: W * 0.24 }))
+  merge(white, boxSolid({ x0: -L * 0.38, x1: -L * 0.34, y0: deckY + 2.3, y1: deckY + 3.1, z0: -W * 0.09, z1: W * 0.09 }))
+
+  const stacks = G()
+  const cw = 2.0, cl = 4.2, ch = 1.5
+  let bay = 0
+  for (let x = -L * 0.14; x < L * 0.46; x += cl + 0.3) {
+    bay++
+    const cols = bay > 5 ? 2 : 3
+    for (let r = 0; r < cols; r++) {
+      const cz = (r - (cols - 1) / 2) * cw * 1.08
+      const levels = r === 1 ? 2 : 1
+      for (let l = 0; l < levels; l++) {
+        merge(stacks, boxSolid({
+          x0: x - cl / 2, x1: x + cl / 2 - 0.1,
+          y0: deckY + l * ch, y1: deckY + (l + 1) * ch - 0.08,
+          z0: cz - cw / 2, z1: cz + cw / 2,
+        }))
+      }
+    }
+  }
+
+  return { hull: finalize(hull), white: finalize(white), stacks: finalize(stacks), deckY }
+}
+
+/* ------------------------------------------------------------------ *
  * 04 — Globe with land ribbons
  * ------------------------------------------------------------------ */
 const worldRings = JSON.parse(fs.readFileSync(path.join(ROOT, 'src', 'data', 'worldOutline.json'), 'utf8')).landRings
@@ -1148,6 +1411,52 @@ console.log('SinaiCore — building 3D assets')
     { name: 'sack_caps', geo: caps, material: { name: 'sack_cap', color: [0.96, 0.96, 0.94], roughness: 0.92, doubleSided: true } },
     { name: 'sack_crimp', geo: crimp, material: { name: 'sack_crimp', color: [0.95, 0.95, 0.93], roughness: 0.9, doubleSided: true } },
     { name: 'sack_panel', geo: panel, material: { name: 'sack_print', color: [1, 1, 1], roughness: 0.86 } },
+  ])
+}
+
+/* alt cut container + ship */
+{
+  const { frame, sides, floor, doorA, doorB, plate } = shippingContainer()
+  renderPreview(path.join(OUT_PREVIEW, 'alt-01-container.png'), [
+    { geo: frame, color: [70, 92, 110], metal: 0.35, rough: 0.5 },
+    { geo: sides, color: [30, 92, 140], metal: 0.25, rough: 0.55 },
+    { geo: floor, color: [46, 40, 34], rough: 0.9 },
+    { geo: doorA, color: [34, 96, 146], metal: 0.25, rough: 0.55 },
+    { geo: doorB, color: [34, 96, 146], metal: 0.25, rough: 0.55 },
+  ], { eye: [7.6, 4.4, 8.2], target: [0, 1.2, 0], fov: 34 })
+  renderPreview(path.join(OUT_PREVIEW, 'alt-01b-container-end.png'), [
+    { geo: frame, color: [70, 92, 110] },
+    { geo: sides, color: [30, 92, 140] },
+    { geo: floor, color: [46, 40, 34] },
+    { geo: doorA, color: [200, 120, 60] },
+    { geo: doorB, color: [180, 100, 50] },
+  ], { eye: [9.5, 3.0, 4.2], target: [1.5, 1.2, 0], fov: 34 })
+  await writeGLB('container.glb', [
+    { name: 'cont_frame', geo: frame, material: { name: 'cont_steel', color: [0.24, 0.32, 0.38], roughness: 0.42, metallic: 0.6 } },
+    { name: 'cont_sides', geo: sides, material: { name: 'cont_sheet', color: [0.13, 0.40, 0.58], roughness: 0.5, metallic: 0.32, doubleSided: true } },
+    { name: 'cont_floor', geo: floor, material: { name: 'cont_floor', color: [0.17, 0.14, 0.11], roughness: 0.86 } },
+    {
+      name: 'cont_door_left', geo: doorA,
+      material: { name: 'cont_door', color: [0.14, 0.42, 0.60], roughness: 0.48, metallic: 0.32, doubleSided: true },
+    },
+    {
+      name: 'cont_door_right', geo: doorB,
+      material: { name: 'cont_door_r', color: [0.14, 0.42, 0.60], roughness: 0.48, metallic: 0.32, doubleSided: true },
+    },
+    { name: 'cont_plate', geo: plate, material: { name: 'cont_print', color: [1, 1, 1], roughness: 0.6, doubleSided: true } },
+  ])
+
+  const ship = cargoShip()
+
+  renderPreview(path.join(OUT_PREVIEW, 'alt-02-ship.png'), [
+    { geo: ship.hull, color: [34, 46, 58], metal: 0.2, rough: 0.6 },
+    { geo: ship.white, color: [232, 236, 238], rough: 0.6 },
+    { geo: ship.stacks, color: [40, 96, 140], metal: 0.1, rough: 0.7 },
+  ], { eye: [30, 15, 33], target: [0, 2.2, 0], fov: 32 })
+  await writeGLB('cargo-ship.glb', [
+    { name: 'ship_hull', geo: ship.hull, material: { name: 'ship_hull', color: [0.06, 0.10, 0.14], roughness: 0.42, metallic: 0.4 } },
+    { name: 'ship_bridge', geo: ship.white, material: { name: 'ship_bridge', color: [0.88, 0.90, 0.91], roughness: 0.62 } },
+    { name: 'ship_stacks', geo: ship.stacks, material: { name: 'ship_boxes', color: [0.11, 0.35, 0.52], roughness: 0.66, metallic: 0.15 } },
   ])
 }
 
