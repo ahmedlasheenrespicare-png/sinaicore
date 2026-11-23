@@ -1,6 +1,6 @@
 # SinaiCore — Premium Industrial Salt from Egypt
 
-Static marketing / export website for **SinaiCore for Salts & Minerals**, an Egyptian
+English-only static marketing / export website for **SinaiCore for Salts & Minerals**, an Egyptian
 salt exporter coordinating qualified sourcing, quality verification, packaging,
 documentation, and logistics for global markets.
 
@@ -46,4 +46,5 @@ python3 -m http.server 8000
 - **Shipping terms:** FOB Arish Port (bulk/charter) · FOB Suez Port or Port Said
   East Al-Tafreaa (containerized 20ft/40ft), Incoterms per latest ICC rules.
 - **Offices:** El Arish (North Sinai) & Cairo (New Cairo), Egypt.
+- **Language:** English only (`lang="en"` on all pages, EN badge in the header).
 - Deploy anywhere static: GitHub Pages, Netlify, Vercel, or any web server.
