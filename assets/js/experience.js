@@ -47,10 +47,10 @@
      5 Conclusion: centre, Zoom Out, attractive base pose, buy button */
   var STAGES = {
     hero: {ry:45,  rx:10, rz:0,  explode:1,   s:1,    x:0,    y:0,    camZ:9.5,  light:1.35},
-    ch1:  {ry:-70, rx:8,  rz:0,  explode:1,   s:1.15, x:-3.1, y:0,    camZ:7.4,  light:1.0},
-    ch2:  {ry:-30, rx:16, rz:-12,explode:1.15, s:1.18, x:3.1,  y:.1,  camZ:7.2,  light:1.1},
+    ch1:  {ry:-70, rx:8,  rz:0,  explode:1,   s:1.15, x:-2.4, y:0,    camZ:7.4,  light:1.0},
+    ch2:  {ry:-30, rx:16, rz:-12,explode:1.15, s:1.18, x:2.4,  y:.1,  camZ:7.2,  light:1.1},
     ch3:  {ry:120, rx:10, rz:0,  explode:2.6,  s:1.3,  x:0,    y:.25, camZ:8.2,  light:1.2},
-    ch4:  {ry:480, rx:8,  rz:0,  explode:1,   s:1.05, x:3.1,  y:.1,  camZ:9.0,  light:1.5},
+    ch4:  {ry:480, rx:8,  rz:0,  explode:1,   s:1.05, x:2.4,  y:.1,  camZ:9.0,  light:1.5},
     ch5:  {ry:45,  rx:10, rz:0,  explode:1,   s:1,    x:0,    y:0,    camZ:11.0, light:1.35},
     end:  {ry:45,  rx:10, rz:0,  explode:1,   s:1,    x:0,    y:0,    camZ:11.0, light:1.35}
   };
