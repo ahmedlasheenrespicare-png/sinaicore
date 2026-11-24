@@ -653,3 +653,51 @@ body:not(.loaded) #intro{opacity:0; pointer-events:none}
 @media(max-width:860px){.exp-cta{display:none}}
 /* micro-spec directly under a product name (reference "40% vol · 50cl") */
 .product h3 + .meta-line,.lineup-card h3 + .meta-line{margin-top:6px}
+
+/* ================= v31: 3D hotspots, fallbacks, quality tiers ================= */
+
+/* screen-projected hotspots anchored to the model */
+.hs-layer{position:fixed;inset:0;z-index:25;pointer-events:none;opacity:0;transition:opacity .45s ease}
+.hs-layer.on{opacity:1}
+.hs{
+  position:absolute;left:0;top:0;margin:-13px 0 0 -13px;
+  display:flex;align-items:center;gap:7px;
+  padding:6px 11px 6px 8px;border-radius:999px;
+  background:rgba(255,255,255,.95);border:1px solid rgba(26,107,156,.4);
+  color:#0E1A2B;font-family:var(--mono);font-size:10.5px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+  box-shadow:0 10px 26px rgba(0,0,0,.35);will-change:transform;
+  transition:background .2s,color .2s,opacity .25s,border-color .2s
+}
+.hs i{width:9px;height:9px;border-radius:50%;background:#C96A1B;display:block;animation:hsPulse 2.2s infinite}
+@keyframes hsPulse{
+  0%{box-shadow:0 0 0 0 rgba(201,106,27,.6)}
+  70%{box-shadow:0 0 0 12px rgba(201,106,27,0)}
+  100%{box-shadow:0 0 0 0 rgba(201,106,27,0)}
+}
+.hs:hover{background:#0E1A2B;color:#fff;border-color:#7ec3e8}
+.hs:hover i{background:#7ec3e8}
+
+.hs-card{
+  position:fixed;left:0;top:0;z-index:26;width:258px;
+  background:#fff;border:1px solid #dbe6ee;border-radius:12px;
+  padding:15px 16px 14px;box-shadow:0 26px 64px rgba(14,26,43,.38);
+  opacity:0;pointer-events:none;transition:opacity .2s ease;will-change:transform
+}
+.hs-card.on{opacity:1;pointer-events:auto}
+.hs-card h4{font-family:var(--serif);font-size:17px;margin:0 0 10px;color:var(--col1)}
+.hs-card dl{margin:0;display:grid;gap:7px}
+.hs-card dl > div{display:flex;justify-content:space-between;gap:12px;border-top:1px solid #eef3f7;padding-top:7px;font-size:12.5px}
+.hs-card dt{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#7a8ba0;margin:0}
+.hs-card dd{margin:0;font-weight:600;color:var(--col1);text-align:right}
+.hs-close{position:absolute;top:7px;right:9px;border:0;background:none;font-size:18px;line-height:1;color:#9db0c2;cursor:pointer}
+.hs-close:hover{color:var(--col1)}
+
+/* fallbacks: CSS bag only when WebGL is unavailable */
+body.webgl-ready .stage-fixed .scene{opacity:0;visibility:hidden}
+body.no-webgl #webgl-wrap{display:none}
+body.no-webgl .stage-fixed .scene{opacity:1;visibility:visible}
+
+@media(max-width:1100px){
+  .hs-layer,.hs-card{display:none}
+}

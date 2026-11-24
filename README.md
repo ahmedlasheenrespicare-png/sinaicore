@@ -94,3 +94,18 @@ Following the brocksbushes.moonshiners.co.uk breakdown:
 - **Micro-specs** sit directly under every product name (`NaCl ≥ 99.5% · moisture ≤ 0.2%`), the way the reference prints `40% vol · 50cl`.
 - **CTA repeated** at the top (header pill “Get a quote →”) and at the bottom (finale buttons).
 - **Asset strategy:** no third-party 3D models at all — every mesh is generated in Three.js and every pack shot is SinaiCore's own photography, so there is nothing to licence.
+
+
+## Scene spec implementation (v31)
+
+| Requirement | Status |
+|---|---|
+| Three.js + GSAP ScrollTrigger + Lenis | Vendored locally in `assets/js/vendor/`, all `defer`, scene driven by the story clock |
+| Scroll scrubbing across 8 chapters | `experience.js` story model → camera keyframes + subject weights |
+| Mouse parallax + drag | `window.__mouse` parallax on the camera; drag surface (`#stage-drag`) over the 3D half rotates the model (`dragRy/dragRx`, double-click resets) |
+| 3D hotspots with spec cards | `HOTSPOTS` in `experience-3d.js` are anchored in the bag's local space, projected to screen every frame, and open a card (purity, moisture, layers, net weight) |
+| Instanced salt particles | `InstancedMesh` per float type (crystal / granule / tablet / large) — one draw call each, matrices updated per frame |
+| HDRI + PBR + transmission | A procedural equirectangular studio dome is run through `PMREMGenerator` into `scene.environment`; crystals and large shards use `MeshPhysicalMaterial` with `transmission` (high tier only) |
+| Performance | Quality tier (`data-quality`) from screen size, cores and device memory; lower instance counts, no transmission and DPR 1.5 on the low tier; rendering pauses on hidden tabs |
+| Mobile / no-WebGL fallback | `body.no-webgl` keeps the pure-CSS bag; `body.webgl-ready` hides it; the stage becomes a sticky panel under 1100px |
+| Draco (GLB) / KTX2 | Not applicable — there are no model or texture files: every mesh is generated in Three.js and every print/label is a canvas texture. Nothing to compress, nothing to download. If GLB/KTX2 assets are supplied later, `DRACOLoader` + `KTX2Loader` can be added without touching the scroll architecture. |
