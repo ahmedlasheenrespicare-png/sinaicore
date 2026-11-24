@@ -195,8 +195,10 @@ export default function FieldSite() {
                 <span>Made by</span>
                 <p className="f2s-made-name">Scroll</p>
               </div>
+              {/* the cue is the animated hairline alone. The original has no
+                  word here either — "Made by / Scroll" above it already puts
+                  the word Scroll on screen, and repeating it reads as a bug. */}
               <div className="f2s-cue" aria-hidden="true">
-                <span>Scroll</span>
                 <span className="f2s-cue-line">
                   <span />
                 </span>
