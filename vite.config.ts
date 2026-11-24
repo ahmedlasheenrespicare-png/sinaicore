@@ -34,6 +34,7 @@ export default defineConfig({
       input: {
         main: 'index.html',
         'ref-field': 'ref-field.html',
+        salt: 'salt.html',
       },
       output: {
         /* three.js and its r3f/drei bindings are bigger than everything

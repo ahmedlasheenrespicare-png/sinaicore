@@ -1,0 +1,511 @@
+/* ------------------------------------------------------------------ *
+ * The SinaiCore page on the reference's skeleton.
+ *
+ * Palette: warm paper (#f7f1e7) with our navy ink and copper accent. The
+ * reference's rose ground would fight the navy and, worse, would make salt
+ * look pink. Everything else — the type scale, the sticky rhythm, the
+ * frosted plate, the accent-per-product — is the reference's.
+ *
+ * Prefix `s3-` so this cannot collide with the site's `ref-` styles or the
+ * rebuild's `f2s-`. Three designs, three namespaces.
+ * ------------------------------------------------------------------ */
+
+.s3 {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+  color: #0e1a2b;
+  font-family: 'Cairo Variable', 'Tahoma', system-ui, sans-serif;
+  overflow-x: clip;
+}
+
+.s3-fixed {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.s3-fixed canvas {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.s3-act {
+  position: relative;
+}
+.s3-sticky {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.s3-panel {
+  position: relative;
+  width: 100%;
+  padding: 0 1.5rem 8svh;
+}
+@media (min-width: 1024px) {
+  .s3-panel {
+    width: 46vw;
+    padding-inline-start: 7vw;
+    padding-inline-end: 1.5rem;
+  }
+  /* In RTL the reading column is the *right* side, so the product sits
+     left. `is-left` flips the text panel to the other edge for the second
+     act, which is what makes the scroll feel like it alternates sides. */
+  .s3-panel.is-left {
+    margin-inline-start: auto;
+    padding-inline-start: 1.5rem;
+    padding-inline-end: 7vw;
+    text-align: left;
+  }
+  /* the copy is on the right for every act; the *product* is what moves.
+     `is-left` says the product goes left, which means the copy stays right
+     and the two never overlap. */
+  .s3-panel.is-left .s3-copy {
+    text-align: right;
+  }
+}
+
+/* ---------------------------------------------------------- display */
+.s3-h1 {
+  margin: 0;
+  font-family: 'Amiri', 'Times New Roman', serif;
+  font-weight: 700;
+  font-size: clamp(2.8rem, 7.4vw, 6.4rem);
+  line-height: 1.06;
+  letter-spacing: 0;
+}
+
+.s3-word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.34em);
+  transition:
+    opacity 0.66s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.66s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.is-on .s3-word {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------------------------------------------------------- the hero */
+.s3-hero {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.s3-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  margin-bottom: 1.2rem;
+  font-size: 0.8rem;
+  color: rgba(14, 26, 43, 0.5);
+}
+.s3-brandname {
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #c2712f;
+}
+.s3-brandsub {
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+}
+.s3-cross {
+  opacity: 0.4;
+}
+
+.s3-lead {
+  margin: 1.4rem 0 0;
+  max-width: 26rem;
+  font-size: 1.05rem;
+  line-height: 1.85;
+  color: rgba(14, 26, 43, 0.74);
+}
+
+.s3-cta {
+  display: flex;
+  align-items: center;
+  gap: 1.3rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+.s3-cta-center {
+  justify-content: center;
+}
+.s3-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.72rem 1.2rem;
+  border-radius: 999px;
+  background: #0e1a2b;
+  color: #f7f1e7;
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+.s3-btn:hover {
+  background: #c2712f;
+  transform: translateY(-1px);
+}
+.s3-link {
+  font-size: 0.86rem;
+  color: rgba(14, 26, 43, 0.66);
+  text-underline-offset: 0.28em;
+  text-decoration-color: rgba(14, 26, 43, 0.28);
+}
+.s3-link:hover {
+  color: #0e1a2b;
+}
+
+.s3-made {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 1.6rem;
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(14, 26, 43, 0.48);
+}
+.s3-made b {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  color: rgba(14, 26, 43, 0.74);
+}
+.s3-made-center {
+  align-items: center;
+}
+
+/* the cue: a travelling segment on a hairline, no label */
+.s3-cue {
+  display: flex;
+  align-items: center;
+  margin-top: 1.1rem;
+}
+.s3-cue-line {
+  position: relative;
+  display: block;
+  width: 1px;
+  height: 3rem;
+  overflow: hidden;
+  background: rgba(14, 26, 43, 0.14);
+}
+.s3-cue-line > span {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 50%;
+  background: rgba(14, 26, 43, 0.66);
+  animation: s3-cue 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+@keyframes s3-cue {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(200%);
+  }
+}
+
+.s3-pull {
+  margin: 0;
+  max-width: 24rem;
+  font-family: 'Amiri', 'Times New Roman', serif;
+  font-weight: 700;
+  font-size: clamp(1.5rem, 2.7vw, 2.3rem);
+  line-height: 1.35;
+}
+.s3-passing {
+  position: absolute;
+  top: 175svh;
+  right: 0;
+  width: 100%;
+}
+@media (min-width: 1024px) {
+  .s3-passing {
+    width: 46vw;
+  }
+}
+
+/* ------------------------------------------------------- the products */
+.s3-kicker {
+  margin: 0 0 0.3rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: rgba(14, 26, 43, 0.56);
+}
+.s3-pill {
+  display: inline-block;
+  padding: 0.25rem 0.8rem;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #fbf7f0;
+}
+.s3-h2 {
+  margin: 0.85rem 0 0;
+  font-family: 'Amiri', 'Times New Roman', serif;
+  font-weight: 700;
+  font-size: clamp(2rem, 5.2vw, 4.4rem);
+  line-height: 1.1;
+}
+.s3-h2-center {
+  text-align: center;
+}
+.s3-meta {
+  margin: 0.5rem 0 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  color: rgba(14, 26, 43, 0.52);
+}
+.s3-body {
+  margin: 1rem 0 0;
+  max-width: 28rem;
+  font-size: 0.94rem;
+  line-height: 1.95;
+  color: rgba(14, 26, 43, 0.8);
+}
+@media (min-width: 1024px) {
+  .s3-body {
+    margin-top: 1.3rem;
+    font-size: 1.02rem;
+  }
+}
+
+/* the spec table: a hairline list, not cards — the reference has no cards */
+.s3-specs {
+  margin: 1.3rem 0 0;
+  max-width: 26rem;
+  border-top: 1px solid rgba(14, 26, 43, 0.14);
+}
+.s3-specs > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(14, 26, 43, 0.1);
+}
+.s3-specs dt {
+  font-size: 0.76rem;
+  color: rgba(14, 26, 43, 0.55);
+}
+.s3-specs dd {
+  margin: 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.76rem;
+  font-weight: 500;
+}
+.s3-panel.is-left .s3-specs,
+.s3-panel.is-left .s3-body {
+  margin-inline-start: auto;
+}
+
+/* ------------------------------------------------------ the analysis */
+.s3-analysis-in {
+  max-width: 30rem;
+}
+.s3-rows {
+  margin: 1.2rem 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid rgba(14, 26, 43, 0.14);
+}
+.s3-rows li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.44rem 0;
+  border-bottom: 1px solid rgba(14, 26, 43, 0.09);
+  font-size: 0.78rem;
+}
+.s3-rows span {
+  color: rgba(14, 26, 43, 0.58);
+}
+.s3-rows b {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 500;
+  color: #1a6b9c;
+}
+
+/* The frosted plate — the reference's move, kept exactly: a blur whose mask
+   is the intersection of two gradients, so it fades at every edge instead of
+   ending in a visible box. */
+.s3-fros {
+  position: absolute;
+  inset: -3rem -3.5rem;
+  z-index: -1;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 18%, #000 82%, transparent),
+    linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 18%, #000 82%, transparent),
+    linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  opacity: 0;
+  transition: opacity 1.1s ease;
+  pointer-events: none;
+}
+.s3-fros.is-on {
+  opacity: 1;
+}
+
+/* --------------------------------------------------------- the close */
+.s3-panel.s3-close {
+  width: 100%;
+  padding: 0 1.5rem 6svh;
+  display: flex;
+  justify-content: center;
+}
+.s3-close-in {
+  max-width: 34rem;
+  margin-inline: auto;
+  text-align: center;
+}
+.s3-close-body {
+  margin: 1.05rem 0 0;
+  font-size: 1rem;
+  line-height: 1.9;
+  color: rgba(14, 26, 43, 0.74);
+}
+.s3-credit {
+  margin: 1.2rem 0 0;
+  font-size: 10.5px;
+  line-height: 1.7;
+  color: rgba(14, 26, 43, 0.42);
+}
+
+/* ---------------------------------------------------------- reveals */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: calc(var(--i, 0) * 30ms);
+}
+[data-reveal].is-on {
+  opacity: 1;
+  transform: none;
+}
+
+/* -------------------------------------------------------- the loader */
+.s3-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  background: #f7f1e7;
+  transition:
+    opacity 0.7s ease 0.15s,
+    visibility 0s linear 0.85s;
+}
+.s3-loader.is-done {
+  opacity: 0;
+  visibility: hidden;
+}
+.s3-loader-mark {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: clamp(0.95rem, 2.2vw, 1.35rem);
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: #0e1a2b;
+  opacity: 0.8;
+}
+.s3-loader-wave {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(14, 26, 43, 0.16);
+  overflow: hidden;
+}
+.s3-loader-wave::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 40%;
+  background: #c2712f;
+  animation: s3-loader 1.1s ease-in-out infinite;
+}
+@keyframes s3-loader {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+/* ------------------------------------------------- reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .s3-word,
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .s3-cue-line > span,
+  .s3-loader-wave::after {
+    animation: none;
+  }
+  .s3-fros {
+    opacity: 1;
+    transition: none;
+  }
+}
+
+
+/* ------------------------------------------------- portrait restraint */
+/* On a phone the copy and the product compete for the same 844px. The
+   reference has the same problem and solves it by showing less, not by
+   shrinking both: the spec table is hidden here because the analysis act
+   already lists every one of those values in full, and the body is clamped
+   to three lines. What is left fits in the lower half, so the product owns
+   the top and nothing dark sits behind the text where the frosted plate
+   would smear it. */
+@media (max-width: 1023px) {
+  .s3-specs {
+    display: none;
+  }
+  .s3-body {
+    font-size: 0.9rem;
+    line-height: 1.8;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .s3-h2 {
+    font-size: clamp(1.8rem, 7.4vw, 2.6rem);
+  }
+  .s3-panel {
+    padding-bottom: 5svh;
+  }
+  .s3-fros {
+    /* narrower feather: on a phone the plate is mostly text, so a wide blur
+       drags the product's shadow across the paragraph */
+    inset: -1.6rem -1.2rem;
+    backdrop-filter: blur(11px);
+    -webkit-backdrop-filter: blur(11px);
+  }
+}
