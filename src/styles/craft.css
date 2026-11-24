@@ -1808,3 +1808,87 @@
     padding-block-start: 0.8rem;
   }
 }
+
+/* ==================================================================
+ * 11. the grades band — a table that drives a specimen
+ *
+ * Idea taken from the catalogue sites: an index you can *point at* rather
+ * than read. Here the comparison table and the plate are one instrument:
+ * five rows on the reading edge, one live model on the other, swapped by
+ * picking a row. The table stays a real table for screen readers and for
+ * the narrow layout, where the plate drops underneath it.
+ * ================================================================== */
+.ref-grade-band {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: clamp(1.4rem, 3vw, 2.8rem);
+  align-items: start;
+}
+
+/* the row itself is the control */
+.ref-grade-pick {
+  display: grid;
+  gap: 0.15rem;
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  text-align: start;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  inline-size: 100%;
+}
+.ref-grade-pick:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 4px;
+}
+/* the picked row: a rule in the margin, not a filled chip */
+.ref-table tbody tr.is-picked {
+  background: color-mix(in oklab, currentColor 4%, transparent);
+}
+.ref-table tbody tr.is-picked .g-name {
+  font-weight: 700;
+}
+.ref-table tbody tr.is-picked td:first-of-type {
+  position: relative;
+}
+.ref-table tbody tr {
+  transition: background-color 0.25s var(--ease);
+}
+.ref-grade-pick .g-use {
+  font-size: 0.78rem;
+  opacity: 0.62;
+}
+
+.ref-grade-plate {
+  position: sticky;
+  inset-block-start: 5.5rem;
+}
+.ref-grade-plate .ref-feature-stage {
+  /* portrait suits a specimen standing on a floor, but a tall crop at this
+     width pulls the camera in far enough to fill the frame with one face.
+     4:3 keeps the whole object and its shadow inside the plate. */
+  aspect-ratio: 5 / 4;
+}
+
+@media (max-width: 1000px) {
+  .ref-grade-band {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ref-grade-plate {
+    position: static;
+    order: -1;
+  }
+  .ref-grade-plate .ref-feature-stage {
+    aspect-ratio: 4 / 3;
+  }
+}
+
+/* reduced motion: the row highlight changes instantly, no cross-fade */
+@media (prefers-reduced-motion: reduce) {
+  .ref-table tbody tr {
+    transition: none;
+  }
+}

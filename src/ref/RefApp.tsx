@@ -113,6 +113,92 @@ function Plate({
   )
 }
 
+/* ---------------------------------------------------------------- *
+ * The grade table drives a live specimen.
+ *
+ * A comparison table answers "which grade" in the abstract; the plate
+ * answers it in the concrete. Selecting a row swaps the model, the tag and
+ * the camera, so the buyer sees the thing they just read the spec of.
+ * A radio group rather than buttons, because that is what it is — one of
+ * five, always exactly one chosen.
+ * ---------------------------------------------------------------- */
+function GradesBand() {
+  const [pick, setPick] = useState(0)
+  const g = grades[pick]
+  return (
+    <div className="ref-grade-band">
+      <div className="ref-grade-col">
+        <div className="ref-table-wrap">
+          <table className="ref-table">
+            <caption className="sr-only">
+              مقارنة درجات ملح SinaiCore — اختر صفًا لعرض عيّنة الدرجة
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">الدرجة</th>
+                <th scope="col" className="formula" dir="ltr">
+                  NaCl
+                </th>
+                <th scope="col">الرطوبة</th>
+                <th scope="col">حجم الحبيبات</th>
+                <th scope="col">التعبئة</th>
+              </tr>
+            </thead>
+            <tbody>
+              {grades.map((row, i) => (
+                <tr key={row.id} className={i === pick ? 'is-picked' : undefined}>
+                  <th scope="row" style={{ textAlign: 'start', fontWeight: 400 }}>
+                    <button
+                      type="button"
+                      className="ref-grade-pick"
+                      // a radio-semantics group driven by a button is simpler
+                      // to style than a table of real inputs, and still
+                      // announces the selected state
+                      aria-pressed={i === pick}
+                      onClick={() => setPick(i)}
+                    >
+                      <span className="g-name">{row.name}</span>
+                      <span className="g-latin">{row.latin}</span>
+                      <span className="g-use">{row.use}</span>
+                    </button>
+                  </th>
+                  <td>
+                    <span className="g-num">{row.nacl}</span>
+                  </td>
+                  <td>
+                    <span className="g-num">{row.moisture}</span>
+                  </td>
+                  <td>
+                    {isLatin(row.size) ? (
+                      <span className="g-num">{row.size}</span>
+                    ) : (
+                      <span className="g-ar">{row.size}</span>
+                    )}
+                  </td>
+                  <td className="g-use">
+                    {isLatin(row.pack) ? <span dir="ltr">{row.pack}</span> : row.pack}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div className="ref-grade-plate">
+        {/* keyed on the scene so React remounts the canvas per specimen
+            rather than re-using one rig across four different models */}
+        <Plate
+          key={g.scene}
+          kind={g.scene}
+          tag={g.sceneTag}
+          hint={`3D · ${g.scene}`}
+          camera={{ position: g.camera.position, fov: g.camera.fov }}
+        />
+      </div>
+    </div>
+  )
+}
+
 export default function RefApp() {
   const [on, setOn] = useState(false)
   useEffect(() => {
@@ -392,52 +478,7 @@ export default function RefApp() {
                 نفسها المنشورة على بطاقة كل منتج، مجموعة هنا للمقارنة المباشرة.
               </p>
             </div>
-            <div className="ref-table-wrap">
-              <table className="ref-table">
-                <caption className="sr-only">
-                  مقارنة درجات ملح SinaiCore بالنقاوة والرطوبة وحجم الحبيبات والتعبئة
-                </caption>
-                <thead>
-                  <tr>
-                    <th scope="col">الدرجة</th>
-                    <th scope="col" className="formula" dir="ltr">
-                      NaCl
-                    </th>
-                    <th scope="col">الرطوبة</th>
-                    <th scope="col">حجم الحبيبات</th>
-                    <th scope="col">التطبيق</th>
-                    <th scope="col">التعبئة</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {grades.map((g) => (
-                    <tr key={g.id}>
-                      <th scope="row" style={{ textAlign: 'start', fontWeight: 400 }}>
-                        <span className="g-name">{g.name}</span>
-                        <span className="g-latin">{g.latin}</span>
-                      </th>
-                      <td>
-                        <span className="g-num">{g.nacl}</span>
-                      </td>
-                      <td>
-                        <span className="g-num">{g.moisture}</span>
-                      </td>
-                      <td>
-                        {isLatin(g.size) ? (
-                          <span className="g-num">{g.size}</span>
-                        ) : (
-                          <span className="g-ar">{g.size}</span>
-                        )}
-                      </td>
-                      <td className="g-use">{g.use}</td>
-                      <td className="g-use">
-                        {isLatin(g.pack) ? <span dir="ltr">{g.pack}</span> : g.pack}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <GradesBand />
           </div>
         </section>
 

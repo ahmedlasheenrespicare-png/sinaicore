@@ -614,6 +614,7 @@ function ModelStage({
 
   const pos = camera?.position ?? [3.2, 2.1, 4.4]
 
+
   return (
     <div className="ref-stage" ref={host}>
       {live && (

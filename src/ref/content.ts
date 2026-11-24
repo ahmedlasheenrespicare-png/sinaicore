@@ -309,6 +309,14 @@ export type Grade = {
   size: string
   use: string
   pack: string
+  /** the 3D specimen that stands for this grade: picking a row in the
+   *  comparison table swaps the plate beside it. Two grades share the sack
+   *  because both ship as one; the tablet grade has its own model. */
+  scene: 'crystal' | 'tablets' | 'fibc' | 'sack'
+  /** the plate caption under the model, in the reference's mono tag style */
+  sceneTag: string
+  /** camera framing that suits each specimen */
+  camera: { position: [number, number, number]; fov: number }
 }
 
 export const grades: Grade[] = [
@@ -321,6 +329,9 @@ export const grades: Grade[] = [
     size: '0.2 – 0.8 mm',
     use: 'غذائي · معالجة مياه',
     pack: '25 / 50 kg · FIBC',
+    scene: 'crystal',
+    sceneTag: 'HALITE · REFINED',
+    camera: { position: [2.6, 1.5, 3.7], fov: 30 },
   },
   {
     id: 'washed',
@@ -331,6 +342,9 @@ export const grades: Grade[] = [
     size: '0.5 – 3 mm',
     use: 'صناعي · تطرية',
     pack: '25 / 50 kg · FIBC',
+    scene: 'fibc',
+    sceneTag: 'FIBC · WASHED',
+    camera: { position: [4.1, 2.5, 5.2], fov: 32 },
   },
   {
     id: 'deicing',
@@ -341,6 +355,9 @@ export const grades: Grade[] = [
     size: '1 – 5 mm',
     use: 'طرق · صيانة شتاء',
     pack: 'FIBC · سائب',
+    scene: 'sack',
+    sceneTag: 'SACK · DE-ICING',
+    camera: { position: [2.0, 1.25, 3.0], fov: 30 },
   },
   {
     id: 'softening',
@@ -351,6 +368,9 @@ export const grades: Grade[] = [
     size: 'قرص مضغوط',
     use: 'تبادل أيوني',
     pack: '10 / 25 / 50 kg',
+    scene: 'tablets',
+    sceneTag: 'TABLETS · SOFTENING',
+    camera: { position: [3.4, 2.3, 4.1], fov: 30 },
   },
   {
     id: 'marine',
@@ -361,6 +381,9 @@ export const grades: Grade[] = [
     size: 'coarse · unsorted',
     use: 'صناعي · تجاري',
     pack: 'FIBC · سائب',
+    scene: 'fibc',
+    sceneTag: 'FIBC · MARINE',
+    camera: { position: [4.1, 2.5, 5.2], fov: 32 },
   },
 ]
 
