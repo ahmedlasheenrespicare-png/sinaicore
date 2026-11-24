@@ -9,7 +9,7 @@
     var renderer;
     try{ renderer = new THREE.WebGLRenderer({canvas:canvas, alpha:true, antialias:true}); }
     catch(e){ return; }
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, window.innerWidth < 900 ? 1.5 : 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.15;
     renderer.outputEncoding = THREE.sRGBEncoding;
@@ -23,7 +23,8 @@
     var rim = new THREE.DirectionalLight(0x7ec3e8, .9); rim.position.set(-4,4,-6); scene.add(rim);
     var spot = new THREE.SpotLight(0xffffff, .7, 30, .5, .6); spot.position.set(0,8,4); scene.add(spot);
 
-    var N = 8000;
+    /* Adaptive budget: lighter on small screens (perf requirement) */
+    var N = window.innerWidth < 900 ? 4200 : 8000;
     function rand(a,b){ return a + Math.random()*(b-a); }
     /* A: crystal — faceted octahedron with slight jitter for sparkle */
     function shapeCrystal(){
@@ -166,6 +167,17 @@
       requestAnimationFrame(animate);
       if(document.hidden) return;
       var m = window.__morph || {from:0, to:0, progress:0, rotY:0};
+      /* Camera keyframes from ScrollTrigger (window.__cam) */
+      var cam = window.__cam || {x:0, y:.5, z:9.6, tx:0, ty:0};
+      camera.position.x += (cam.x - camera.position.x) * .06;
+      camera.position.y += ((cam.y||.5) - camera.position.y) * .06;
+      camera.position.z += ((cam.z||9.6) - camera.position.z) * .06;
+      camera.lookAt(cam.tx||0, cam.ty||0, 0);
+      /* Art direction: keep the model inside the left half of the fixed canvas */
+      var visW = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov/2)) * camera.position.z * camera.aspect;
+      var desktop = window.innerWidth >= 1100;
+      group.position.x += ((desktop ? -visW/4 : 0) - group.position.x) * .08;
+      routes.position.x = group.position.x; shadow.position.x = group.position.x;
       var A = SHAPES[m.from], B = SHAPES[m.to];
       var time = clock.getElapsedTime();
       for(var i=0;i<N;i++){

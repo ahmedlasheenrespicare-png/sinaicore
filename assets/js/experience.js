@@ -9,21 +9,62 @@
     requestAnimationFrame(lenisRaf);
     if(lenis.on) lenis.on("scroll", function(){ lastScroll = Date.now(); });
   }
-  /* GSAP ScrollTrigger: particle morph per scene (crystal->granules->bag->globe) */
+  /* ================= REFERENCE MOTION ARCHITECTURE =================
+     One ScrollTrigger per chapter, each writing ONLY while it is active,
+     so no two timelines fight over the same shared state (that was the
+     bug that made the camera start on the last keyframe).
+     - morph: crystal(0) -> granules(1) -> bag(2) -> globe(3)
+     - camera: position + look-at target keyframes per chapter
+     ================================================================= */
   window.__morph = {from:0, to:0, progress:0, rotY:0};
+  window.__cam = {x:0, y:.65, z:10.2, tx:0, ty:0};
+  var CAM = {
+    hero:{x:0,    y:.65, z:10.2, tx:0, ty:0},
+    ch1: {x:-.35, y:.45, z:8.4,  tx:0, ty:0},
+    ch2: {x:.45,  y:.30, z:7.3,  tx:0, ty:.05},
+    ch3: {x:0,    y:.20, z:7.0,  tx:0, ty:0},
+    ch4: {x:-.30, y:.35, z:7.6,  tx:0, ty:0},
+    ch5: {x:.30,  y:.40, z:8.2,  tx:0, ty:0},
+    ch6: {x:0,    y:.20, z:9.4,  tx:0, ty:0},
+    ch7: {x:-.20, y:.45, z:9.0,  tx:0, ty:0},
+    ch8: {x:0,    y:.55, z:10.8, tx:0, ty:0}
+  };
+  var CAM_ORDER = ["hero","ch1","ch2","ch3","ch4","ch5","ch6","ch7","ch8"];
+  /* Which chapters morph the particle model, and into what */
+  var MORPHS = {"ch2":[0,1], "ch3":[1,2], "ch6":[2,3]};
+  function mix(a, b, t){ return a + (b - a) * t; }
   if(typeof gsap !== "undefined" && typeof ScrollTrigger !== "undefined"){
     gsap.registerPlugin(ScrollTrigger);
-    var morph = window.__morph;
-    function morphTl(trigger, from, to){
-      var tl = gsap.timeline({scrollTrigger:{trigger:trigger, scrub:1.2, start:"top bottom", end:"bottom top"}});
-      tl.fromTo(morph, {from:from, to:from, progress:0}, {from:from, to:to, progress:1, ease:"power1.inOut"}, 0);
-      return tl;
-    }
-    morphTl("#ch1", 0, 0);
-    morphTl("#ch2", 0, 1);
-    morphTl("#ch3", 1, 2);
-    morphTl("#ch4", 2, 3);
-    morphTl("#ch5", 3, 3);
+    CAM_ORDER.forEach(function(id, i){
+      var sec = document.getElementById(id);
+      if(!sec) return;
+      var from = CAM[id], to = CAM[CAM_ORDER[Math.min(i+1, CAM_ORDER.length-1)]];
+      var mp = MORPHS[id];
+      ScrollTrigger.create({
+        trigger: sec,
+        start: "top bottom",
+        end: "bottom top",
+        onUpdate: function(self){
+          if(!self.isActive) return; /* only the chapter in view writes */
+          var t = self.progress;
+          var cam = window.__cam;
+          cam.x = mix(from.x, to.x, t);
+          cam.y = mix(from.y, to.y, t);
+          cam.z = mix(from.z, to.z, t);
+          cam.tx = mix(from.tx, to.tx, t);
+          cam.ty = mix(from.ty, to.ty, t);
+          if(mp){
+            var mm = window.__morph;
+            mm.from = mp[0]; mm.to = mp[1];
+            mm.progress = Math.min(1, Math.max(0, t));
+          }
+          /* rotation of the particle model follows the same scrub */
+          window.__morph.rotY = t * 360 * (id === "ch8" ? .5 : 1);
+        }
+      });
+    });
+    /* Font/layout settle: recompute start/end positions */
+    if(document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ ScrollTrigger.refresh(); });
   }
   /* Mouse parallax (shared with 3D camera) */
   window.__mouse = {x:0, y:0};
@@ -31,6 +72,34 @@
     window.__mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
     window.__mouse.y = (e.clientY / window.innerHeight) * 2 - 1;
   }, {passive:true});
+  /* ---------- Preloader: wait for the 3D libs + first paint ---------- */
+  (function(){
+    var fill = document.getElementById("pre-fill");
+    var pct = document.getElementById("pre-pct");
+    var started = Date.now(), p = 0, done = false;
+    function finish(){
+      if(done) return; done = true;
+      p = 100; if(fill) fill.style.width = "100%"; if(pct) pct.textContent = "100%";
+      setTimeout(function(){
+        document.body.classList.add("loaded");
+        if(typeof ScrollTrigger !== "undefined") ScrollTrigger.refresh();
+      }, 320);
+    }
+    var timer = setInterval(function(){
+      /* advance toward 92% while libs load, then wait for load event */
+      var target = (typeof THREE !== "undefined" && typeof gsap !== "undefined") ? 92 : 55;
+      p = Math.min(target, p + Math.random()*9 + 3);
+      if(fill) fill.style.width = p + "%";
+      if(pct) pct.textContent = Math.round(p) + "%";
+      if(p >= target && document.readyState === "complete") { clearInterval(timer); finish(); }
+      if(Date.now() - started > 6000){ clearInterval(timer); finish(); }
+    }, 90);
+    window.addEventListener("load", function(){
+      var wait = Math.max(0, 900 - (Date.now()-started));
+      setTimeout(function(){ clearInterval(timer); finish(); }, wait);
+    });
+  })();
+
   /* Intro: locked until "Click to start" (reference style) */
   var intro = document.getElementById("intro");
   var introBtn = document.getElementById("intro-start");
@@ -50,7 +119,7 @@
   if(reduced) startExperience();
 
   /* ---------- Stage keyframes (continuous scroll interpolation) ---------- */
-  var ORDER = ["hero","ch1","ch2","ch3","ch4","ch5","end"];
+  var ORDER = ["hero","ch1","ch2","ch3","ch4","ch5","ch6","ch7","ch8"];
   /* Reference choreography (84-24): each chapter flies/turns/zooms the
      model to the side opposite the text, explodes it for the "surgery"
      chapter, reassembles it, then spins it out at the end.
@@ -62,24 +131,30 @@
      4 Durability: Pan Right, Reassemble + 360deg to back, material light
      5 Conclusion: centre, Zoom Out, attractive base pose, buy button */
   var STAGES = {
-    hero: {ry:45,  rx:10, rz:0,  explode:1,   s:1,    x:0,    y:0,    camZ:9.5,  light:1.35},
-    ch1:  {ry:-70, rx:8,  rz:0,  explode:1,   s:1.15, x:-1.1, y:0,    camZ:7.4,  light:1.0},
-    ch2:  {ry:-30, rx:16, rz:-12,explode:1.15, s:1.18, x:1.1,  y:.1,  camZ:7.2,  light:1.1},
-    ch3:  {ry:120, rx:10, rz:0,  explode:2.6,  s:1.3,  x:0,    y:.25, camZ:8.2,  light:1.2},
-    ch4:  {ry:480, rx:8,  rz:0,  explode:1,   s:1.05, x:1.1,  y:.1,  camZ:9.0,  light:1.5},
-    ch5:  {ry:45,  rx:10, rz:0,  explode:1,   s:1,    x:0,    y:0,    camZ:11.0, light:1.35},
-    end:  {ry:45,  rx:10, rz:0,  explode:1,   s:1,    x:0,    y:0,    camZ:11.0, light:1.35}
+    /* 8 chapters. ry = turn, camZ = camera distance, explode = layer separation,
+       light = key light intensity, x = pan offset (positive = right) */
+    hero: {ry:45,  rx:10, rz:0,  explode:1,    s:1,    x:0,    y:0,    camZ:9.6,  light:1.35},
+    ch1:  {ry:-70, rx:8,  rz:0,  explode:1,    s:1.15, x:-.9,  y:0,    camZ:8.4,  light:1.45},
+    ch2:  {ry:-30, rx:16, rz:-12,explode:1.15, s:1.18, x:.9,   y:.1,   camZ:7.3,  light:1.15},
+    ch3:  {ry:120, rx:10, rz:0,  explode:2.6,  s:1.3,  x:0,    y:.25,  camZ:7.0,  light:1.25},
+    ch4:  {ry:480, rx:8,  rz:0,  explode:1,    s:1.05, x:-.7,  y:.1,   camZ:7.6,  light:1.5},
+    ch5:  {ry:150, rx:12, rz:0,  explode:1.05, s:1.02, x:.7,   y:0,    camZ:8.2,  light:1.2},
+    ch6:  {ry:220, rx:14, rz:0,  explode:1,    s:1,    x:0,    y:.1,   camZ:9.4,  light:1.3},
+    ch7:  {ry:300, rx:8,  rz:0,  explode:1,    s:.98,  x:-.6,  y:0,    camZ:9.0,  light:1.4},
+    ch8:  {ry:405, rx:10, rz:0,  explode:1,    s:1,    x:0,    y:0,    camZ:10.8, light:1.35}
   };
-  var TITLES = {hero:"Welcome",ch1:"01 The Crystal",ch2:"02 Granules & Tablets",ch3:"03 The Jumbo Bag",ch4:"04 Arish to the World",ch5:"Conclusion",end:"The End"};
-  var NUMS = {hero:"00 / 05",ch1:"01 / 05",ch2:"02 / 05",ch3:"03 / 05",ch4:"04 / 05",ch5:"05 / 05",end:"05 / 05"};
+  var TITLES = {hero:"Welcome",ch1:"01 The Crystal",ch2:"02 Granules & Tablets",ch3:"03 Inside the Bag",ch4:"04 The Printed Face",ch5:"05 Packaging Formats",ch6:"06 Arish to the World",ch7:"07 Ports & Documents",ch8:"08 The End"};
+  var NUMS = {hero:"00 / 08",ch1:"01 / 08",ch2:"02 / 08",ch3:"03 / 08",ch4:"04 / 08",ch5:"05 / 08",ch6:"06 / 08",ch7:"07 / 08",ch8:"08 / 08"};
   var CAPTIONS = {
-    hero:"Fig. 0 — Hero: centre, 45° angle, slow auto-rotate, bright light.",
-    ch1:"Fig. 1 — Pan Left + Rotate to right side + Zoom In. Text on the right.",
-    ch2:"Fig. 2 — Bag crosses back right, tilts and zooms in — the challenge, close up.",
-    ch3:"Fig. 3 — Surgery: bag centres, zooms and explodes — four layers separate in space.",
-    ch4:"Fig. 4 — Pan Right + Reassemble + 360° spin to the back. Material light on.",
-    ch5:"Fig. 5 — Conclusion: centre, Zoom Out, base pose. Request a Quote below.",
-    end:"Fig. 5 — Conclusion: centre, Zoom Out, base pose. Request a Quote below."
+    hero:"Fig. 0 — The model at rest. Scroll to begin the story.",
+    ch1:"Fig. 1 — Scene 01: salt crystal, bright purity light, scrub rotation.",
+    ch2:"Fig. 2 — Scene 02: crystal morphs into granules and water-softening tablets.",
+    ch3:"Fig. 3 — Scene 03: exploded view — shell, liner, salt core, printed face.",
+    ch4:"Fig. 4 — Scene 04: full turn to the printed face and the batch record.",
+    ch5:"Fig. 5 — Scene 05: packaging formats, raw versus refined.",
+    ch6:"Fig. 6 — Scene 06: bag dissolves into the globe, export arcs light up.",
+    ch7:"Fig. 7 — Scene 07: ports, Incoterms and documents.",
+    ch8:"Fig. 8 — The End. Request a quote below the model."
   };
   var cur = {ry:45, rx:10, rz:0, explode:1, s:1, x:0, y:0, camZ:9.5, light:1.35};
   var autoRy = 0;
@@ -141,9 +216,9 @@
     if(hudTitle) hudTitle.textContent = TITLES[id] || "";
     if(callouts) callouts.classList.toggle("show", id==="ch2");
     var cta = document.getElementById("stage-cta");
-    if(cta) cta.classList.toggle("show", id==="ch5" || id==="end");
+    if(cta) cta.classList.toggle("show", id==="ch8");
     badges.forEach(function(b){
-      b.classList.toggle("show", (id==="ch2" && b.dataset.stage==="ch2") || (id==="ch5" && b.dataset.stage==="ch5"));
+      b.classList.toggle("show", b.dataset.stage===id);
     });
     document.querySelectorAll(".exp-nav a").forEach(function(a){
       a.classList.toggle("active", a.getAttribute("href")==="#"+id);

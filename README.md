@@ -51,3 +51,15 @@ python3 -m http.server 8000
 - **Offices:** El Arish (North Sinai) & Cairo (New Cairo), Egypt.
 - **Language:** English only (`lang="en"` on all pages, EN badge in the header).
 - Deploy anywhere static: GitHub Pages, Netlify, Vercel, or any web server.
+
+
+## 3D Experience — architecture (v21)
+
+The `experience.html` page borrows the *architecture and motion logic* of the 84-24.org reference, not its content:
+
+1. **Fixed 3D layer + scrollable DOM** — `.stage-fixed` is `position:fixed; inset:0` with a full-viewport WebGL canvas (`pointer-events:none`); the text column (`main`) scrolls above it on the right 50% and the model is art-directed into the left half by offsetting the camera.
+2. **ScrollTrigger keyframes** — one `ScrollTrigger` per chapter writes camera position/target (`window.__cam`) and the particle morph state (`window.__morph`) only while it is active. Chapters 02, 03 and 06 perform the crystal → granules/tablets → jumbo bag → globe morphs; the bag layers also scrub between assembled and exploded.
+3. **Chapter navigation 01–08** — the fixed rail (`.side-rail`) and header nav highlight automatically from the active chapter and jump smoothly through Lenis.
+4. **Performance** — a preloader gates the scene until the vendored libs are ready; particle budget adapts (8,000 desktop / 4,200 small screens), device pixel ratio is capped, rendering pauses on hidden tabs, and all libraries are vendored + minified (no CDN).
+
+**On Draco / GLB:** this build ships no 3D model files at all — every scene (crystal, granules, tablets, bag, globe, export arcs) is generated procedurally in Three.js, so the 3D payload is 0 KB. If real GLB assets are supplied later, a `DRACOLoader` can be added without changing the scroll architecture.

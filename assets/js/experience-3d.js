@@ -193,14 +193,15 @@
     }
     window.addEventListener("resize", resize); resize();
     var dragRy=0, dragRx=0, dragging=false, sx=0, sy=0, br=0, bx=0;
-    canvas.addEventListener("pointerdown", function(e){ dragging=true; sx=e.clientX; sy=e.clientY; br=dragRy; bx=dragRx; canvas.setPointerCapture(e.pointerId); });
-    canvas.addEventListener("pointermove", function(e){
+    var dragTarget = document.getElementById("stage-drag") || canvas;
+    dragTarget.addEventListener("pointerdown", function(e){ dragging=true; sx=e.clientX; sy=e.clientY; br=dragRy; bx=dragRx; if(dragTarget.setPointerCapture) dragTarget.setPointerCapture(e.pointerId); });
+    dragTarget.addEventListener("pointermove", function(e){
       if(!dragging) return;
       dragRy = br + (e.clientX-sx)*.5;
       dragRx = Math.max(-30, Math.min(30, bx - (e.clientY-sy)*.35));
     });
-    ["pointerup","pointercancel"].forEach(function(ev){ canvas.addEventListener(ev, function(){ dragging=false; }); });
-    canvas.addEventListener("dblclick", function(){ dragRy=0; dragRx=0; });
+    ["pointerup","pointercancel"].forEach(function(ev){ dragTarget.addEventListener(ev, function(){ dragging=false; }); });
+    dragTarget.addEventListener("dblclick", function(){ dragRy=0; dragRx=0; });
 
     var cur = {ry:45, rx:10, rz:0, explode:1, s:1, x:0, y:0, camZ:9.5, light:1.35};
     function lerp(a,b,t){ return a+(b-a)*t; }
@@ -231,9 +232,12 @@
       key.intensity = 1.35 * cur.light; rim.intensity = .7 * cur.light; /* per-chapter lighting */
       var mx = (window.__mouse && window.__mouse.x) || 0;
       var my = (window.__mouse && window.__mouse.y) || 0;
-      camera.position.x = bag.position.x * .55 + mx * .35;
-      camera.position.y = .4 + bag.position.y * .5 - my * .25;
-      camera.lookAt(bag.position.x, bag.position.y, 0);
+      /* Fixed canvas is full-viewport: shift the bag into the left half,
+         exactly like art-directing the reference's single WebGL layer. */
+      var camOffset = (window.innerWidth >= 1100) ? halfW/2 : 0;
+      camera.position.x += ((bag.position.x + camOffset + mx * .35) - camera.position.x) * .1;
+      camera.position.y += ((.4 + bag.position.y * .5 - my * .25) - camera.position.y) * .1;
+      camera.lookAt(bag.position.x + camOffset, bag.position.y, 0);
       /* Exploded: parts separate in Z, fan in Y, and rotate (reference parts fly + turn) */
       var e = cur.explode, fan = (e-1);
       back.position.z = -D*.37*e;  back.position.y = -.35*fan;  back.rotation.x = -.18*fan;

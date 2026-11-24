@@ -386,3 +386,82 @@ main{z-index:2}
 .callouts .callout{background:#fff;color:var(--col1);border:1px solid #2a4a6b;box-shadow:0 4px 14px rgba(0,0,0,.35)}
 .callouts .callout::after{background:#fff}
 .callouts .callout:hover,.callouts .callout.hot{background:#c96a1b;color:#fff;border-color:#c96a1b}
+
+/* ================= v21: REFERENCE ARCHITECTURE =================
+   1) Fixed 3D layer (position:fixed) + scrollable DOM above it
+   2) Chapter rail 01–08 auto-highlight
+   3) Preloader gate
+   ============================================================== */
+
+/* --- 1. Fixed canvas: full viewport, model art-directed into the left half --- */
+.stage-fixed{
+  position:fixed; left:0; top:0; width:100vw; height:100vh;
+  z-index:20; pointer-events:none;
+  background:linear-gradient(90deg,#0E1A2B 0%,#16293d 46%,#1d3a56 50%,#f6f9fb 50%,#eef4f8 100%);
+  border-right:0;
+}
+#webgl-wrap{position:fixed; inset:0; width:100vw; height:100vh}
+#webgl,#particles-canvas{position:absolute; inset:0; width:100%; height:100%}
+.stage-fixed .scene{pointer-events:none}
+.stage-hud{left:20px; right:auto; bottom:20px}
+.keyboard-bar{left:auto; right:20px; bottom:20px}
+.stage-caption{left:auto; right:calc(50% + 22px); bottom:66px; text-align:right; max-width:240px; color:#cfe2ee}
+.stage-hint{left:auto; right:calc(50% + 22px); bottom:44px; text-align:right; color:#8fa6bd}
+.stage-cta{left:auto; right:calc(50% + 22px); bottom:110px}
+
+/* --- DOM scrolls above the fixed 3D layer --- */
+main{
+  margin-left:50vw; width:50vw; position:relative; z-index:30;
+  background:linear-gradient(180deg,#f7fafc 0%,#ffffff 100%);
+  box-shadow:-30px 0 60px rgba(14,26,43,.18);
+}
+.chapter,.hero,.end,.footnotes{background:transparent}
+
+/* --- hero sits over the right column --- */
+.hero{padding:120px 0 60px}
+.hero h1{color:var(--col1)}
+
+/* --- 2. Rail with 8 chapters: subtle numbers, active expands --- */
+.side-rail{gap:5px; z-index:40}
+.side-rail a{padding:6px 11px; font-size:10.5px; letter-spacing:.06em}
+.side-rail a b{font-size:13px}
+.side-rail a.active{transform:translateX(3px)}
+
+/* --- 3. Preloader --- */
+#preloader{
+  position:fixed; inset:0; z-index:9000; display:flex; align-items:center; justify-content:center;
+  background:radial-gradient(900px 600px at 50% 45%,#1d3a56,#0E1A2B 75%);
+  transition:opacity .7s ease, visibility .7s ease;
+}
+body.loaded #preloader{opacity:0; visibility:hidden}
+.pre-inner{text-align:center; color:#fff}
+.pre-logo{font-family:var(--serif); font-size:26px; letter-spacing:.04em; margin-bottom:26px}
+.pre-logo span{color:var(--accent); margin:0 2px}
+.pre-bar{width:min(320px,60vw); height:2px; background:rgba(255,255,255,.16); margin:0 auto 14px; overflow:hidden}
+.pre-bar i{display:block; height:100%; width:0; background:linear-gradient(90deg,#7ec3e8,#fff); transition:width .25s ease}
+.pre-meta{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#8fa6bd}
+.pre-meta span{color:#7ec3e8}
+
+/* --- intro waits for the preloader --- */
+body:not(.loaded) #intro{opacity:0; pointer-events:none}
+
+/* --- mobile: stage becomes a sticky block on top, canvas stays inside it --- */
+@media(max-width:1100px){
+  .stage-fixed{
+    position:sticky; top:64px; width:100%; height:44vh;
+    background:radial-gradient(700px 420px at 50% 45%,#1d3a56,#0E1A2B 78%);
+  }
+  #webgl-wrap{position:absolute; inset:0; width:100%; height:100%}
+  main{margin-left:0; width:100%; box-shadow:none}
+  .stage-caption,.stage-hint,.stage-cta{right:auto; left:50%; transform:translateX(-50%); text-align:center; max-width:300px}
+  .side-rail{display:none}
+}
+
+/* v21b: drag surface lives only over the 3D half (canvas itself is pointer-events:none) */
+.stage-drag{position:fixed;left:0;top:0;width:50vw;height:100vh;z-index:21;cursor:grab;touch-action:pan-y}
+.stage-drag:active{cursor:grabbing}
+.stage-fixed .scene{left:25%;top:50%;transform:translate(-50%,-50%)}
+@media(max-width:1100px){
+  .stage-drag{display:none}
+  .stage-fixed .scene{left:50%}
+}
