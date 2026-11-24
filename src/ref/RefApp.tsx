@@ -476,7 +476,7 @@ export default function RefApp() {
             </div>
             <div className="ref-globe">
               <Suspense fallback={null}>
-                <ModelStage kind="globe" dark camera={{ position: [0, 0.35, 4.2], fov: 33 }} />
+                <ModelStage kind="globe" dark camera={{ position: [0, 1.1, 8.4], fov: 30 }} />
               </Suspense>
               <div className="ref-globe-dest mono">
                 {destinations.map((d) => (

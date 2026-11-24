@@ -540,12 +540,12 @@ function GlobeModel() {
       if (!mesh.isMesh) return
       if (mesh.name.includes('ocean')) {
         mesh.material = new THREE.MeshPhysicalMaterial({
-          color: '#08161f',
-          roughness: 0.42,
-          metalness: 0.28,
-          clearcoat: 0.45,
-          clearcoatRoughness: 0.45,
-          envMapIntensity: 1.1,
+          color: '#050f16',
+          roughness: 0.5,
+          metalness: 0.15,
+          clearcoat: 0.35,
+          clearcoatRoughness: 0.55,
+          envMapIntensity: 0.45,
         })
       } else {
         mesh.material = new THREE.MeshBasicMaterial({ color: '#63b7dd', toneMapped: false, transparent: true, opacity: 0.92 })
@@ -556,8 +556,9 @@ function GlobeModel() {
   useFrame((_, dt) => {
     if (ref.current) ref.current.rotation.y += dt * 0.09
   })
+  useReportMetrics(model, [model])
   return (
-    <group ref={ref} rotation={[0.18, -1.35, 0.03]} scale={1.5}>
+    <group ref={ref} rotation={[0.18, -1.35, 0.03]} scale={1.5} position={[0, 0.12, 0]}>
       <primitive object={model} />
     </group>
   )
@@ -630,7 +631,10 @@ function ModelStage({
         >
           <MetricsCtx.Provider value={setHalf}>
           <StudioEnv dark={dark} />
-          <Cyc tone={TONE[kind]} y={-half} />
+          {/* a dark plate needs a dark sweep: the container now renders its
+              own background, so a light cyc inside the dark hero section
+              would read as a glowing white card */}
+          <Cyc tone={dark ? 'slate' : TONE[kind]} y={-half} />
           <ambientLight intensity={dark ? 0.26 : 0.22} />
           {/* one key with a real shadow, one fill, one rim — a three-light
               set rather than three equal directionals */}
