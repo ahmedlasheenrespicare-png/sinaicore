@@ -18,6 +18,53 @@ import { useWovenPBR, fabricProps } from './fabric'
 
 useGLTF.setDecoderPath('/draco/')
 
+/* ------------------------------------------------------------------ *
+ * Canvas sizing.
+ *
+ * R3F measures its parent once, when the canvas mounts. If that measurement
+ * lands before layout — or while the host is still 0×0, as it is for a panel
+ * that is lazily mounted inside a Suspense boundary — the canvas keeps the
+ * HTML default of 300×150 and draws into a buffer nobody can see. The stage
+ * is then present, the model is loaded, and the plate is empty.
+ *
+ * So: measure in a rAF loop until the box has a real size, then keep
+ * measuring through a ResizeObserver. This is the same fix the exploded act
+ * uses, and it is here for the same reason — it was the thing that made the
+ * models invisible.
+ * ------------------------------------------------------------------ */
+function FitCanvas() {
+  const { gl, camera, setSize, size } = useThree()
+  useEffect(() => {
+    let raf = 0
+    let tries = 0
+    const solve = () => {
+      const el = gl.domElement
+      const w = el.parentElement?.clientWidth || el.clientWidth || 0
+      const h = el.parentElement?.clientHeight || el.clientHeight || 0
+      if (w < 2 || h < 2) return false
+      if (size.width !== w || size.height !== h) setSize(w, h)
+      const cam = camera as THREE.PerspectiveCamera
+      cam.aspect = w / h
+      cam.updateProjectionMatrix()
+      return true
+    }
+    const tick = () => {
+      tries++
+      if (solve() || tries > 180) return
+      raf = requestAnimationFrame(tick)
+    }
+    tick()
+    const ro = new ResizeObserver(() => solve())
+    ro.observe(gl.domElement.parentElement ?? gl.domElement)
+    return () => {
+      cancelAnimationFrame(raf)
+      ro.disconnect()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gl, camera, setSize])
+  return null
+}
+
 export type Kind = 'container' | 'crystal' | 'tablets' | 'fibc' | 'sack' | 'globe' | 'jar'
 
 /* ------------------------------------------------------------------ *
@@ -630,6 +677,7 @@ function ModelStage({
             r.shadowMap.type = THREE.PCFShadowMap
           }}
         >
+          <FitCanvas />
           <MetricsCtx.Provider value={setHalf}>
           <StudioEnv dark={dark} />
           {/* a dark plate needs a dark sweep: the container now renders its
