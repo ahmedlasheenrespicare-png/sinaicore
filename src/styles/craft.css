@@ -950,3 +950,847 @@
     transition: none;
   }
 }
+
+/* ==================================================================
+ * 10. the field notes — merged into the final document
+ *
+ * The prose chapters were authored in the editorial cut, against a
+ * measure of text with a sticky numbered margin. Here they run inside
+ * the reference's section shell instead: the same reading measure, but
+ * with the chapter number set as a rule-bound over-line rather than a
+ * floating sticky column, so eight chapters do not turn into eight
+ * screens of empty gutter on a laptop.
+ * ================================================================== */
+
+/* the contents list: eight chapters, numbered, as a printed index */
+.nt-index {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  border-block-start: 1px solid var(--hair);
+  margin-block-end: clamp(2rem, 5vw, 3.4rem);
+}
+.nt-index a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0 0.55rem;
+  align-items: baseline;
+  padding: 0.65rem 0.9rem 0.65rem 0;
+  border-block-end: 1px solid var(--hair-soft);
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.25s var(--ease);
+}
+.nt-index a:hover {
+  color: var(--ref-copper);
+}
+.nt-index .n {
+  grid-row: 1 / span 2;
+  font-family: var(--font-serif-lat);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  opacity: 0.45;
+}
+.nt-index .t {
+  font-family: var(--font-serif-ar);
+  font-size: 0.98rem;
+  line-height: 1.3;
+}
+.nt-index .s {
+  font-size: 0.72rem;
+  opacity: 0.55;
+  line-height: 1.4;
+}
+
+/* one chapter: head on the reading edge, prose in a measured column */
+.nt-chapter {
+  display: grid;
+  grid-template-columns: minmax(0, 15rem) minmax(0, var(--measure-wide));
+  gap: 0 clamp(2rem, 6vw, 5rem);
+  padding-block: clamp(1.6rem, 4vw, 2.6rem);
+  border-block-start: 1px solid var(--hair);
+  scroll-margin-block-start: 5rem;
+}
+.nt-chapter-head .n {
+  font-family: var(--font-serif-lat);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  opacity: 0.45;
+  display: block;
+  margin-block-end: 0.35rem;
+}
+.nt-chapter-head h3 {
+  font-family: var(--font-serif-ar);
+  font-size: clamp(1.4rem, 2.6vw, 1.85rem);
+  line-height: 1.2;
+  margin: 0 0 0.3rem;
+}
+.nt-chapter-head .sub {
+  font-size: 0.82rem;
+  opacity: 0.6;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.nt-body {
+  max-inline-size: var(--measure);
+  font-size: 0.95rem;
+  line-height: 1.85;
+  text-wrap: pretty;
+}
+.nt-body > * + * {
+  margin-block-start: 1rem;
+}
+.nt-body p {
+  margin: 0;
+}
+/* No drop capital anywhere in this run. `::first-letter` on Arabic
+   selects the letter *and* its initial form and floats both out of the
+   line, producing a stray glyph rather than an initial. Latin typography
+   has an initial; Arabic has its own openings, and this is not one. */
+.nt-body .lead {
+  /* base.css carries a global .lead sized and coloured for the dark cut
+     (--salt-dim on near-black). On the reference's light page that colour
+     is almost invisible, so the whole rule is restated here rather than
+     letting one word of shared class name ghost a paragraph. */
+  font-size: 1.02rem;
+  line-height: 1.8;
+  font-weight: 400;
+  color: inherit;
+  max-inline-size: none;
+  opacity: 0.95;
+}
+.nt-body .lead::first-letter {
+  font-family: var(--font-serif-ar);
+}
+
+/* margin note, set as a rule-bound aside */
+.nt-note {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0 0.7rem;
+  align-items: baseline;
+  border-inline-start: 2px solid var(--hair);
+  padding-inline-start: 0.85rem;
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+.nt-note .n {
+  font-family: var(--font-serif-lat);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  opacity: 0.5;
+}
+.nt-note b {
+  display: block;
+  font-size: 0.86rem;
+  margin-block-end: 0.1rem;
+}
+.nt-note span:last-child {
+  grid-column: 2;
+  opacity: 0.72;
+}
+
+.nt-quote {
+  margin: 1.6rem 0;
+  padding-inline-start: 1.1rem;
+  border-inline-start: 1px solid currentColor;
+}
+.nt-quote p {
+  font-family: var(--font-serif-ar);
+  font-size: 1.2rem;
+  line-height: 1.6;
+  margin: 0 0 0.4rem;
+}
+.nt-quote cite {
+  font-style: normal;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  opacity: 0.55;
+}
+
+/* small definition rows: label left, figure right, hairline between */
+.nt-rows {
+  margin: 0;
+  font-size: 0.86rem;
+}
+.nt-rows > dt {
+  font-family: var(--font-serif-lat);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.5;
+  margin-block-end: 0.35rem;
+}
+.nt-rows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 0;
+  border-block-end: 1px solid var(--hair-soft);
+}
+.nt-rows div dt {
+  font-size: 0.84rem;
+  opacity: 0.8;
+}
+.nt-rows div dd {
+  margin: 0;
+  font-family: var(--font-serif-lat);
+  font-variant-numeric: lining-nums;
+  font-size: 0.88rem;
+  direction: ltr;
+}
+
+/* a figure in the prose run: plate mark, caption, no shadow */
+.nt-fig {
+  margin: 1.4rem 0 0;
+}
+.nt-fig .frame {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--hair-soft);
+  aspect-ratio: 4 / 3;
+}
+.nt-fig .frame img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  display: block;
+}
+.nt-fig figcaption {
+  display: grid;
+  gap: 0.2rem;
+  margin-block-start: 0.55rem;
+  font-size: 0.76rem;
+  line-height: 1.6;
+  opacity: 0.72;
+}
+.nt-fig figcaption .tag {
+  font-family: var(--font-serif-lat);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  opacity: 0.65;
+}
+
+/* --------------------------------------------------- container act */
+.ref-load-head {
+  margin-block: clamp(1.8rem, 4vw, 2.8rem) 0;
+  border-block-start: 1px solid var(--hair);
+  padding-block-start: 0.9rem;
+}
+.ref-load-head .over {
+  display: block;
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, currentColor 55%, transparent);
+  margin-block-end: 0.5rem;
+}
+.ref-load-head h3 {
+  font-family: var(--font-serif-ar);
+  font-size: clamp(1.3rem, 2.4vw, 1.7rem);
+  margin: 0;
+}
+.nt-load {
+  list-style: none;
+  margin: 1.2rem 0 clamp(1.8rem, 4vw, 2.6rem);
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0 clamp(1.2rem, 3vw, 2.2rem);
+}
+.nt-stop {
+  border-block-start: 1px solid var(--hair);
+  padding-block: 0.8rem 1.2rem;
+}
+.nt-stop .n {
+  font-family: var(--font-serif-lat);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  opacity: 0.45;
+}
+.nt-stop .k {
+  display: block;
+  font-size: 0.56rem;
+  letter-spacing: 0.16em;
+  opacity: 0.5;
+  margin-block: 0.5rem 0.35rem;
+}
+.nt-stop h4 {
+  font-family: var(--font-serif-ar);
+  font-size: 1.02rem;
+  line-height: 1.35;
+  margin: 0 0 0.4rem;
+  white-space: pre-line;
+}
+.nt-stop p {
+  font-size: 0.81rem;
+  line-height: 1.65;
+  opacity: 0.76;
+  margin: 0 0 0.7rem;
+  text-wrap: pretty;
+}
+.nt-stop dl {
+  margin: 0;
+  font-size: 0.78rem;
+}
+.nt-stop dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.28rem 0;
+  border-block-end: 1px solid var(--hair-soft);
+}
+.nt-stop dl dt {
+  font-family: var(--font-serif-lat);
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  opacity: 0.5;
+  text-transform: uppercase;
+}
+.nt-stop dl dd {
+  margin: 0;
+  font-family: var(--font-serif-lat);
+  font-variant-numeric: lining-nums;
+  direction: ltr;
+}
+
+/* --------------------------------------------------- sailing lines */
+.nt-routes {
+  margin-block-start: 0.9rem;
+  border-block-start: 1px solid var(--hair);
+  padding-block-start: 0.7rem;
+}
+.nt-routes > .sub {
+  margin: 0 0 0.4rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+.nt-routes dl {
+  margin: 0;
+}
+.nt-routes dl > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.34rem 0;
+  border-block-end: 1px solid var(--hair-soft);
+}
+.nt-routes dt {
+  font-size: 0.84rem;
+}
+.nt-routes dt .lat {
+  display: block;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  opacity: 0.45;
+}
+.nt-routes dd {
+  margin: 0;
+  font-size: 0.78rem;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------ narrow */
+@media (max-width: 1000px) {
+  .nt-index {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .nt-load {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .nt-chapter {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.8rem;
+  }
+  .nt-chapter-head {
+    position: static;
+  }
+  .nt-index {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .nt-load {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The logistics grid is auto-fit at a 320px minimum, which held for three
+   equal cards and breaks as soon as one card carries a port pair *and* a
+   route table: it grows two rows taller than its neighbours and leaves the
+   columns beside it empty. The ports card spans the full row and sets its
+   two blocks side by side, so the row stays level. */
+.ref-logi {
+  align-items: start;
+}
+.ref-logi > .ref-card {
+  grid-column: 1 / -1;
+}
+.ref-port-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.72fr);
+  gap: 0 clamp(1.6rem, 4vw, 3rem);
+  align-items: start;
+  margin-block-start: 0.9rem;
+}
+.ref-port-col {
+  display: grid;
+  gap: 0.8rem;
+}
+.ref-port-pair > .nt-routes {
+  margin-block-start: 0;
+  border-block-start: 0;
+  padding-block-start: 0;
+  border-inline-start: 1px solid var(--hair-soft);
+  padding-inline-start: clamp(1rem, 3vw, 2rem);
+}
+.ref-port-pair > .nt-routes > .sub {
+  margin-block-start: 0.1rem;
+}
+
+@media (max-width: 860px) {
+  .ref-port-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ref-port-pair > .nt-routes {
+    border-inline-start: 0;
+    padding-inline-start: 0;
+    border-block-start: 1px solid var(--hair-soft);
+    padding-block-start: 0.8rem;
+  }
+}
+
+/* ==================================================================
+ * 10. the field notes — merged into the final document
+ *
+ * The prose chapters were authored in the editorial cut, against a
+ * measure of text with a sticky numbered margin. Here they run inside
+ * the reference's section shell instead: the same reading measure, but
+ * with the chapter number set as a rule-bound over-line rather than a
+ * floating sticky column, so eight chapters do not turn into eight
+ * screens of empty gutter on a laptop.
+ * ================================================================== */
+
+/* the contents list: eight chapters, numbered, as a printed index */
+.nt-index {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  border-block-start: 1px solid var(--hair);
+  margin-block-end: clamp(2rem, 5vw, 3.4rem);
+}
+.nt-index a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0 0.55rem;
+  align-items: baseline;
+  padding: 0.65rem 0.9rem 0.65rem 0;
+  border-block-end: 1px solid var(--hair-soft);
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.25s var(--ease);
+}
+.nt-index a:hover {
+  color: var(--ref-copper);
+}
+.nt-index .n {
+  grid-row: 1 / span 2;
+  font-family: var(--font-serif-lat);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  opacity: 0.45;
+}
+.nt-index .t {
+  font-family: var(--font-serif-ar);
+  font-size: 0.98rem;
+  line-height: 1.3;
+}
+.nt-index .s {
+  font-size: 0.72rem;
+  opacity: 0.55;
+  line-height: 1.4;
+}
+
+/* one chapter: head on the reading edge, prose in a measured column */
+.nt-chapter {
+  display: grid;
+  grid-template-columns: minmax(0, 15rem) minmax(0, var(--measure-wide));
+  gap: 0 clamp(2rem, 6vw, 5rem);
+  padding-block: clamp(1.6rem, 4vw, 2.6rem);
+  border-block-start: 1px solid var(--hair);
+  scroll-margin-block-start: 5rem;
+}
+.nt-chapter-head .n {
+  font-family: var(--font-serif-lat);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  opacity: 0.45;
+  display: block;
+  margin-block-end: 0.35rem;
+}
+.nt-chapter-head h3 {
+  font-family: var(--font-serif-ar);
+  font-size: clamp(1.4rem, 2.6vw, 1.85rem);
+  line-height: 1.2;
+  margin: 0 0 0.3rem;
+}
+.nt-chapter-head .sub {
+  font-size: 0.82rem;
+  opacity: 0.6;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.nt-body {
+  max-inline-size: var(--measure);
+  font-size: 0.95rem;
+  line-height: 1.85;
+  text-wrap: pretty;
+}
+.nt-body > * + * {
+  margin-block-start: 1rem;
+}
+.nt-body p {
+  margin: 0;
+}
+/* No drop capital anywhere in this run. `::first-letter` on Arabic
+   selects the letter *and* its initial form and floats both out of the
+   line, producing a stray glyph rather than an initial. Latin typography
+   has an initial; Arabic has its own openings, and this is not one. */
+.nt-body .lead {
+  /* base.css carries a global .lead sized and coloured for the dark cut
+     (--salt-dim on near-black). On the reference's light page that colour
+     is almost invisible, so the whole rule is restated here rather than
+     letting one word of shared class name ghost a paragraph. */
+  font-size: 1.02rem;
+  line-height: 1.8;
+  font-weight: 400;
+  color: inherit;
+  max-inline-size: none;
+  opacity: 0.95;
+}
+.nt-body .lead::first-letter {
+  font-family: var(--font-serif-ar);
+}
+
+/* margin note, set as a rule-bound aside */
+.nt-note {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0 0.7rem;
+  align-items: baseline;
+  border-inline-start: 2px solid var(--hair);
+  padding-inline-start: 0.85rem;
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+.nt-note .n {
+  font-family: var(--font-serif-lat);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  opacity: 0.5;
+}
+.nt-note b {
+  display: block;
+  font-size: 0.86rem;
+  margin-block-end: 0.1rem;
+}
+.nt-note span:last-child {
+  grid-column: 2;
+  opacity: 0.72;
+}
+
+.nt-quote {
+  margin: 1.6rem 0;
+  padding-inline-start: 1.1rem;
+  border-inline-start: 1px solid currentColor;
+}
+.nt-quote p {
+  font-family: var(--font-serif-ar);
+  font-size: 1.2rem;
+  line-height: 1.6;
+  margin: 0 0 0.4rem;
+}
+.nt-quote cite {
+  font-style: normal;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  opacity: 0.55;
+}
+
+/* small definition rows: label left, figure right, hairline between */
+.nt-rows {
+  margin: 0;
+  font-size: 0.86rem;
+}
+.nt-rows > dt {
+  font-family: var(--font-serif-lat);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.5;
+  margin-block-end: 0.35rem;
+}
+.nt-rows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 0;
+  border-block-end: 1px solid var(--hair-soft);
+}
+.nt-rows div dt {
+  font-size: 0.84rem;
+  opacity: 0.8;
+}
+.nt-rows div dd {
+  margin: 0;
+  font-family: var(--font-serif-lat);
+  font-variant-numeric: lining-nums;
+  font-size: 0.88rem;
+  direction: ltr;
+}
+
+/* a figure in the prose run: plate mark, caption, no shadow */
+.nt-fig {
+  margin: 1.4rem 0 0;
+}
+.nt-fig .frame {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--hair-soft);
+  aspect-ratio: 4 / 3;
+}
+.nt-fig .frame img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  display: block;
+}
+.nt-fig figcaption {
+  display: grid;
+  gap: 0.2rem;
+  margin-block-start: 0.55rem;
+  font-size: 0.76rem;
+  line-height: 1.6;
+  opacity: 0.72;
+}
+.nt-fig figcaption .tag {
+  font-family: var(--font-serif-lat);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  opacity: 0.65;
+}
+
+/* --------------------------------------------------- container act */
+.ref-load-head {
+  margin-block: clamp(1.8rem, 4vw, 2.8rem) 0;
+  border-block-start: 1px solid var(--hair);
+  padding-block-start: 0.9rem;
+}
+.ref-load-head .over {
+  display: block;
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, currentColor 55%, transparent);
+  margin-block-end: 0.5rem;
+}
+.ref-load-head h3 {
+  font-family: var(--font-serif-ar);
+  font-size: clamp(1.3rem, 2.4vw, 1.7rem);
+  margin: 0;
+}
+.nt-load {
+  list-style: none;
+  margin: 1.2rem 0 clamp(1.8rem, 4vw, 2.6rem);
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0 clamp(1.2rem, 3vw, 2.2rem);
+}
+.nt-stop {
+  border-block-start: 1px solid var(--hair);
+  padding-block: 0.8rem 1.2rem;
+}
+.nt-stop .n {
+  font-family: var(--font-serif-lat);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  opacity: 0.45;
+}
+.nt-stop .k {
+  display: block;
+  font-size: 0.56rem;
+  letter-spacing: 0.16em;
+  opacity: 0.5;
+  margin-block: 0.5rem 0.35rem;
+}
+.nt-stop h4 {
+  font-family: var(--font-serif-ar);
+  font-size: 1.02rem;
+  line-height: 1.35;
+  margin: 0 0 0.4rem;
+  white-space: pre-line;
+}
+.nt-stop p {
+  font-size: 0.81rem;
+  line-height: 1.65;
+  opacity: 0.76;
+  margin: 0 0 0.7rem;
+  text-wrap: pretty;
+}
+.nt-stop dl {
+  margin: 0;
+  font-size: 0.78rem;
+}
+.nt-stop dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.28rem 0;
+  border-block-end: 1px solid var(--hair-soft);
+}
+.nt-stop dl dt {
+  font-family: var(--font-serif-lat);
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  opacity: 0.5;
+  text-transform: uppercase;
+}
+.nt-stop dl dd {
+  margin: 0;
+  font-family: var(--font-serif-lat);
+  font-variant-numeric: lining-nums;
+  direction: ltr;
+}
+
+/* --------------------------------------------------- sailing lines */
+.nt-routes {
+  margin-block-start: 0.9rem;
+  border-block-start: 1px solid var(--hair);
+  padding-block-start: 0.7rem;
+}
+.nt-routes > .sub {
+  margin: 0 0 0.4rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+.nt-routes dl {
+  margin: 0;
+}
+.nt-routes dl > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.34rem 0;
+  border-block-end: 1px solid var(--hair-soft);
+}
+.nt-routes dt {
+  font-size: 0.84rem;
+}
+.nt-routes dt .lat {
+  display: block;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  opacity: 0.45;
+}
+.nt-routes dd {
+  margin: 0;
+  font-size: 0.78rem;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------ narrow */
+@media (max-width: 1000px) {
+  .nt-index {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .nt-load {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .nt-chapter {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.8rem;
+  }
+  .nt-chapter-head {
+    position: static;
+  }
+  .nt-index {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .nt-load {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The logistics grid is auto-fit at a 320px minimum, which held for three
+   equal cards and breaks as soon as a card carries a port pair *and* a
+   route table: it grows two rows taller than its neighbours and leaves the
+   columns beside it empty. The ports card spans the remaining columns and
+   sets its inner blocks in two columns, so the row stays level. */
+.ref-logi {
+  align-items: start;
+}
+.ref-logi > .ref-card {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0 clamp(1.4rem, 4vw, 3rem);
+  align-items: start;
+}
+/* the card's own header is a grid child too — keep it on one line above */
+.ref-logi > .ref-card > .ref-icon,
+.ref-logi > .ref-card > h3,
+.ref-logi > .ref-card > p {
+  grid-column: 1 / -1;
+}
+.ref-logi > .ref-card > div {
+  grid-column: 1;
+  /* the markup carries an inline margin for the old stacked layout; in the
+     two-column card it only pushes the port block out of line with the
+     route table beside it */
+  margin-block-start: 0 !important;
+}
+.ref-logi > .ref-card > .nt-routes {
+  grid-column: 2;
+  /* follow the ports block, not a fixed row index: the header above it
+     can wrap to more lines than expected */
+  grid-row: 4;
+  align-self: start;
+  margin-block-start: 0;
+  border-block-start: 0;
+  padding-block-start: 0;
+  border-inline-start: 1px solid var(--hair-soft);
+  padding-inline-start: clamp(1rem, 3vw, 2rem);
+  align-self: start;
+}
+.ref-logi > .ref-card > p:last-child {
+  grid-column: 1;
+  opacity: 0.62;
+}
+
+@media (max-width: 860px) {
+  .ref-logi > .ref-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ref-logi > .ref-card > .nt-routes {
+    grid-column: 1;
+    grid-row: auto;
+    margin-block-start: 0.9rem;
+    border-inline-start: 0;
+    padding-inline-start: 0;
+    border-block-start: 1px solid var(--hair-soft);
+    padding-block-start: 0.8rem;
+  }
+}

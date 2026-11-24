@@ -16,6 +16,9 @@ import {
   grades,
   applications,
   faqs,
+  chapters,
+  loadStops,
+  seaRoutes,
   contact,
 } from './content'
 
@@ -27,6 +30,62 @@ const ModelStage = lazy(() => import('./Stage'))
    must not be applied to them. Deciding per string beats a per-row flag that
    would silently rot as the table is edited. */
 const isLatin = (t: string) => !/[\u0600-\u06FF]/.test(t)
+
+/* One prose block. The chapter copy was written for a reading column with
+   figures and margin notes; it is rendered here in the reference's own
+   type, not by importing the other cut's stylesheet — the words travel,
+   the design does not. */
+function NoteBlock({ b }: { b: (typeof chapters)[number]['blocks'][number] }) {
+  switch (b.kind) {
+    case 'p':
+      /* no drop capital: ::first-letter on Arabic takes the first two
+         glyphs (the letter plus its initial form) and floats them out of
+         the line, which reads as a stray mark. Latin lets you set an
+         initial; Arabic does not work that way. */
+      return <p>{b.text}</p>
+    case 'note':
+      return (
+        <aside className="nt-note">
+          <span className="n mono">{b.n}</span>
+          <b>{b.title}</b>
+          <span>{b.text}</span>
+        </aside>
+      )
+    case 'quote':
+      return (
+        <blockquote className="nt-quote">
+          <p>{b.text}</p>
+          <cite>{b.cite}</cite>
+        </blockquote>
+      )
+    case 'rows':
+      return (
+        <dl className="nt-rows">
+          <dt>{b.title}</dt>
+          {b.rows.map(([k, v]) => (
+            <div key={k}>
+              <dt>{k}</dt>
+              <dd>{v}</dd>
+            </div>
+          ))}
+        </dl>
+      )
+    case 'fig':
+      return (
+        <figure className="nt-fig">
+          <div className="frame" style={b.ratio ? { aspectRatio: b.ratio } : undefined}>
+            <img src={b.src} alt={b.alt} loading="lazy" decoding="async" />
+          </div>
+          <figcaption>
+            <span className="tag mono">{b.tag}</span>
+            {b.caption}
+          </figcaption>
+        </figure>
+      )
+    default:
+      return null
+  }
+}
 
 function Plate({
   kind,
@@ -180,6 +239,51 @@ export default function RefApp() {
 
         {/* ---------------------------------------- the aerial salt-pan act */}
         <PanAct />
+
+        {/* ------------------------------------------------ field notes
+         The aerial act shows the pans from above; this is the prose that
+         explains what is happening in them, chapter by chapter, from sea
+         water to the lab. It sits directly after the aerial act because it
+         is the same subject one level down: the ground truth behind the
+         three-second flyover. */}
+        <section className="ref-sec on-light" id="process">
+          <div className="ref-shell">
+            <div className="ref-sec-head">
+              <span className="over">Field Notes · Eight Chapters</span>
+              <h2>كيف يخرج الملح من الماء</h2>
+              <p>
+                من مياه البحر في خليج العريش إلى شهادة التحليل — ثمانية فصول تتبع الملح
+                خطوة بخطوة: التبخّر، والحصاد، والغسيل، والتكرير، والفرز، والتعبئة.
+              </p>
+            </div>
+            <nav className="nt-index" aria-label="فصول العملية">
+              {chapters.map((c) => (
+                <a key={c.id} href={`#ch-${c.id}`}>
+                  <span className="n mono">{c.n}</span>
+                  <span className="t">{c.title}</span>
+                  <span className="s">{c.sub}</span>
+                </a>
+              ))}
+            </nav>
+            <div className="nt-chapters">
+              {chapters.map((c) => (
+                <article className="nt-chapter" id={`ch-${c.id}`} key={c.id}>
+                  <header className="nt-chapter-head">
+                    <span className="n mono">{c.n}</span>
+                    <h3>{c.title}</h3>
+                    <p className="sub">{c.sub}</p>
+                  </header>
+                  <div className="nt-body">
+                    <p className="lead">{c.lead}</p>
+                    {c.blocks.map((b, i) => (
+                      <NoteBlock key={i} b={b} />
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
 
         {/* --------------------------------------------------- pillars */}
         <section className="ref-sec on-light" id="company">
@@ -516,6 +620,30 @@ export default function RefApp() {
               </div>
             </div>
 
+            {/* the sack is what goes in; this is what it goes in to */}
+            <div className="ref-load-head">
+              <span className="over">Container Loading</span>
+              <h3>من الشكارة إلى الحاوية المختومة</h3>
+            </div>
+            <ol className="nt-load">
+              {loadStops.map((st) => (
+                <li key={st.id} className="nt-stop">
+                  <span className="n mono">{st.index}</span>
+                  <span className="k mono">{st.labelLat}</span>
+                  <h4>{st.title}</h4>
+                  <p>{st.body}</p>
+                  <dl>
+                    {st.facts.map((f) => (
+                      <div key={f.k}>
+                        <dt>{f.k}</dt>
+                        <dd>{f.v}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </li>
+              ))}
+            </ol>
+
             <div className="ref-logi">
               {logistics.map((l) => (
                 <article className="ref-product" key={l.title}>
@@ -538,7 +666,12 @@ export default function RefApp() {
                 </span>
                 <h3>شروط الشحن وخيارات التعاقد</h3>
                 <p>FOB من موانئ مصرية استراتيجية.</p>
-                <div style={{ display: 'grid', gap: '0.8rem', marginBlockStart: '0.9rem' }}>
+                {/* ports and sailing lines answer the same question — where
+                    does it leave from — so they sit side by side on one
+                    level row rather than stacked, which is what left two
+                    empty columns and a card twice its neighbours' height */}
+                <div className="ref-port-pair">
+                <div className="ref-port-col">
                   {ports.map((p) => (
                     <div className={`ref-port ${p.tone}`} key={p.id}>
                       <div>
@@ -558,6 +691,23 @@ export default function RefApp() {
                       </div>
                     </div>
                   ))}
+                </div>
+                <div className="nt-routes">
+                  <p className="sub">خطوط الإبحار وأيام العبور</p>
+                  <dl>
+                    {seaRoutes.map((r) => (
+                      <div key={r.id}>
+                        <dt>
+                          {r.name}
+                          <span className="lat mono">{r.nameLat}</span>
+                        </dt>
+                        <dd className="mono" dir="ltr">
+                          {r.note}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
                 </div>
                 <p style={{ marginBlockStart: '0.9rem', fontSize: '0.78rem' }}>
                   جميع الشحنات تخضع لشروط العقد القياسية. تُطبَّق Incoterms وفق أحدث قواعد
