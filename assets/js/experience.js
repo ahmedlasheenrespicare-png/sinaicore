@@ -35,10 +35,10 @@
     ch2: {x:.45,  y:.30, z:7.3,  tx:0, ty:.05},
     ch3: {x:0,    y:.20, z:7.0,  tx:0, ty:0},
     ch4: {x:-.30, y:.35, z:7.6,  tx:0, ty:0},
-    ch5: {x:.30,  y:.40, z:8.2,  tx:0, ty:0},
+    ch5: {x:.30,  y:.40, z:10.2, tx:0, ty:0},
     ch6: {x:0,    y:.20, z:9.4,  tx:0, ty:0},
     ch7: {x:-.20, y:.45, z:9.0,  tx:0, ty:0},
-    ch8: {x:0,    y:.55, z:10.8, tx:0, ty:0}
+    ch8: {x:0,    y:.55, z:12.6, tx:0, ty:0}
   };
   var CAM_KEYS = CAM_ORDER_IDS();
   function CAM_ORDER_IDS(){ return ["hero","ch1","ch2","ch3","ch4","ch5","ch6","ch7","ch8"]; }
@@ -104,6 +104,7 @@
     window.__story.velocity = damp(window.__story.velocity, scrollVelocity, 6, dt);
     lastStoryPos = pos; lastStoryTime = now;
     window.__story.position = pos;
+    window.__story.index = chapterIndex(pos);
 
     /* --- subject weights (crystal / granules / bag / globe) --- */
     var w = [1, 0, 0, 0];
@@ -209,10 +210,10 @@
     ch2:  {ry:-30, rx:16, rz:-12,explode:1.15, s:1.18, x:.9,   y:.1,   camZ:7.3,  light:1.15},
     ch3:  {ry:120, rx:10, rz:0,  explode:2.6,  s:1.3,  x:0,    y:.25,  camZ:7.0,  light:1.25},
     ch4:  {ry:480, rx:8,  rz:0,  explode:1,    s:1.05, x:-.7,  y:.1,   camZ:7.6,  light:1.5},
-    ch5:  {ry:150, rx:12, rz:0,  explode:1.05, s:1.02, x:.7,   y:0,    camZ:8.2,  light:1.2},
+    ch5:  {ry:150, rx:12, rz:0,  explode:1.05, s:1.02, x:.7,   y:.15,  camZ:10.4, light:1.2},
     ch6:  {ry:220, rx:14, rz:0,  explode:1,    s:1,    x:0,    y:.1,   camZ:9.4,  light:1.3},
     ch7:  {ry:300, rx:8,  rz:0,  explode:1,    s:.98,  x:-.6,  y:0,    camZ:9.0,  light:1.4},
-    ch8:  {ry:405, rx:10, rz:0,  explode:1,    s:1,    x:0,    y:0,    camZ:10.8, light:1.35}
+    ch8:  {ry:405, rx:10, rz:0,  explode:1,    s:1,    x:0,    y:.1,   camZ:12.6, light:1.35}
   };
   var TITLES = {hero:"Welcome",ch1:"01 The source",ch2:"02 The grades",ch3:"03 Inside the bag",ch4:"04 The printed face",ch5:"05 Formats",ch6:"06 The map",ch7:"07 Ports & documents",ch8:"08 The finale"};
   var NUMS = {hero:"00 / 08",ch1:"01 / 08",ch2:"02 / 08",ch3:"03 / 08",ch4:"04 / 08",ch5:"05 / 08",ch6:"06 / 08",ch7:"07 / 08",ch8:"08 / 08"};

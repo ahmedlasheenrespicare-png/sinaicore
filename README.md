@@ -83,3 +83,14 @@ The scroll choreography now works like the reference's `sceneAt()`:
 - **Floating elements.** 67 instanced salt bits — 34 small crystals, 20 granules, 8 medium shards and 5 large glassy crystals — orbit the bag at different radii, bob, spin and pulse; scroll velocity adds energy, and they hide when the globe takes the frame.
 - **Label & texture.** The front/back artwork is drawn at 1536 × 1920 with 16× anisotropy, and the PP weave doubles as a bump map so the fabric and the blue print read at close range (chapter 02 pushes the camera in).
 - **Typography & loader.** Wide-tracked display headings and a minimal loader that shows one big percentage over the brand mark.
+
+
+## Product family & content rules (v30)
+
+Following the brocksbushes.moonshiners.co.uk breakdown:
+
+- **Three products, not one.** The 50 kg bag is the hero; a jumbo FIBC (cloned model, re-skinned with its own “1,000 kg” print) joins it in chapter 05 and stays for the closing lineup; a stack of softener tablets appears from chapter 02. The camera widens in 05 and again in 08 so the family can stand together.
+- **Floating elements match the copy.** The bullet lists carry the element glyphs that float in the scene (◆ crystals, ● granules, ▲ chunks, ▬ tablets), so the list and the 3D agree.
+- **Micro-specs** sit directly under every product name (`NaCl ≥ 99.5% · moisture ≤ 0.2%`), the way the reference prints `40% vol · 50cl`.
+- **CTA repeated** at the top (header pill “Get a quote →”) and at the bottom (finale buttons).
+- **Asset strategy:** no third-party 3D models at all — every mesh is generated in Three.js and every pack shot is SinaiCore's own photography, so there is nothing to licence.

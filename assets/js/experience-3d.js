@@ -39,9 +39,10 @@
     fill.position.set(0,-2,5); scene.add(fill);
 
     /* ---------- Textures (canvas-drawn, industrial detail) ---------- */
-    function frontTexture(){
+    function frontTexture(weightLabel){
       var c=document.createElement("canvas"); c.width=1536; c.height=1920;
       var x=c.getContext("2d");
+      x.scale(1.5, 1.5);                     /* artwork is authored in 1024x1280 */
       var g=x.createLinearGradient(0,0,0,1280);
       g.addColorStop(0,"#ffffff"); g.addColorStop(1,"#e8f2f8");
       x.fillStyle=g; x.fillRect(0,0,1024,1280);
@@ -60,7 +61,7 @@
       x.fillStyle="#5b6b7f"; x.font="500 38px Arial";
       x.fillText("Solar Evaporation  ·  High Purity",512,440);
       x.fillStyle="#0E1A2B"; x.font="700 96px Georgia, serif";
-      x.fillText("50 kg",512,580);
+      x.fillText(weightLabel || "50 kg",512,580);
       x.font="500 32px Arial"; x.fillStyle="#5b6b7f";
       x.fillText("NET WEIGHT",512,630);
       /* barcode */
@@ -79,6 +80,7 @@
     function backTexture(){
       var c=document.createElement("canvas"); c.width=1536; c.height=1920;
       var x=c.getContext("2d");
+      x.scale(1.5, 1.5);
       x.fillStyle="#14567d"; x.fillRect(0,0,1024,1280);
       x.fillStyle="#fff"; x.font="700 64px Georgia, serif"; x.textAlign="center";
       x.fillText("Batch Information",512,180);
@@ -225,6 +227,55 @@
                Math.random()*6.28, (Math.random()-.5)*2.6, .02 + Math.random()*.05);
     }
 
+    /* ---------- Product family (reference: one product per beat, lineup at the end) ----------
+       50 kg bag = the hero already built above. A jumbo FIBC clone and a stack of
+       softener tablets join it for the formats chapter and the closing lineup. */
+    var jumboTex = frontTexture("1,000 kg");
+    var jumboFaceMat = new THREE.MeshStandardMaterial({map:jumboTex, bumpMap:weaveTex, bumpScale:.012, roughness:.62, metalness:.02});
+    var jumbo = bag.clone(true);
+    jumbo.traverse(function(o){ if(o.isMesh){ o.castShadow = true; o.receiveShadow = true; } });
+    /* the clone keeps child order, so the printed faces can be re-skinned
+       with the 1 tonne artwork (front panel + the label plane) */
+    jumbo.children.forEach(function(child, i){
+      if(bag.children[i] === front || bag.children[i] === label) child.material = jumboFaceMat;
+    });
+    jumbo.scale.setScalar(1.16);
+    jumbo.position.set(0, 0, -1.15);
+    jumbo.visible = false;
+    scene.add(jumbo);
+
+    var tablets = new THREE.Group();
+    var tabGeo = new THREE.CylinderGeometry(.4, .4, .13, 44, 1);
+    var tabMat = new THREE.MeshStandardMaterial({color:0xfcfdff, roughness:.38, metalness:.02});
+    var tabEdge = new THREE.MeshStandardMaterial({color:0xeaf2f8, roughness:.55});
+    var tabLayout = [[0,0,0],[.86,0,.1],[.43,0,.86],[-.43,0,.86],[-.86,0,.1],
+                     [.43,-.16,.1],[-.43,-.16,.1],[0,-.32,0]];
+    tabLayout.forEach(function(pos, i){
+      var t = new THREE.Mesh(tabGeo, i % 3 === 0 ? tabEdge : tabMat);
+      t.position.set(pos[0], pos[1], pos[2]);
+      t.rotation.set((Math.random()-.5)*.06, Math.random()*3.14, (Math.random()-.5)*.06);
+      t.castShadow = true; t.receiveShadow = true;
+      t.userData = {bob: Math.random()*6.28, sp: .3 + Math.random()*.4};
+      tablets.add(t);
+    });
+    tablets.visible = false;
+    scene.add(tablets);
+
+    /* tablet-shaped floating elements (they match the "tablets" bullet list) */
+    var floatTablets = [];
+    for(var ft = 0; ft < 10; ft++){
+      var fm2 = new THREE.Mesh(tabGeo, tabMat);
+      fm2.scale.setScalar(.9 + Math.random()*.5);
+      fm2.userData = {
+        radius: 2.0 + Math.random()*1.9, angle: Math.random()*6.28,
+        yBase: (Math.random()-.5)*3.6, speed: .03 + Math.random()*.08,
+        bob: Math.random()*6.28, bobSpeed: .5 + Math.random()*.6,
+        spin: (Math.random()-.5)*.5, spin2: (Math.random()-.5)*.5,
+        baseScale: .9 + Math.random()*.5, parallax: 1
+      };
+      floatGroup.add(fm2); floatTablets.push(fm2);
+    }
+
     /* Ground shadow catcher */
     var ground = new THREE.Mesh(new THREE.PlaneGeometry(30,30),
       new THREE.ShadowMaterial({opacity:.22}));
@@ -279,6 +330,39 @@
       var energy = 1 + Math.min(.7, Math.abs(vel) * .12);
       floatGroup.rotation.y = bag.rotation.y * .35;
       floatGroup.visible = bagAmt > .12;   /* they belong to the bag chapters */
+
+      /* ---- product family reveal, keyed to the story chapter index ---- */
+      var idx = (window.__story && window.__story.index) || 0;
+      function step(a, b){ var t = (idx - a) / Math.max(.001, (b - a)); return t < 0 ? 0 : (t > 1 ? 1 : t * t * (3 - 2 * t)); }
+      var jumboW = step(4.15, 5.15);        /* appears with "05 — Formats" */
+      var tabletW = step(1.15, 2.15);       /* tablets join with "02 — The grades" */
+      jumbo.visible = jumboW > .01 && bagAmt > .12;
+      jumbo.scale.setScalar(1.16 * (0.55 + 0.45 * jumboW));
+      jumbo.position.set(bag.position.x + 2.15 * jumboW, bag.position.y - .1, -1.15);
+      jumbo.rotation.copy(bag.rotation);
+      jumbo.rotation.y += .35;
+      tablets.visible = tabletW > .01 && bagAmt > .12;
+      tablets.scale.setScalar(0.55 + 0.45 * tabletW);
+      tablets.position.set(bag.position.x - 2.05 * tabletW, bag.position.y - 1.15, .55);
+      tablets.rotation.y = bag.rotation.y * .8;
+      tablets.children.forEach(function(t, ti){
+        t.position.y = tabLayout[ti][1] + Math.sin(time * t.userData.sp * 2 + t.userData.bob) * .03;
+      });
+      /* tablet floats only orbit while the tablets are part of the story */
+      floatTablets.forEach(function(ft2, fi2){
+        var u2 = ft2.userData;
+        u2.angle += u2.speed * .006 * energy;
+        u2.bob += u2.bobSpeed * .012 * energy;
+        var r2 = u2.radius;
+        ft2.position.x = Math.cos(u2.angle) * r2;
+        ft2.position.z = Math.sin(u2.angle) * r2 * .55;
+        ft2.position.y = u2.yBase + Math.sin(u2.bob) * .16;
+        ft2.rotation.x += u2.spin * .004;
+        ft2.rotation.z += u2.spin2 * .004;
+        var s2 = u2.baseScale * tabletW;
+        ft2.scale.setScalar(Math.max(.001, s2));
+        ft2.visible = tabletW > .02;
+      });
       floats.forEach(function(fm, fi){
         var u = fm.userData;
         u.angle += u.speed * .006 * energy;

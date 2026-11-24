@@ -642,3 +642,14 @@ body:not(.loaded) #intro{opacity:0; pointer-events:none}
   font-family:var(--mono); font-size:10px; letter-spacing:.34em;
   text-transform:uppercase; color:#8fa6bd; margin-top:4px
 }
+
+/* v29: header CTA (repeated call to action, reference style) */
+.exp-cta{
+  font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.1em;
+  text-transform:uppercase; color:#fff; background:var(--accent);
+  padding:9px 14px; border-radius:999px; white-space:nowrap; transition:.25s
+}
+.exp-cta:hover{background:#12496c; transform:translateY(-1px)}
+@media(max-width:860px){.exp-cta{display:none}}
+/* micro-spec directly under a product name (reference "40% vol · 50cl") */
+.product h3 + .meta-line,.lineup-card h3 + .meta-line{margin-top:6px}
