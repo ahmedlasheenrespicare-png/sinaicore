@@ -513,3 +513,95 @@ body:not(.loaded) #intro{opacity:0; pointer-events:none}
   .chapter.is-pinned{display:block}
   .chapter.is-pinned .wrap{position:static;height:auto;max-height:none;padding:20px 26px}
 }
+
+/* ================= v25: REFERENCE EDITORIAL CONTENT SYSTEM ================= */
+/* eyebrow / display name / meta / notes / badge / product / lineup — the
+   reference's "one product, one block" content rhythm, in SinaiCore colours */
+
+.eyebrow2{
+  font-family:var(--mono); font-size:11px; font-weight:600;
+  letter-spacing:.28em; text-transform:uppercase; color:var(--accent);
+  margin:0 0 14px
+}
+.big-name{
+  font-family:var(--serif); font-weight:700;
+  font-size:clamp(30px,3.4vw,52px); line-height:.98; letter-spacing:-.015em;
+  margin:0 0 14px; color:var(--col1)
+}
+.meta-line{
+  font-family:var(--mono); font-size:11.5px; letter-spacing:.12em;
+  text-transform:uppercase; color:#7a8ba0; margin:0 0 14px
+}
+.lead-para{font-size:17px; line-height:1.7; color:#2f4257; margin:0 0 18px}
+.chapter p{color:#3a4f66}
+.sub-h{font-family:var(--serif); font-size:19px; margin:26px 0 12px; color:var(--col1)}
+
+/* brand row in the hero (reference logo strip) */
+.brand-row{display:flex; align-items:center; gap:12px; margin-bottom:22px}
+.brand-mark{font-family:var(--serif); font-size:19px; font-weight:700; letter-spacing:-.01em; color:var(--col1)}
+.brand-mark.alt{font-weight:500; color:#7a8ba0; font-size:15px; letter-spacing:.06em; text-transform:uppercase; font-family:var(--mono)}
+.brand-div{color:var(--accent); font-size:13px}
+
+.hero-meta-line{display:flex; flex-wrap:wrap; gap:8px; margin:16px 0 22px}
+.hero-meta-line span{
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+  border:1px solid #dbe6ee; border-radius:999px; padding:6px 11px; color:#42566b; background:#fff
+}
+.hero-cta{display:flex; flex-wrap:wrap; gap:10px; margin-bottom:18px}
+
+/* notes list (reference tasting notes) */
+.notes{list-style:none; margin:6px 0 20px; padding:0; display:flex; flex-wrap:wrap; gap:7px}
+.notes li{
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+  color:#42566b; background:var(--accent-soft); border-radius:4px; padding:6px 10px
+}
+
+/* badge pill (reference "available now") */
+.badge-pill{
+  font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.14em;
+  text-transform:uppercase; color:#fff; background:var(--accent);
+  border-radius:999px; padding:5px 11px; white-space:nowrap
+}
+.badge-pill.seasonal{background:#C96A1B}
+
+/* product block (reference: one spirit per block) */
+.product{padding:20px 0; border-top:1px solid #e6edf3}
+.product:first-of-type{border-top:0; padding-top:6px}
+.product h3{font-family:var(--serif); font-size:clamp(21px,2.1vw,29px); line-height:1.05; margin:0; color:var(--col1); font-weight:700}
+.product-head{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:8px}
+.product p{font-size:14.5px; line-height:1.65; color:#3a4f66; margin:0 0 10px; max-width:46ch}
+.product .notes{margin-bottom:0}
+
+/* layers list (reference botanical bill) */
+.layers{list-style:none; margin:8px 0 20px; padding:0}
+.layers li{display:flex; flex-direction:column; gap:2px; padding:11px 0; border-top:1px solid #e6edf3}
+.layers li b{font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent)}
+.layers li span{font-size:14.5px; color:#3a4f66}
+
+/* passing statement (reference data-passing band) */
+.passing{
+  font-family:var(--serif); font-size:clamp(20px,2.3vw,30px); line-height:1.25;
+  color:var(--col1); margin:26px 0; padding-left:18px; border-left:3px solid var(--accent)
+}
+
+/* finale lineup (reference "one farm, three bottles") */
+.lineup{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin:24px 0 30px}
+.lineup-card{background:#fff; border:1px solid #e3eaf0; border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:8px; transition:.25s}
+.lineup-card:hover{border-color:var(--accent); box-shadow:0 12px 30px rgba(14,26,43,.10); transform:translateY(-2px)}
+.lineup-no{font-family:var(--mono); font-size:10px; letter-spacing:.16em; color:#9db0c2}
+.lineup-card h3{font-family:var(--serif); font-size:19px; line-height:1.1; margin:0; color:var(--col1)}
+.lineup-card .meta-line{font-size:10px; margin:0}
+.lineup-card .badge-pill{align-self:flex-start; margin-top:auto}
+
+/* credits / footer fine print (reference footer) */
+.credits{margin-top:26px; padding-top:18px; border-top:1px solid #e6edf3; font-size:12px; line-height:1.7; color:#6b7f93}
+.credits p{margin:0 0 6px}
+.credits .fine{font-size:10.5px; color:#93a5b6; line-height:1.6}
+.cta-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px}
+
+/* keep pinned panels honest with the new blocks */
+.chapter.is-pinned .wrap{overflow:hidden}
+@media(max-width:700px){
+  .big-name{font-size:clamp(26px,7vw,36px)}
+  .lineup{grid-template-columns:1fr 1fr}
+}

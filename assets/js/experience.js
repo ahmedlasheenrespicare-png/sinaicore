@@ -212,18 +212,18 @@
     ch7:  {ry:300, rx:8,  rz:0,  explode:1,    s:.98,  x:-.6,  y:0,    camZ:9.0,  light:1.4},
     ch8:  {ry:405, rx:10, rz:0,  explode:1,    s:1,    x:0,    y:0,    camZ:10.8, light:1.35}
   };
-  var TITLES = {hero:"Welcome",ch1:"01 The Crystal",ch2:"02 Granules & Tablets",ch3:"03 Inside the Bag",ch4:"04 The Printed Face",ch5:"05 Packaging Formats",ch6:"06 Arish to the World",ch7:"07 Ports & Documents",ch8:"08 The End"};
+  var TITLES = {hero:"Welcome",ch1:"01 The source",ch2:"02 The grades",ch3:"03 Inside the bag",ch4:"04 The printed face",ch5:"05 Formats",ch6:"06 The map",ch7:"07 Ports & documents",ch8:"08 The finale"};
   var NUMS = {hero:"00 / 08",ch1:"01 / 08",ch2:"02 / 08",ch3:"03 / 08",ch4:"04 / 08",ch5:"05 / 08",ch6:"06 / 08",ch7:"07 / 08",ch8:"08 / 08"};
   var CAPTIONS = {
     hero:"Fig. 0 — The model at rest. Scroll to begin the story.",
-    ch1:"Fig. 1 — Scene 01: salt crystal, bright purity light, scrub rotation.",
-    ch2:"Fig. 2 — Scene 02: crystal morphs into granules and water-softening tablets.",
-    ch3:"Fig. 3 — Scene 03: exploded view — shell, liner, salt core, printed face.",
-    ch4:"Fig. 4 — Scene 04: full turn to the printed face and the batch record.",
-    ch5:"Fig. 5 — Scene 05: packaging formats, raw versus refined.",
-    ch6:"Fig. 6 — Scene 06: bag dissolves into the globe, export arcs light up.",
-    ch7:"Fig. 7 — Scene 07: ports, Incoterms and documents.",
-    ch8:"Fig. 8 — The End. Request a quote below the model."
+    ch1:"Fig. 1 — The source: solar evaporation, North Sinai.",
+    ch2:"Fig. 2 — The grades: crystal into granules and softener tablets.",
+    ch3:"Fig. 3 — Inside the bag: four layers, one tonne.",
+    ch4:"Fig. 4 — The printed face: brand, weight, batch, origin.",
+    ch5:"Fig. 5 — Formats: bags, FIBC, sling bags, bulk.",
+    ch6:"Fig. 6 — The map: routes drawn from Arish and Suez.",
+    ch7:"Fig. 7 — Ports and documents: FOB terms, COA, traceability.",
+    ch8:"Fig. 8 — The finale: one coast, five grades."
   };
   var cur = {ry:45, rx:10, rz:0, explode:1, s:1, x:0, y:0, camZ:9.5, light:1.35};
   var autoRy = 0;
