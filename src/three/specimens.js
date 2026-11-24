@@ -23,6 +23,58 @@ function normalise(object, targetHeight) {
   return object
 }
 
+/* the sack and the FIBC ship as blank geometry — print the SinaiCore panel
+   onto a canvas so the 50 kg sack reads as the product it is */
+async function makeBrandPanel() {
+  const img = await new Promise((resolve) => {
+    const el = new Image()
+    el.onload = () => resolve(el)
+    el.onerror = () => resolve(null)
+    el.src = '/brand/logo-full.png'
+  })
+
+  const c = document.createElement('canvas')
+  c.width = c.height = 512
+  const g = c.getContext('2d')
+
+  g.fillStyle = '#f8f6f0'
+  g.fillRect(0, 0, 512, 512)
+
+  // a faint weave so the panel does not read as plastic
+  g.globalAlpha = 0.05
+  g.strokeStyle = '#1b2839'
+  for (let i = 0; i < 512; i += 6) {
+    g.beginPath()
+    g.moveTo(i, 0)
+    g.lineTo(i, 512)
+    g.stroke()
+  }
+  g.globalAlpha = 1
+
+  if (img) {
+    const w = 316
+    const h = w * (img.naturalHeight / img.naturalWidth)
+    g.drawImage(img, (512 - w) / 2, 54, w, h)
+  }
+
+  g.textAlign = 'center'
+  g.fillStyle = '#1a6b9c'
+  g.font = '500 22px "IBM Plex Mono", monospace'
+  g.fillText('INDUSTRIAL SEA SALT', 256, 396)
+  g.fillStyle = '#0e1a2b'
+  g.font = '600 20px Cairo, Tahoma, sans-serif'
+  g.fillText('FOOD GRADE · VACUUM REFINED', 256, 432)
+  g.fillStyle = '#c2712f'
+  g.font = '700 40px "EB Garamond", Georgia, serif'
+  g.fillText('50 kg', 256, 492)
+
+  const tex = new THREE.CanvasTexture(c)
+  tex.colorSpace = THREE.SRGBColorSpace
+  tex.anisotropy = 4
+  tex.wrapS = THREE.RepeatWrapping
+  return tex
+}
+
 /* the exported globe is a grey study model — recolour it into the
    notebook palette so it belongs on the paper */
 function tintGlobe(root) {
@@ -72,6 +124,9 @@ export async function loadSpecimens(loader, baseUrl = '') {
   )
   const models = Object.fromEntries(entries)
 
+  const panel = await makeBrandPanel()
+  const printMats = new Set()
+
   const groups = {}
 
   /* 06 — the softening tablets, a small heap at the side */
@@ -88,8 +143,8 @@ export async function loadSpecimens(loader, baseUrl = '') {
   /* 07 — the printed 50 kg sack and the FIBC beside it */
   if (models.sack && models.bag) {
     const g = new THREE.Group()
-    normalise(models.sack, 1.45)
-    models.sack.position.add(new THREE.Vector3(-1.0, -0.25, 0.35))
+    normalise(models.sack, 1.32)
+    models.sack.position.add(new THREE.Vector3(-1.02, 0.02, 0.35))
     models.sack.rotation.y = 0.35
     g.add(models.sack)
 
@@ -99,6 +154,37 @@ export async function loadSpecimens(loader, baseUrl = '') {
     g.add(models.bag)
     g.userData = { baseY: 0, rot: 0, phase: 2.1 }
     groups.pack = { group: g, mats: cloneMaterials(g), opacity: 0 }
+    /* the real bag: cream woven body, sea-blue crimp and cap */
+    const tones = {
+      woven_sack: 0xefeade,
+      sack_cap: 0x2f6f96,
+      sack_crimp: 0x2f6f96,
+      fibc_body: 0xf2eee4,
+      fibc_loops: 0x2f6f96,
+      fibc_seams: 0x9fb6c4,
+      brand_panel: 0xf8f6f0,
+    }
+    for (const [name, hex] of Object.entries(tones)) {
+      const mesh = g.getObjectByName(name)
+      const mat = mesh?.material
+      if (mat && !Array.isArray(mat)) {
+        mat.color = new THREE.Color(hex)
+        mat.roughness = 0.88
+        mat.needsUpdate = true
+      }
+    }
+
+    for (const name of ['sack_panel', 'sack_print', 'brand_panel']) {
+      const mesh = g.getObjectByName(name)
+      const mat = mesh?.material
+      if (mat && !Array.isArray(mat)) {
+        mat.map = panel
+        mat.color = new THREE.Color(0xffffff)
+        mat.roughness = 0.82
+        mat.needsUpdate = true
+        printMats.add(mat)
+      }
+    }
   }
 
   /* 08 — the export globe behind, the lab jar in front */
@@ -156,6 +242,7 @@ export async function loadSpecimens(loader, baseUrl = '') {
   }
 
   function dispose() {
+    panel.dispose()
     for (const spec of Object.values(groups)) {
       spec.group.traverse((obj) => {
         if (obj.isMesh) obj.geometry?.dispose()

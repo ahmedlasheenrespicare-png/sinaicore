@@ -3,11 +3,16 @@
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
+import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import { loadLattice } from './lattice.js'
 import { loadSpecimens } from './specimens.js'
 import { createParticles } from './particles.js'
+import { createDrag } from './drag.js'
+import { createHotspots } from './hotspots.js'
 import { debounce, isMobile, reducedMotion } from '../core/utils.js'
+
+const PAPER = 0xf4efe4
 
 export async function createStage({ manager, state }) {
   const canvas = document.getElementById('gl')
@@ -29,15 +34,24 @@ export async function createStage({ manager, state }) {
   }
 
   const reduce = reducedMotion()
+  /* transmission costs a full extra render of the scene — desktop only, and
+     the refraction buffer is rendered at a fraction of the frame to keep the
+     cost close to a single pass */
+  const transmission = !isMobile() && !reduce
 
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile() ? 1.5 : 1.75))
   renderer.setSize(window.innerWidth, window.innerHeight)
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.ACESFilmicToneMapping
   renderer.toneMappingExposure = 1.04
-  renderer.setClearColor(0x000000, 0)
+  renderer.setClearColor(PAPER, transmission ? 1 : 0)
+  if (transmission) renderer.transmissionResolutionScale = 0.4
 
   const scene = new THREE.Scene()
+  /* the transmission pass samples the framebuffer, so it needs something
+     behind the crystals — the page's own paper colour, which is seamless */
+  if (transmission) scene.background = new THREE.Color(PAPER)
+
   const camera = new THREE.PerspectiveCamera(
     33,
     window.innerWidth / window.innerHeight,
@@ -76,24 +90,56 @@ export async function createStage({ manager, state }) {
   draco.setDecoderPath('/draco/')
   draco.preload()
 
+  const ktx2 = new KTX2Loader(manager).setTranscoderPath('/ktx2/').detectSupport(renderer)
+
   const gltf = new GLTFLoader(manager)
   gltf.setDRACOLoader(draco)
+  gltf.setKTX2Loader(ktx2)
 
   let lattice
   let specimens
+  let wovenNormal
   try {
-    ;[lattice, specimens] = await Promise.all([loadLattice(gltf), loadSpecimens(gltf)])
+    ;[lattice, specimens, wovenNormal] = await Promise.all([
+      loadLattice(gltf, '', { transmission }),
+      loadSpecimens(gltf),
+      ktx2.loadAsync('/textures/woven-normal.ktx2').catch((err) => {
+        console.warn('[SinaiCore] KTX2 normal map unavailable:', err)
+        return null
+      }),
+    ])
   } catch (err) {
     console.warn('[SinaiCore] model load failed — falling back to the still.', err)
     document.body.classList.add('no-webgl')
     return null
   }
 
-  scene.add(lattice.group)
-  for (const spec of Object.values(specimens.groups)) scene.add(spec.group)
+  /* everything the reader can grab lives on one rig, so the drag rotates
+     the crystals and the specimen together */
+  const rig = new THREE.Group()
+  rig.name = 'rig'
+  scene.add(rig)
+  rig.add(lattice.group)
+  for (const spec of Object.values(specimens.groups)) rig.add(spec.group)
+
+  /* the KTX2 compressed normal map goes on the woven body of the FIBC */
+  if (wovenNormal) {
+    wovenNormal.wrapS = wovenNormal.wrapT = THREE.RepeatWrapping
+    wovenNormal.flipY = false
+    const body = rig.getObjectByName('fibc_body')
+    const mat = body?.material
+    if (mat && !Array.isArray(mat)) {
+      mat.normalMap = wovenNormal
+      mat.normalScale = new THREE.Vector2(0.9, 0.9)
+      mat.needsUpdate = true
+    }
+  }
 
   const particles = createParticles()
   scene.add(particles.group)
+
+  const hotspots = createHotspots({ camera, rig, isMobile: isMobile() })
+  const drag = createDrag({ camera, rig, enabled: !reduce && !isMobile() })
 
   /* mouse parallax */
   const mouse = { x: 0, y: 0 }
@@ -150,11 +196,18 @@ export async function createStage({ manager, state }) {
       camera.updateProjectionMatrix()
     }
 
+    /* the reader's drag, layered on top of the scroll rotation */
+    const orbit = drag.update(dt)
+    rig.rotation.y = orbit.yaw
+    rig.rotation.x = orbit.pitch
+    rig.rotation.z = orbit.pitch * -0.25
+
     lattice.update(state, now)
     specimens.update(state, now)
     particles.update(state, now)
 
     renderer.render(scene, camera)
+    hotspots.update()
   }
 
   function start() {
@@ -169,6 +222,7 @@ export async function createStage({ manager, state }) {
     running = false
     shouldRun = false
     cancelAnimationFrame(raf)
+    hotspots.hideAll()
   }
 
   function resize() {
@@ -202,10 +256,13 @@ export async function createStage({ manager, state }) {
     window.removeEventListener('pointermove', onPointer)
     window.removeEventListener('resize', onResize)
     document.removeEventListener('visibilitychange', onVisibility)
+    drag.dispose()
+    hotspots.dispose()
     lattice.dispose()
     specimens.dispose()
     particles.dispose()
     draco.dispose()
+    ktx2.dispose()
     pmrem.dispose()
     envScene.traverse?.((obj) => {
       obj.geometry?.dispose?.()
@@ -218,9 +275,12 @@ export async function createStage({ manager, state }) {
     renderer,
     scene,
     camera,
+    rig,
     lattice,
     specimens,
     particles,
+    hotspots,
+    drag,
     resize,
     start,
     stop,
@@ -228,5 +288,6 @@ export async function createStage({ manager, state }) {
     resume: start,
     dispose,
     setSpecimen: (name) => specimens.show(name),
+    setChapter: (i) => hotspots.setChapter(i),
   }
 }

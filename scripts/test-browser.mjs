@@ -109,7 +109,7 @@ const info = await page.evaluate(() => {
 })
 console.log(JSON.stringify(info, null, 2))
 
-await page.screenshot({ path: `${SHOTS}/01-hero.png` })
+await page.screenshot({ path: `${SHOTS}/01-hero.png`, timeout: 90000 })
 
 // walk the journey
 const stops = ['water', 'pan', 'harvest', 'wash', 'refine', 'grade', 'pack', 'lab']
@@ -121,14 +121,14 @@ for (let i = 0; i < stops.length; i++) {
     if (!el) return
     window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY + 40)
   }, id)
-  await page.waitForTimeout(1100)
+  await page.waitForTimeout(2200)
   const state = await page.evaluate(() => ({
     rail: [...document.querySelectorAll('.rail__item.is-active .rail__num')].map((e) => e.textContent),
     running: document.getElementById('running-title')?.textContent,
     y: Math.round(window.scrollY),
   }))
   seen.push(`${id.padEnd(8)} y=${String(state.y).padStart(6)} rail=[${state.rail}] running="${state.running}"`)
-  await page.screenshot({ path: `${SHOTS}/0${i + 2}-${id}.png` })
+  await page.screenshot({ path: `${SHOTS}/0${i + 2}-${id}.png`, timeout: 90000 })
 }
 console.log(seen.join('\n'))
 
@@ -141,11 +141,121 @@ const menuState = await page.evaluate(() => {
   return { visibility: cs.visibility, opacity: cs.opacity, open: m.classList.contains('is-open') }
 })
 console.log('menu:', JSON.stringify(menuState))
-await page.screenshot({ path: `${SHOTS}/10-menu.png` })
+await page.screenshot({ path: `${SHOTS}/10-menu.png`, timeout: 90000 })
 await page.locator('#menu-close').click()
 await page.waitForTimeout(700)
 
 // reduced motion sanity: reload with the preference set
+
+/* ---------- 3D interaction layer: hotspots, drag, hover ---------- */
+
+const stage = await page.evaluate(() => ({
+  hasStage: !!window.__stage,
+  transmission: window.__stage ? window.__stage.renderer.transmissionResolutionScale : null,
+  particles: window.__stage ? window.__stage.particles.count : null,
+}))
+console.log('stage:', JSON.stringify(stage))
+
+await page.evaluate(() => {
+  const el = document.getElementById('pack')
+  window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY + 420)
+})
+await page.waitForTimeout(2400)
+
+const hotspots = await page.evaluate(() =>
+  [...document.querySelectorAll('.hs')].map((el) => ({
+    id: el.dataset.hotspot,
+    chapter: Number(el.dataset.chapter),
+    visible: el.classList.contains('is-visible'),
+    rect: (() => {
+      const r = el.getBoundingClientRect()
+      return [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)]
+    })(),
+  })),
+)
+console.log('hotspots:', JSON.stringify(hotspots))
+
+const sack = hotspots.find((h) => h.id === 'sack')
+const visibleHere = hotspots.filter((h) => h.visible).map((h) => h.id)
+console.log(`hotspots visible in 07: [${visibleHere}]`)
+
+// a real click on the marker, through the browser's own hit testing
+await page.mouse.click(sack.rect[0] + sack.rect[2] / 2, sack.rect[1] + sack.rect[3] / 2)
+await page.waitForTimeout(700)
+const card = await page.evaluate(() => {
+  const c = document.querySelector('.hs-card')
+  return {
+    open: !c.hidden,
+    title: c.querySelector('.hs-card__title')?.textContent,
+    specs: [...c.querySelectorAll('.hs-card__specs dd')].map((d) => d.textContent),
+    rect: (() => {
+      const r = c.getBoundingClientRect()
+      return [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)]
+    })(),
+  }
+})
+console.log('card:', JSON.stringify(card))
+await page.screenshot({ path: `${SHOTS}/11-hotspot-card.png`, timeout: 90000 })
+
+await page.keyboard.press('Escape')
+await page.waitForTimeout(500)
+console.log('card closed by Escape:', await page.evaluate(() => document.querySelector('.hs-card').hidden))
+
+// drag: press on the object, move, release
+const probe = await page.evaluate(() => {
+  const st = window.__stage
+  const V3 = st.camera.position.constructor
+  const v = new V3()
+  st.rig.getObjectByName('sack_panel').getWorldPosition(v)
+  const p = v.clone().project(st.camera)
+  /* start a little off the marker so the press lands on the bag itself */
+  return {
+    x: Math.round((p.x * 0.5 + 0.5) * innerWidth) - 70,
+    y: Math.round((-p.y * 0.5 + 0.5) * innerHeight) + 40,
+  }
+})
+console.log('drag probe at', JSON.stringify(probe))
+
+await page.mouse.move(probe.x, probe.y)
+await page.waitForTimeout(500)
+console.log('hover over object:', await page.evaluate(() => document.body.classList.contains('is-over-object')))
+
+const yawBefore = await page.evaluate(() => window.__stage.rig.rotation.y)
+await page.mouse.down()
+await page.waitForTimeout(80)
+const draggingClass = await page.evaluate(() => document.body.classList.contains('is-dragging'))
+for (let i = 1; i <= 10; i++) {
+  await page.mouse.move(probe.x + i * 12, probe.y + i * 3)
+  await page.waitForTimeout(40)
+}
+await page.mouse.up()
+await page.waitForTimeout(500)
+const yawAfter = await page.evaluate(() => window.__stage.rig.rotation.y)
+console.log(
+  'drag:',
+  JSON.stringify({ draggingClass, yawBefore: +yawBefore.toFixed(3), yawAfter: +yawAfter.toFixed(3) }),
+)
+await page.screenshot({ path: `${SHOTS}/12-drag.png`, timeout: 90000 })
+
+const released = await page.evaluate(() => !document.body.classList.contains('is-dragging'))
+
+const interactions = {
+  markerClicked: card.open && card.title === 'شكارة ٥٠ كجم',
+  escapeCloses: await page.evaluate(() => document.querySelector('.hs-card').hidden),
+  dragged: draggingClass && Math.abs(yawAfter - yawBefore) > 0.05,
+  released,
+  hover: await page.evaluate(() => document.body.classList.contains('is-over-object')),
+}
+console.log('interaction checks:', JSON.stringify(interactions))
+if (
+  !interactions.markerClicked ||
+  !interactions.escapeCloses ||
+  !interactions.dragged ||
+  !interactions.released
+) {
+  errors.push('3D interaction layer failed: ' + JSON.stringify(interactions))
+}
+
 console.log('fig count:', await page.evaluate(() => document.querySelectorAll('.fig').length))
 console.log('chapter ids:', await page.evaluate(() => [...document.querySelectorAll('.chapter')].map((c) => c.id).join(',')))
 

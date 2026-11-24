@@ -6,7 +6,7 @@ import { clamp, easeInOut, seeded, reducedMotion } from '../core/utils.js'
 const Y_AXIS = new THREE.Vector3(0, 1, 0)
 const CENTER = new THREE.Vector3(0, 0.25, 0)
 
-export async function loadLattice(loader, baseUrl = '') {
+export async function loadLattice(loader, baseUrl = '', opts = {}) {
   const gltf = await loader.loadAsync(`${baseUrl}/models/halite-lattice.glb`)
   const group = gltf.scene
   group.name = 'halite-lattice'
@@ -73,13 +73,21 @@ export async function loadLattice(loader, baseUrl = '') {
 
   /* one physical material for every crystal — glass-clear halite with a
      copper core light behind it */
+  /* clear glass with a faint mineral tint. On desktop the material is
+     genuinely transmissive (it refracts what is behind it); on mobile and
+     for reduced motion we keep the cheaper clearcoat-only build, which looks
+     close and costs one pass instead of two. */
   const halite = new THREE.MeshPhysicalMaterial({
-    color: 0xe6f1ec,
+    color: 0xeef7f3,
     metalness: 0,
-    roughness: 0.1,
+    roughness: opts.transmission ? 0.06 : 0.1,
     clearcoat: 1,
     clearcoatRoughness: 0.045,
     ior: 1.48,
+    transmission: opts.transmission ? 0.94 : 0,
+    thickness: opts.transmission ? 0.62 : 0,
+    attenuationColor: new THREE.Color(0xe2f1f0),
+    attenuationDistance: opts.transmission ? 1.5 : Infinity,
     envMapIntensity: 0.85,
     specularIntensity: 1,
     sheen: 0.2,

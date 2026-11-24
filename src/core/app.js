@@ -111,6 +111,8 @@ export async function boot() {
 
   const [stageResult] = await Promise.allSettled([stagePromise, fontsPromise])
   const stage = stageResult.status === 'fulfilled' ? stageResult.value : null
+  // exposed for the headless browser test (scripts/test-browser.mjs)
+  window.__stage = stage
   if (stageResult.status === 'rejected') {
     console.warn('[SinaiCore] stage failed — falling back to the still.', stageResult.reason)
     document.body.classList.add('no-webgl')
@@ -134,7 +136,10 @@ export async function boot() {
   const timeline = createTimeline({
     state,
     sections,
-    onChapter: (i) => nav.setActive(i),
+    onChapter: (i) => {
+      nav.setActive(i)
+      stage?.setChapter(i)
+    },
     onSpecimen: (name) => stage?.setSpecimen(name),
   })
   timeline.build()
