@@ -259,8 +259,8 @@
         m.position.y = m.userData.y + Math.sin(time*m.userData.sp + m.userData.s)*.22;
       });
       /* Solid bag fades in only in Scene 3 (morph to bag shape) */
-      var mm = window.__morph || {from:0, to:0, progress:0};
-      var bagAmt = (mm.to===2) ? mm.progress : (mm.from===2 ? 1-mm.progress : 0);
+      var W = (window.__story && window.__story.weights) || [1,0,0,0];
+      var bagAmt = W[2] || 0;
       canvas.style.opacity = String(Math.max(0, Math.min(1, bagAmt*1.6)));
       var pc = document.getElementById("particles-canvas");
       if(pc) pc.style.opacity = String(1 - bagAmt*.55);

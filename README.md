@@ -63,3 +63,15 @@ The `experience.html` page borrows the *architecture and motion logic* of the 84
 4. **Performance** — a preloader gates the scene until the vendored libs are ready; particle budget adapts (8,000 desktop / 4,200 small screens), device pixel ratio is capped, rendering pauses on hidden tabs, and all libraries are vendored + minified (no CDN).
 
 **On Draco / GLB:** this build ships no 3D model files at all — every scene (crystal, granules, tablets, bag, globe, export arcs) is generated procedurally in Three.js, so the 3D payload is 0 KB. If real GLB assets are supplied later, a `DRACOLoader` can be added without changing the scroll architecture.
+
+
+## Story model (v23, borrowed from Field to Still × Brocksbushes)
+
+The scroll choreography now works like the reference's `sceneAt()`:
+
+- **Story position in screens** — `position = scrollTop / viewportHeight`; each chapter is a *beat* measured from the DOM (`offsetTop`), with a monotonic guard so the beats always increase.
+- **Subject weights** — instead of a from/to morph, the four 3D subjects (crystal, granules/tablets, jumbo bag, globe) carry a weight each: `smoothstep` bands around the beats of chapters 02, 03 and 06, normalised and damped twice. The particle system blends only the shapes with a non-zero weight, so transitions stay smooth and cheap.
+- **Camera keyframes** — a fractional chapter index is interpolated between per-chapter camera keyframes (position + look-at target), then damped; fast scrolling adds a small "surge" push, exactly like the reference's velocity offset.
+- **Typography** — chapter headings split into letters and rise with `back.out(2)` / `stagger 0.028`; figures, stat rows, tables and quote blocks use `power3.out` reveals.
+- **Micro-interaction** — a soft brand-coloured cursor halo (dot + ring, ring expands on interactive elements), disabled for coarse pointers and reduced motion.
+- **Performance** — the whole scene is still procedural (0 KB of model data), with an adaptive particle budget and a preloader gate.

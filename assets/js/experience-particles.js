@@ -162,39 +162,60 @@
     window.addEventListener("resize", resize); resize();
 
     var clock = new THREE.Clock();
-    var tmp = new THREE.Vector3(), tmpC = new THREE.Color();
+    var tmp = new THREE.Vector3(), acc = new THREE.Vector3(), tmpC = new THREE.Color();
+    var cAcc = new THREE.Color();
     function animate(){
       requestAnimationFrame(animate);
       if(document.hidden) return;
-      var m = window.__morph || {from:0, to:0, progress:0, rotY:0};
-      /* Camera keyframes from ScrollTrigger (window.__cam) */
+      /* Story weights (reference architecture): 4 subjects, blended */
+      var W = (window.__story && window.__story.weights) || [1,0,0,0];
+      var active = [];
+      for(var k = 0; k < 4; k++) if(W[k] > .002) active.push(k);
+      if(!active.length) active = [0];
+      var time = clock.getElapsedTime();
+
+      /* Camera keyframes from the story clock */
       var cam = window.__cam || {x:0, y:.5, z:9.6, tx:0, ty:0};
-      camera.position.x += (cam.x - camera.position.x) * .06;
-      camera.position.y += ((cam.y||.5) - camera.position.y) * .06;
-      camera.position.z += ((cam.z||9.6) - camera.position.z) * .06;
+      camera.position.x += (cam.x - camera.position.x) * .08;
+      camera.position.y += ((cam.y||.5) - camera.position.y) * .08;
+      camera.position.z += ((cam.z||9.6) - camera.position.z) * .08;
       camera.lookAt(cam.tx||0, cam.ty||0, 0);
-      /* Art direction: keep the model inside the left half of the fixed canvas */
+      /* keep the model inside the left half of the fixed canvas */
       var visW = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov/2)) * camera.position.z * camera.aspect;
       var desktop = window.innerWidth >= 1100;
-      group.position.x += ((desktop ? -visW/4 : 0) - group.position.x) * .08;
+      group.position.x += ((desktop ? -visW/4 : 0) - group.position.x) * .1;
       routes.position.x = group.position.x; shadow.position.x = group.position.x;
-      var A = SHAPES[m.from], B = SHAPES[m.to];
-      var time = clock.getElapsedTime();
-      for(var i=0;i<N;i++){
-        var lt = Math.max(0, Math.min(1, (m.progress*1.5 - delays[i])));
-        lt = lt*lt*(3-2*lt);
-        tmp.copy(A[i]).lerp(B[i], lt);
-        tmp.y += Math.sin(time*1.1 + i*.008)*.035;
-        pos[i*3]=tmp.x; pos[i*3+1]=tmp.y; pos[i*3+2]=tmp.z;
-        tmpC.copy(COLORS[m.from*2]).lerp(COLORS[m.to*2 + (i%2)], lt);
-        col[i*3]=tmpC.r; col[i*3+1]=tmpC.g; col[i*3+2]=tmpC.b;
+
+      for(var i = 0; i < N; i++){
+        /* weighted blend of the four subject shapes */
+        acc.set(0,0,0);
+        cAcc.setRGB(0,0,0);
+        var wsum = 0;
+        for(var a = 0; a < active.length; a++){
+          var si = active[a], wt = W[si];
+          if(wt <= 0) continue;
+          tmp.copy(SHAPES[si][i]);
+          acc.addScaledVector(tmp, wt);
+          tmpC.copy(COLORS[si*2 + (i%2)]);
+          cAcc.r += tmpC.r * wt; cAcc.g += tmpC.g * wt; cAcc.b += tmpC.b * wt;
+          wsum += wt;
+        }
+        if(wsum > 0){ acc.divideScalar(wsum); cAcc.r /= wsum; cAcc.g /= wsum; cAcc.b /= wsum; }
+        acc.y += Math.sin(time*1.1 + i*.008) * .03;
+        pos[i*3] = acc.x; pos[i*3+1] = acc.y; pos[i*3+2] = acc.z;
+        col[i*3] = cAcc.r; col[i*3+1] = cAcc.g; col[i*3+2] = cAcc.b;
       }
       geo.attributes.position.needsUpdate = true;
       geo.attributes.color.needsUpdate = true;
-      group.rotation.y = (m.rotY||0) + time*.07;
+
+      /* the model always turns slowly; scroll surge adds a little energy */
+      var vel = (window.__story && window.__story.velocity) || 0;
+      group.rotation.y += .0016 + Math.max(-.02, Math.min(.02, vel * .002));
       group.rotation.x = .16 + Math.sin(time*.3)*.04;
-      shadow.material.opacity = .35 + .15*Math.sin(time*.8);
-      var globeAmt = (m.to===3) ? m.progress : (m.from===3 ? 1-m.progress : 0);
+      shadow.material.opacity = .3 + .12*Math.sin(time*.8);
+
+      /* export arcs only exist on the globe subject */
+      var globeAmt = W[3] || 0;
       routeMats.forEach(function(mm){ mm.opacity = Math.max(0, Math.min(1, globeAmt*1.5)) * (.6 + .4*Math.sin(time*2.4)); });
       routes.rotation.y = group.rotation.y;
       renderer.render(scene, camera);

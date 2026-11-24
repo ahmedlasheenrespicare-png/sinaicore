@@ -465,3 +465,18 @@ body:not(.loaded) #intro{opacity:0; pointer-events:none}
   .stage-drag{display:none}
   .stage-fixed .scene{left:50%}
 }
+
+/* ================= v23: reference typography + micro-interactions ================= */
+
+/* Letter-by-letter headings (reference split-letters motion) */
+.hero h1 .lw,.chapter h2 .lw,.end h2 .lw{display:inline-block;white-space:nowrap}
+.hero h1 .ltr,.chapter h2 .ltr,.end h2 .ltr{display:inline-block;will-change:transform,opacity}
+@media(prefers-reduced-motion:reduce){
+  .hero h1 .ltr,.chapter h2 .ltr,.end h2 .ltr{opacity:1 !important;transform:none !important}
+}
+
+/* Soft cursor halo (desktop, fine pointer only) */
+.cursor-dot{position:fixed;left:0;top:0;width:6px;height:6px;border-radius:50%;background:#C96A1B;pointer-events:none;z-index:9998;transition:opacity .3s}
+.cursor-ring{position:fixed;left:0;top:0;width:32px;height:32px;border-radius:50%;border:1px solid rgba(201,106,27,.55);pointer-events:none;z-index:9997;transition:border-color .25s,opacity .3s;opacity:0}
+.cursor-ring.hot{border-color:#1A6B9C;border-width:2px}
+@media(hover:none),(pointer:coarse){.cursor-dot,.cursor-ring{display:none}}

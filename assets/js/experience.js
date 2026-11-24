@@ -9,15 +9,26 @@
     requestAnimationFrame(lenisRaf);
     if(lenis.on) lenis.on("scroll", function(){ lastScroll = Date.now(); });
   }
-  /* ================= REFERENCE MOTION ARCHITECTURE =================
-     One ScrollTrigger per chapter, each writing ONLY while it is active,
-     so no two timelines fight over the same shared state (that was the
-     bug that made the camera start on the last keyframe).
-     - morph: crystal(0) -> granules(1) -> bag(2) -> globe(3)
-     - camera: position + look-at target keyframes per chapter
-     ================================================================= */
-  window.__morph = {from:0, to:0, progress:0, rotY:0};
-  window.__cam = {x:0, y:.65, z:10.2, tx:0, ty:0};
+  /* =====================================================================
+     STORY MODEL (reference: Field to Still / Moonshiners × Brocksbushes)
+     ---------------------------------------------------------------------
+     The page is one story measured in SCREENS. Each chapter is a "beat"
+     with its own weight, and the 3D scene reads a single continuous
+     story position instead of fighting over the scroll:
+
+        position  = scrollTop / viewportHeight          (screens)
+        beat[i]   = document offset of chapter i        (screens)
+        weight_i  = smoothstep band over the beats      (0..1)
+        camera    = fractional chapter index, interpolated between
+                    per-chapter keyframes, then damped twice
+     ===================================================================== */
+  function clamp01(x){ return x < 0 ? 0 : (x > 1 ? 1 : x); }
+  function smooth01(x){ x = clamp01(x); return x*x*(3-2*x); }
+  function band(pos, a, b){ return smooth01((pos - a) / Math.max(.0001, (b - a))); }
+  function damp(cur, target, lambda, dt){ return cur + (target - cur) * (1 - Math.exp(-lambda * dt)); }
+
+  window.__story = {position:0, velocity:0, weights:[1,0,0,0]};
+
   var CAM = {
     hero:{x:0,    y:.65, z:10.2, tx:0, ty:0},
     ch1: {x:-.35, y:.45, z:8.4,  tx:0, ty:0},
@@ -29,43 +40,101 @@
     ch7: {x:-.20, y:.45, z:9.0,  tx:0, ty:0},
     ch8: {x:0,    y:.55, z:10.8, tx:0, ty:0}
   };
-  var CAM_ORDER = ["hero","ch1","ch2","ch3","ch4","ch5","ch6","ch7","ch8"];
-  /* Which chapters morph the particle model, and into what */
-  var MORPHS = {"ch2":[0,1], "ch3":[1,2], "ch6":[2,3]};
-  function mix(a, b, t){ return a + (b - a) * t; }
-  if(typeof gsap !== "undefined" && typeof ScrollTrigger !== "undefined"){
-    gsap.registerPlugin(ScrollTrigger);
-    CAM_ORDER.forEach(function(id, i){
-      var sec = document.getElementById(id);
-      if(!sec) return;
-      var from = CAM[id], to = CAM[CAM_ORDER[Math.min(i+1, CAM_ORDER.length-1)]];
-      var mp = MORPHS[id];
-      ScrollTrigger.create({
-        trigger: sec,
-        start: "top bottom",
-        end: "bottom top",
-        onUpdate: function(self){
-          if(!self.isActive) return; /* only the chapter in view writes */
-          var t = self.progress;
-          var cam = window.__cam;
-          cam.x = mix(from.x, to.x, t);
-          cam.y = mix(from.y, to.y, t);
-          cam.z = mix(from.z, to.z, t);
-          cam.tx = mix(from.tx, to.tx, t);
-          cam.ty = mix(from.ty, to.ty, t);
-          if(mp){
-            var mm = window.__morph;
-            mm.from = mp[0]; mm.to = mp[1];
-            mm.progress = Math.min(1, Math.max(0, t));
-          }
-          /* rotation of the particle model follows the same scrub */
-          window.__morph.rotY = t * 360 * (id === "ch8" ? .5 : 1);
-        }
-      });
+  var CAM_KEYS = CAM_ORDER_IDS();
+  function CAM_ORDER_IDS(){ return ["hero","ch1","ch2","ch3","ch4","ch5","ch6","ch7","ch8"]; }
+  /* which beat starts a new 3D subject: crystal -> granules -> bag -> globe */
+  var SUBJECT_BEATS = ["ch2", "ch3", "ch6"];
+
+  window.__cam = {x:CAM.hero.x, y:CAM.hero.y, z:CAM.hero.z, tx:0, ty:0};
+  var camSmooth = {x:CAM.hero.x, y:CAM.hero.y, z:CAM.hero.z, tx:0, ty:0};
+  var weightsSmooth = [1,0,0,0];
+  var lastStoryPos = 0, lastStoryTime = 0, scrollVelocity = 0;
+
+  var beatPositions = [];   /* chapter tops, in screens */
+  function measureBeats(){
+    var vh = window.innerHeight || 1;
+    beatPositions = CAM_KEYS.map(function(id, i){
+      var el = document.getElementById(id);
+      if(!el) return i;
+      var top = el.offsetTop;
+      if(!top) top = el.getBoundingClientRect().top + window.pageYOffset;
+      return top / vh;
     });
-    /* Font/layout settle: recompute start/end positions */
-    if(document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ ScrollTrigger.refresh(); });
+    /* keep the beats strictly increasing, even if a layout pass is odd */
+    for(var i = 1; i < beatPositions.length; i++){
+      if(!(beatPositions[i] > beatPositions[i-1])) beatPositions[i] = beatPositions[i-1] + 1;
+    }
   }
+  measureBeats();
+  window.addEventListener("resize", measureBeats);
+  window.addEventListener("load", measureBeats);
+
+  /* continuous chapter index from the story position */
+  function chapterIndex(pos){
+    if(!beatPositions.length || beatPositions[beatPositions.length-1] <= 0) return 0;
+    for(var i = 0; i < beatPositions.length - 1; i++){
+      var a = beatPositions[i], b = beatPositions[i+1];
+      if(pos < b || i === beatPositions.length - 2){
+        var t = b > a ? smooth01((pos - a) / (b - a)) : 0;
+        return i + clamp01(t);
+      }
+    }
+    return beatPositions.length - 1;
+  }
+  function mix(a, b, t){ return a + (b - a) * t; }
+  function camAt(index){
+    var i = Math.max(0, Math.min(CAM_KEYS.length - 1, Math.floor(index)));
+    var j = Math.min(CAM_KEYS.length - 1, i + 1);
+    var t = index - i;
+    var A = CAM[CAM_KEYS[i]], B = CAM[CAM_KEYS[j]];
+    return {
+      x: mix(A.x, B.x, t), y: mix(A.y, B.y, t), z: mix(A.z, B.z, t),
+      tx: mix(A.tx, B.tx, t), ty: mix(A.ty, B.ty, t)
+    };
+  }
+
+  /* The story clock: one place that turns scroll into scene state */
+  function updateStory(now){
+    var vh = window.innerHeight || 1;
+    var pos = window.pageYOffset / vh;
+    var dt = Math.min(.05, lastStoryTime ? (now - lastStoryTime) / 1000 : .016);
+    if(!lastStoryTime) dt = .016;
+    scrollVelocity = (pos - lastStoryPos) / Math.max(dt, .001);
+    /* light damping on velocity so the surge is not jittery */
+    window.__story.velocity = damp(window.__story.velocity, scrollVelocity, 6, dt);
+    lastStoryPos = pos; lastStoryTime = now;
+    window.__story.position = pos;
+
+    /* --- subject weights (crystal / granules / bag / globe) --- */
+    var w = [1, 0, 0, 0];
+    var t1 = band(pos, beatPositions[2] - .15, beatPositions[2] + .85);  /* ch2 */
+    var t2 = band(pos, beatPositions[3] - .15, beatPositions[3] + .85);  /* ch3 */
+    var t3 = band(pos, beatPositions[6] - .15, beatPositions[6] + .85);  /* ch6 */
+    w[0] = 1 - t1;
+    w[1] = t1 * (1 - t2);
+    w[2] = t2 * (1 - t3);
+    w[3] = t3;
+    var sum = w[0] + w[1] + w[2] + w[3] || 1;
+    for(var i = 0; i < 4; i++) weightsSmooth[i] = damp(weightsSmooth[i], w[i] / sum, 8, dt);
+    window.__story.weights = weightsSmooth.slice();
+
+    /* --- camera keyframes, damped twice like the reference --- */
+    var target = camAt(chapterIndex(pos));
+    var k = 8;
+    camSmooth.x = damp(camSmooth.x, target.x, k, dt);
+    camSmooth.y = damp(camSmooth.y, target.y, k, dt);
+    camSmooth.z = damp(camSmooth.z, target.z, k, dt);
+    camSmooth.tx = damp(camSmooth.tx, target.tx, k, dt);
+    camSmooth.ty = damp(camSmooth.ty, target.ty, k, dt);
+    /* scroll surge: fast scrolling nudges the camera in slightly */
+    var surge = Math.max(-.35, Math.min(.35, -window.__story.velocity * .06));
+    window.__cam.x = camSmooth.x;
+    window.__cam.y = camSmooth.y;
+    window.__cam.z = camSmooth.z + surge;
+    window.__cam.tx = camSmooth.tx;
+    window.__cam.ty = camSmooth.ty;
+  }
+
   /* Mouse parallax (shared with 3D camera) */
   window.__mouse = {x:0, y:0};
   window.addEventListener("mousemove", function(e){
@@ -178,7 +247,8 @@
 
   function lerp(a,b,t){ return a + (b-a)*t; }
   var dragging = false;
-  function tick(){
+  function tick(now){
+    updateStory(now || performance.now());
     /* Hero only: very slow auto-rotate (spec table §1) */
     if(currentStage==="hero" && !dragging && !reduced) autoRy += .05;
     cur.ry = lerp(cur.ry, target.ry, .06);
@@ -241,23 +311,53 @@
       img.style.transform = "translateY(" + off.toFixed(1) + "px) scale(1.06)";
     });
   }
-  /* Heading word reveal */
-  var headingWords = [];
-  document.querySelectorAll(".chapter h2").forEach(function(h){
-    var words = h.textContent.trim().split(/\s+/);
-    h.innerHTML = words.map(function(w){ return '<span class="w">'+w+'</span>'; }).join(" ");
-    headingWords.push({el:h, words:h.querySelectorAll(".w")});
-  });
-  function updateHeadings(){
-    if(reduced){ headingWords.forEach(function(h){ h.words.forEach(function(w){ w.classList.add("on"); }); }); return; }
-    var vh = window.innerHeight;
-    headingWords.forEach(function(h){
-      var r = h.el.getBoundingClientRect();
-      var p = Math.max(0, Math.min(1, (vh*0.85 - r.top) / (vh*0.45)));
-      var on = Math.round(p * h.words.length);
-      h.words.forEach(function(w,i){ w.classList.toggle("on", i < on); });
+  /* ---------- Letter-by-letter heading reveal (reference back.out motion) ---------- */
+  function splitLetters(el){
+    var text = (el.getAttribute("aria-label") || el.textContent || "").trim().replace(/\s+/g, " ");
+    el.setAttribute("aria-label", text);
+    el.textContent = "";
+    text.split(" ").forEach(function(word, wi, arr){
+      var w = document.createElement("span");
+      w.className = "lw";
+      for(var c = 0; c < word.length; c++){
+        var sp = document.createElement("span");
+        sp.className = "ltr";
+        sp.textContent = word.charAt(c);
+        w.appendChild(sp);
+      }
+      el.appendChild(w);
+      if(wi < arr.length - 1) el.appendChild(document.createTextNode(" "));
     });
+    return el.querySelectorAll(".ltr");
   }
+  var letterHeads = [];
+  document.querySelectorAll(".chapter h2, .end h2").forEach(function(h){
+    letterHeads.push({el:h, letters:splitLetters(h)});
+  });
+  var canAnimate = !reduced && typeof gsap !== "undefined";
+  if(canAnimate && typeof ScrollTrigger !== "undefined"){
+    letterHeads.forEach(function(h){
+      gsap.from(h.letters, {
+        yPercent: 70, rotate: 8, opacity: 0, duration: .9,
+        ease: "back.out(2)", stagger: .028,
+        scrollTrigger: { trigger: h.el, start: "top 88%", toggleActions: "play none none reverse" }
+      });
+    });
+    /* ---------- data-reveal: blocks rise and fade in (reference power3.out) ---------- */
+    var revealSel = ".chapter figure, .chapter .stat-row, .chapter .challenge, .chapter blockquote, " +
+                    ".chapter .timeline, .chapter .specs-table, .chapter .side-note, .chapter ul, .final-cta, .credits";
+    document.querySelectorAll(revealSel).forEach(function(el){
+      gsap.from(el, {
+        y: 34, opacity: 0, duration: .9, ease: "power3.out",
+        scrollTrigger: { trigger: el, start: "top 90%", toggleActions: "play none none reverse" }
+      });
+    });
+    /* Refresh once the web fonts land, so the pins/offsets are measured correctly */
+    if(document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ ScrollTrigger.refresh(); measureBeats(); });
+  } else {
+    letterHeads.forEach(function(h){ Array.prototype.forEach.call(h.letters, function(l){ l.style.opacity = 1; }); });
+  }
+
   document.querySelectorAll(".side-rail a").forEach(function(a){
     a.addEventListener("click", function(e){
       e.preventDefault();
@@ -299,7 +399,6 @@
     });
     updateQuote();
     updateParallax();
-    updateHeadings();
   }
   window.addEventListener("scroll", onScroll, {passive:true});
 
@@ -319,6 +418,28 @@
     var on = Math.round(p * quoteWords.length);
     quoteWords.forEach(function(w,i){ w.classList.toggle("on", i < on); });
   }
+
+  /* ---------- Soft cursor halo (reference custom-cursor idea, brand colours) ---------- */
+  (function(){
+    if(reduced || !window.matchMedia || !window.matchMedia("(pointer:fine)").matches) return;
+    var dot = document.createElement("div");
+    var ring = document.createElement("div");
+    dot.className = "cursor-dot"; ring.className = "cursor-ring";
+    document.body.appendChild(dot); document.body.appendChild(ring);
+    var mx = window.innerWidth/2, my = window.innerHeight/2, rx = mx, ry = my, seen = false;
+    window.addEventListener("mousemove", function(e){
+      mx = e.clientX; my = e.clientY; seen = true;
+      dot.style.transform = "translate(" + (mx-3) + "px," + (my-3) + "px)";
+      var t = e.target.closest ? e.target.closest("a,button,.callout,.slider-btn,.compare") : null;
+      ring.classList.toggle("hot", !!t);
+    }, {passive:true});
+    (function loop(){
+      rx += (mx - rx) * .14; ry += (my - ry) * .14;
+      ring.style.transform = "translate(" + (rx-16) + "px," + (ry-16) + "px)";
+      ring.style.opacity = seen ? "1" : "0";
+      requestAnimationFrame(loop);
+    })();
+  })();
 
   /* ---------- Drag to rotate ---------- */
   var startX=0, startY=0, baseRy=0, baseRx=0;
