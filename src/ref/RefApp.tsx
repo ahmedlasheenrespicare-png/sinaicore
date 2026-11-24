@@ -337,6 +337,38 @@ export default function RefApp() {
           </div>
         </section>
 
+        {/* ---------------------------------------------- applications
+         The portfolio is described by grade; this section describes where
+         each grade actually goes, which is the question a purchasing
+         manager asks after the spec table. */}
+        <section className="ref-sec on-gray" id="applications">
+          <div className="ref-shell">
+            <div className="ref-sec-head">
+              <span className="over">Applications</span>
+              <h2>أين يذهب كل نوع</h2>
+              <p>
+                من التصنيع الغذائي إلى إذابة الجليد على الطرق — ستة قطاعات تُورَّد لها
+                درجات المحفظة، كل قطاع بالدرجة التي تلائم مواصفاته.
+              </p>
+            </div>
+            <div className="ref-apps">
+              {applications.map((a) => (
+                <article className="ref-app" key={a.n}>
+                  <span className="n">{a.n}</span>
+                  <span className="ref-icon">
+                    <Icon name={a.icon} size={20} />
+                  </span>
+                  <div>
+                    <h4>{a.title}</h4>
+                    <p>{a.body}</p>
+                    <span className="grade">{a.grade}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* ---------------------------------------------- quality + 3D row */}
         <div className="ref-band navy" aria-hidden="true">
           <div className="ref-shell">
@@ -558,38 +590,6 @@ export default function RefApp() {
                   </span>
                 ))}
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ---------------------------------------------- applications
-         The portfolio is described by grade; this section describes where
-         each grade actually goes, which is the question a purchasing
-         manager asks after the spec table. */}
-        <section className="ref-sec on-gray" id="applications">
-          <div className="ref-shell">
-            <div className="ref-sec-head">
-              <span className="over">Applications</span>
-              <h2>أين يذهب كل نوع</h2>
-              <p>
-                من التصنيع الغذائي إلى إذابة الجليد على الطرق — ستة قطاعات تُورَّد لها
-                درجات المحفظة، كل قطاع بالدرجة التي تلائم مواصفاته.
-              </p>
-            </div>
-            <div className="ref-apps">
-              {applications.map((a) => (
-                <article className="ref-app" key={a.n}>
-                  <span className="n">{a.n}</span>
-                  <span className="ref-icon">
-                    <Icon name={a.icon} size={20} />
-                  </span>
-                  <div>
-                    <h4>{a.title}</h4>
-                    <p>{a.body}</p>
-                    <span className="grade">{a.grade}</span>
-                  </div>
-                </article>
-              ))}
             </div>
           </div>
         </section>
