@@ -626,3 +626,327 @@
     order: 2;
   }
 }
+
+/* ==================================================================
+ * 9. the comparison table, applications grid, buyer questions
+ *
+ * Three additions to the reference cut's document. All three use the
+ * same device as the rest of the sheet: hairlines instead of boxes,
+ * the serif for anything that is a number or a label, and no shadow
+ * anywhere. A table of grades is set like a printed spec sheet — rules
+ * between columns, not cards.
+ * ================================================================== */
+
+/* craft.css is loaded on pages that do not load the app sheet, so the
+   visually-hidden helper has to exist here too — it carries the table's
+   screen-reader caption. */
+.ref .sr-only,
+.ref-table caption.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ------------------------------------------------ the grade spec table */
+.ref-table-wrap {
+  overflow-x: auto;
+  /* the horizontal rule belongs to the table, not the wrapper, so it
+     scrolls with the content on a narrow screen */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.ref-table {
+  inline-size: 100%;
+  min-inline-size: 40rem;
+  border-collapse: collapse;
+  text-align: start;
+  font-size: 0.9rem;
+}
+.ref-table thead th {
+  font-family: var(--font-serif-lat);
+  font-size: 0.66rem;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  /* no text-transform: "NaCl" is a chemical formula, not a word — uppercasing
+     it to NACL is simply wrong */
+  color: color-mix(in oklab, currentColor 58%, transparent);
+  text-align: start;
+  padding: 0 0.9rem 0.7rem;
+  border-block-end: 1px solid var(--hair);
+  white-space: nowrap;
+}
+.ref-table thead th:first-child {
+  padding-inline-start: 0;
+}
+/* a formula is not tracked type: letter-spacing pulls "NaCl" into "N a Cl" */
+.ref-table thead th.formula {
+  letter-spacing: 0.02em;
+  font-variant-numeric: lining-nums;
+  color: currentColor;
+  opacity: 0.72;
+}
+.ref-table tbody tr {
+  border-block-end: 1px solid var(--hair-soft);
+  transition: background-color 0.25s var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+}
+.ref-table tbody tr:hover {
+  background: color-mix(in oklab, currentColor 3%, transparent);
+}
+.ref-table tbody td {
+  padding: 0.85rem 0.9rem;
+  vertical-align: baseline;
+}
+.ref-table tbody td:first-child {
+  padding-inline-start: 0;
+}
+.ref-table .g-name {
+  display: block;
+  font-family: var(--font-serif-ar);
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+.ref-table .g-latin {
+  display: block;
+  font-family: var(--font-serif-lat);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.5;
+  margin-block-start: 0.15rem;
+}
+/* every figure is a mono-ish serif numeral so columns align optically */
+.ref-table .g-num {
+  font-family: var(--font-serif-lat);
+  font-variant-numeric: tabular-nums lining-nums;
+  font-size: 0.98rem;
+  white-space: nowrap;
+  direction: ltr;
+  display: inline-block;
+}
+.ref-table .g-ar {
+  font-family: var(--font-serif-ar);
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+.ref-table .g-use {
+  font-size: 0.84rem;
+  opacity: 0.78;
+}
+
+/* ------------------------------------------------- application tiles */
+.ref-apps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 clamp(1.4rem, 3vw, 2.6rem);
+}
+.ref-app {
+  border-block-start: 1px solid var(--hair);
+  padding-block: 1rem 1.5rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0 0.9rem;
+  align-items: start;
+}
+.ref-app .n {
+  grid-column: 1 / -1;
+  font-family: var(--font-serif-lat);
+  font-variant-numeric: lining-nums;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  opacity: 0.45;
+  margin-block-end: 0.6rem;
+}
+.ref-app .ref-icon {
+  grid-row: 2 / span 3;
+  margin-block-start: 0.15rem;
+  opacity: 0.85;
+}
+.ref-app h4 {
+  font-family: var(--font-serif-ar);
+  font-size: 1.1rem;
+  line-height: 1.35;
+  margin: 0 0 0.35rem;
+}
+.ref-app p {
+  font-size: 0.84rem;
+  line-height: 1.65;
+  margin: 0;
+  opacity: 0.76;
+  text-wrap: pretty;
+}
+/* the grade the application maps to, as a printed footnote */
+.ref-app .grade {
+  display: inline-block;
+  margin-block-start: 0.6rem;
+  font-family: var(--font-serif-lat);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.55;
+  border-block-start: 1px solid var(--hair-soft);
+  padding-block-start: 0.4rem;
+}
+
+/* -------------------------------------------------- buyer questions
+ * native <details>, so it works with no JavaScript, is keyboard
+ * accessible by default, and survives with motion turned off.
+ */
+.ref-faq {
+  border-block-start: 1px solid var(--hair);
+}
+.ref-faq details {
+  border-block-end: 1px solid var(--hair-soft);
+}
+.ref-faq summary {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+  padding: 1rem 0;
+  cursor: pointer;
+  font-family: var(--font-serif-ar);
+  font-size: 1.02rem;
+  line-height: 1.45;
+  list-style: none;
+  transition: color 0.25s var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+}
+/* the marker is our own: a serif plus that becomes a minus */
+.ref-faq summary::-webkit-details-marker {
+  display: none;
+}
+.ref-faq summary::before {
+  content: '+';
+  font-family: var(--font-serif-lat);
+  font-size: 1.05rem;
+  line-height: 1;
+  opacity: 0.5;
+  flex: 0 0 auto;
+}
+.ref-faq details[open] summary::before {
+  content: '−';
+}
+.ref-faq summary:hover {
+  color: var(--ref-copper, #a4602a);
+}
+.ref-faq summary:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 3px;
+}
+.ref-faq .a {
+  padding: 0 0 1.15rem 1.9rem;
+  font-size: 0.88rem;
+  line-height: 1.75;
+  max-inline-size: var(--measure);
+  opacity: 0.78;
+  text-wrap: pretty;
+}
+
+/* ------------------------------------------------------ narrow */
+/* Below 760 the table stops being a table. A six-column spec grid cannot
+   survive a 390px screen — columns drop off the scroll edge and the reader
+   never learns they were there. Each row becomes a small block: the grade
+   as a heading, then its figures as a labelled definition list. Same data,
+   no horizontal hunt. */
+@media (max-width: 760px) {
+  .ref-table-wrap {
+    overflow: visible;
+  }
+  .ref-table,
+  .ref-table tbody,
+  .ref-table tr,
+  .ref-table th,
+  .ref-table td {
+    display: block;
+    inline-size: 100%;
+    min-inline-size: 0;
+  }
+  .ref-table thead {
+    /* the column headers are redundant once each cell is labelled */
+    display: none;
+  }
+  .ref-table tbody tr {
+    border-block-start: 1px solid var(--hair);
+    padding-block: 0.9rem 1.1rem;
+  }
+  .ref-table tbody td {
+    padding: 0;
+    border: 0;
+  }
+  .ref-table tbody th {
+    padding: 0 0 0.6rem;
+    border: 0;
+  }
+  /* the figure pairs, set as a two-up run under the grade name */
+  .ref-table tbody td:nth-child(2),
+  .ref-table tbody td:nth-child(3),
+  .ref-table tbody td:nth-child(4) {
+    display: inline-block;
+    inline-size: auto;
+    margin-inline-end: 1.1rem;
+    /* a measurement reads label-then-value; forcing the run LTR puts the
+       label on the left edge of its figure instead of floating after it */
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+  .ref-table tbody td:nth-child(2)::before,
+  .ref-table tbody td:nth-child(3)::before,
+  .ref-table tbody td:nth-child(4)::before {
+    margin-inline-end: 0.35rem;
+  }
+  .ref-table tbody td:nth-child(2)::before {
+    content: 'NaCl ';
+  }
+  .ref-table tbody td:nth-child(3)::before {
+    content: 'H₂O ';
+  }
+  .ref-table tbody td:nth-child(4)::before {
+    content: 'SIZE ';
+  }
+  .ref-table tbody td::before {
+    font-family: var(--font-serif-lat);
+    font-size: 0.58rem;
+    letter-spacing: 0.14em;
+    opacity: 0.5;
+  }
+  .ref-table tbody td:nth-child(5),
+  .ref-table tbody td:nth-child(6) {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin-block-start: 0.35rem;
+  }
+  .ref-table tbody td:nth-child(5)::before {
+    content: 'USE · ';
+  }
+  .ref-table tbody td:nth-child(6)::before {
+    content: 'PACK · ';
+  }
+  .ref-table .g-num {
+    font-size: 0.88rem;
+    white-space: normal;
+  }
+
+  .ref-apps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 620px) {
+  .ref-apps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ref-faq .a {
+    padding-inline-start: 1.5rem;
+  }
+}
+
+/* motion off: the table row tint and the marker swap stay instant */
+@media (prefers-reduced-motion: reduce) {
+  .ref-table tbody tr,
+  .ref-faq summary {
+    transition: none;
+  }
+}

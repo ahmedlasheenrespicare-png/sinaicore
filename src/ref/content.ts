@@ -18,9 +18,14 @@ export type Product = {
   scene?: 'sack' | 'crystal' | 'tablets' | 'fibc'
 }
 
+/* The reference's own four items, with the two buyer-facing additions the
+   document now carries: the grade table (the question after the products)
+   and the applications grid. Kept to six so the bar still reads as a bar. */
 export const nav = [
   { label: 'الرئيسية', lat: 'Home', href: '#top' },
   { label: 'المنتجات', lat: 'Products', href: '#products' },
+  { label: 'الدرجات', lat: 'Grades', href: '#grades' },
+  { label: 'التطبيقات', lat: 'Applications', href: '#applications' },
   { label: 'ملف الشركة', lat: 'Company Profile', href: '#company' },
   { label: 'تواصل معنا', lat: 'Contact', href: '#contact' },
 ]
@@ -286,3 +291,157 @@ export const contact = {
   phone: '+20 110 753 9914',
   site: 'www.sinaicore.com',
 }
+
+/* ------------------------------------------------------------------ *
+ * Grade comparison — the five portfolio grades side by side.
+ *
+ * A buyer comparing salt suppliers wants one table, not five product
+ * cards repeated. Every value here is the same figure already published
+ * on that grade's own card, so the table can never drift out of sync
+ * with the copy above it.
+ * ------------------------------------------------------------------ */
+export type Grade = {
+  id: string
+  name: string
+  latin: string
+  nacl: string
+  moisture: string
+  size: string
+  use: string
+  pack: string
+}
+
+export const grades: Grade[] = [
+  {
+    id: 'refined',
+    name: 'المكرر الفاخر',
+    latin: 'Refined · Premium',
+    nacl: '≥ 99.5%',
+    moisture: '≤ 0.2%',
+    size: '0.2 – 0.8 mm',
+    use: 'غذائي · معالجة مياه',
+    pack: '25 / 50 kg · FIBC',
+  },
+  {
+    id: 'washed',
+    name: 'المغسول الصناعي',
+    latin: 'Washed · Industrial',
+    nacl: '≥ 98.5%',
+    moisture: '≤ 3%',
+    size: '0.5 – 3 mm',
+    use: 'صناعي · تطرية',
+    pack: '25 / 50 kg · FIBC',
+  },
+  {
+    id: 'deicing',
+    name: 'إذابة الجليد',
+    latin: 'De-icing · Winter',
+    nacl: '≥ 98.0%',
+    moisture: '≤ 3%',
+    size: '1 – 5 mm',
+    use: 'طرق · صيانة شتاء',
+    pack: 'FIBC · سائب',
+  },
+  {
+    id: 'softening',
+    name: 'أقراص التطرية',
+    latin: 'Tablets · Softening',
+    nacl: '≥ 99.5%',
+    moisture: '≤ 0.2%',
+    size: 'قرص مضغوط',
+    use: 'تبادل أيوني',
+    pack: '10 / 25 / 50 kg',
+  },
+  {
+    id: 'marine',
+    name: 'البحري الطبيعي',
+    latin: 'Marine · Solar',
+    nacl: '≥ 97.0%',
+    moisture: '≤ 4%',
+    size: 'coarse · unsorted',
+    use: 'صناعي · تجاري',
+    pack: 'FIBC · سائب',
+  },
+]
+
+/* ------------------------------------------------------------------ *
+ * Applications — where the portfolio actually goes. Grounded in the
+ * published positioning: food, industry, water treatment, winter
+ * maintenance and commercial use.
+ * ------------------------------------------------------------------ */
+export const applications = [
+  {
+    n: '01',
+    icon: 'flask',
+    title: 'الصناعات الغذائية',
+    body: 'ملح غذائي مكرر بدرجة نقاوة 99.5% ونسبة رطوبة لا تتجاوز 0.2%، للاستخدام في التصنيع الغذائي والتعبئة.',
+    grade: 'المكرر الفاخر',
+  },
+  {
+    n: '02',
+    icon: 'lab',
+    title: 'الصناعة الكيميائية',
+    body: 'كلوريد صوديوم بنسب نقاوة متدرّجة يُورَّد للمصانع التي تحتاج توريدًا ثابتًا على مدار العام.',
+    grade: 'المغسول · البحري',
+  },
+  {
+    n: '03',
+    icon: 'drop',
+    title: 'معالجة المياه',
+    body: 'أقراص تطرية مضغوطة بدقة لتجديد الراتنج في وحدات التطرية، بتوزيع حجم مضبوط وأداء تبادل أيوني فعّال.',
+    grade: 'أقراص التطرية',
+  },
+  {
+    n: '04',
+    icon: 'mountain',
+    title: 'صيانة الشتاء وإذابة الجليد',
+    body: 'درجات بنطاقات حجم حبيبي مناسبة لإذابة جليد الطرق وصيانة الشتاء، بمواصفات تُكيّف حسب السوق.',
+    grade: 'إذابة الجليد',
+  },
+  {
+    n: '05',
+    icon: 'box',
+    title: 'التجارة والتوزيع',
+    body: 'ملح بحري طبيعي في شكائر جامبو وسائب، للموزّعين والمشترين التجاريين ولإعادة التعبئة عند الوصول.',
+    grade: 'البحري · المغسول',
+  },
+  {
+    n: '06',
+    icon: 'globe',
+    title: 'أسواق التصدير',
+    body: 'شحنات FOB من العريش والسويس إلى أوروبا وآسيا وأفريقيا والأمريكتين وأستراليا، بتوثيق تصدير كامل.',
+    grade: 'جميع الدرجات',
+  },
+]
+
+/* ------------------------------------------------------------------ *
+ * Buyer questions. Each answer restates a fact already on the page —
+ * ports, packaging, Incoterms, third-party reports — rather than
+ * introducing a new claim.
+ * ------------------------------------------------------------------ */
+export const faqs = [
+  {
+    q: 'كيف أحصل على عينات قبل الشراء؟',
+    a: 'نرسل عينة من الدرجة المطلوبة مع شهادة تحليل كاملة (COA) لتقييمك قبل أي التزام. تُنسَّق العينة من خلال فريق التصدير مباشرة.',
+  },
+  {
+    q: 'ما الحد الأدنى للطلب؟',
+    a: 'يُتفق على الحد الأدنى حسب الدرجة ونوع التعبئة وشروط الشحن، ويُثبَّت في العرض المقدّم قبل تأكيد الطلب. الشحنات بالحاويات والسوائب لها حدود مختلفة.',
+  },
+  {
+    q: 'هل التحليل المختبري مستقل؟',
+    a: 'يمكن دعم كل دفعة بشهادة تحليل صادرة أو موثّقة من مختبر مستقل من طرف ثالث، وفق المتطلبات التعاقدية. تقارير Intertek المستقلة متاحة للمراجعة.',
+  },
+  {
+    q: 'ما أنواع التعبئة المتاحة؟',
+    a: 'شكائر ٢٥ كجم و٥٠ كجم مطبوعة، وشكائر جامبو FIBC من ١ إلى ١.٥ طن بحلقات رفع وفوهات تفريغ، إضافة إلى الشحن السائب للكميات الكبيرة.',
+  },
+  {
+    q: 'من أي موانئ يتم الشحن؟',
+    a: 'FOB ميناء العريش للشحنات السائبة وسفن الاستئجار، وFOB السويس أو شرق بورسعيد التفريعة لشحنات الحاويات مقاس ٢٠ و٤٠ قدمًا.',
+  },
+  {
+    q: 'كيف يتم تتبّع الدفعة؟',
+    a: 'تتبّع منظم من مصدر المورّد المؤهل عبر المعالجة والتعبئة والتوثيق وتحميل السفينة أو الحاوية، مع تقارير توزيع حجم حبيبي لكل دفعة.',
+  },
+]

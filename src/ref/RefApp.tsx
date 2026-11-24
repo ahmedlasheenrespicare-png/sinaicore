@@ -13,10 +13,20 @@ import {
   destinations,
   steps,
   offices,
+  grades,
+  applications,
+  faqs,
   contact,
 } from './content'
 
 const ModelStage = lazy(() => import('./Stage'))
+
+/* Cells that are pure Latin/number need an explicit LTR run, otherwise the
+   RTL paragraph reorders "25 / 50 kg · FIBC" into nonsense. Cells that are
+   already Arabic must keep the Arabic face — and the serif-numeral treatment
+   must not be applied to them. Deciding per string beats a per-row flag that
+   would silently rot as the table is edited. */
+const isLatin = (t: string) => !/[\u0600-\u06FF]/.test(t)
 
 function Plate({
   kind,
@@ -264,6 +274,69 @@ export default function RefApp() {
           </div>
         </section>
 
+        {/* ------------------------------------------- grade comparison
+         The product cards answer "what do you sell"; this answers "which
+         grade do I order". A buyer coming from the cards needs the five
+         grades in one place, on one axis, before the quality argument. */}
+        <section className="ref-sec on-light" id="grades">
+          <div className="ref-shell">
+            <div className="ref-sec-head">
+              <span className="over">Grades · Side by Side</span>
+              <h2>الدرجات الخمس في جدول واحد</h2>
+              <p>
+                كل درجة بنطاق نقاوة ورطوبة وحجم حبيبي وتعبئة خاصة بتطبيقها. الأرقام هي
+                نفسها المنشورة على بطاقة كل منتج، مجموعة هنا للمقارنة المباشرة.
+              </p>
+            </div>
+            <div className="ref-table-wrap">
+              <table className="ref-table">
+                <caption className="sr-only">
+                  مقارنة درجات ملح SinaiCore بالنقاوة والرطوبة وحجم الحبيبات والتعبئة
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">الدرجة</th>
+                    <th scope="col" className="formula" dir="ltr">
+                      NaCl
+                    </th>
+                    <th scope="col">الرطوبة</th>
+                    <th scope="col">حجم الحبيبات</th>
+                    <th scope="col">التطبيق</th>
+                    <th scope="col">التعبئة</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {grades.map((g) => (
+                    <tr key={g.id}>
+                      <th scope="row" style={{ textAlign: 'start', fontWeight: 400 }}>
+                        <span className="g-name">{g.name}</span>
+                        <span className="g-latin">{g.latin}</span>
+                      </th>
+                      <td>
+                        <span className="g-num">{g.nacl}</span>
+                      </td>
+                      <td>
+                        <span className="g-num">{g.moisture}</span>
+                      </td>
+                      <td>
+                        {isLatin(g.size) ? (
+                          <span className="g-num">{g.size}</span>
+                        ) : (
+                          <span className="g-ar">{g.size}</span>
+                        )}
+                      </td>
+                      <td className="g-use">{g.use}</td>
+                      <td className="g-use">
+                        {isLatin(g.pack) ? <span dir="ltr">{g.pack}</span> : g.pack}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
         {/* ---------------------------------------------- quality + 3D row */}
         <div className="ref-band navy" aria-hidden="true">
           <div className="ref-shell">
@@ -489,6 +562,38 @@ export default function RefApp() {
           </div>
         </section>
 
+        {/* ---------------------------------------------- applications
+         The portfolio is described by grade; this section describes where
+         each grade actually goes, which is the question a purchasing
+         manager asks after the spec table. */}
+        <section className="ref-sec on-gray" id="applications">
+          <div className="ref-shell">
+            <div className="ref-sec-head">
+              <span className="over">Applications</span>
+              <h2>أين يذهب كل نوع</h2>
+              <p>
+                من التصنيع الغذائي إلى إذابة الجليد على الطرق — ستة قطاعات تُورَّد لها
+                درجات المحفظة، كل قطاع بالدرجة التي تلائم مواصفاته.
+              </p>
+            </div>
+            <div className="ref-apps">
+              {applications.map((a) => (
+                <article className="ref-app" key={a.n}>
+                  <span className="n">{a.n}</span>
+                  <span className="ref-icon">
+                    <Icon name={a.icon} size={20} />
+                  </span>
+                  <div>
+                    <h4>{a.title}</h4>
+                    <p>{a.body}</p>
+                    <span className="grade">{a.grade}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* ----------------------------------------------- how it works */}
         <section className="ref-sec on-gray">
           <div className="ref-shell">
@@ -504,6 +609,28 @@ export default function RefApp() {
                   <h4>{s.title}</h4>
                   <p>{s.body}</p>
                 </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ----------------------------------------------- buyer questions
+         Placed last, immediately before the quote block: every question
+         that would otherwise stop someone short of asking for a price is
+         settled here, and the code fence below is the next action. */}
+        <section className="ref-sec on-light" id="faq">
+          <div className="ref-shell">
+            <div className="ref-sec-head">
+              <span className="over">Before You Ask</span>
+              <h2>أسئلة المشترين</h2>
+              <p>كل ما يُسأل عادة قبل أول شحنة — العينات، الحد الأدنى، التحليل، والتعبئة والشحن.</p>
+            </div>
+            <div className="ref-faq">
+              {faqs.map((f) => (
+                <details key={f.q}>
+                  <summary>{f.q}</summary>
+                  <p className="a">{f.a}</p>
+                </details>
               ))}
             </div>
           </div>
