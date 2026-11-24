@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useRef, useState } from 'react'
+import { Suspense, isValidElement, lazy, useEffect, useRef, useState } from 'react'
 import { Icon } from './icons'
 import PanAct from './PanAct'
 import {
@@ -285,6 +285,148 @@ function QuoteBuilder() {
   )
 }
 
+/* ------------------------------------------------------------------
+   The masked line reveal.
+
+   Decoded from air.inc, which builds this with no animation library at
+   all: the line is held by a dimmed copy and revealed by a full-colour
+   copy wiped in from below, both driven by one number, `--progress`.
+   CSS reads that number and the compositor does the rest — no per-frame
+   layout, nothing installed. The reference rules and every change made
+   to them are written down in craft.css §14.
+
+   The one structural decision that matters here: the acts are declared,
+   not built. air clones the heading in the DOM and hides the original;
+   doing that from React means writing over nodes React owns, and a
+   re-mount then double-wraps the content (it did, in testing). So the
+   same nodes are simply rendered twice — base and copy — and the copy
+   inherits every rule for free, including the 0.62em gradient half of
+   this headline, at any width.
+   ------------------------------------------------------------------ */
+
+const easeOut = (t: number) => 1 - Math.pow(1 - t, 3)
+
+function Reveal({
+  acts,
+  as = 'h2',
+  className = '',
+  duration = 950,
+}: {
+  /* one entry per line of the heading; each rises on its own beat */
+  acts: React.ReactNode[]
+  as?: 'h1' | 'h2'
+  className?: string
+  duration?: number
+}) {
+  const root = useRef<HTMLHeadingElement>(null)
+
+  useEffect(() => {
+    const el = root.current
+    if (!el) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    const hosts = Array.from(el.querySelectorAll<HTMLElement>('.rv-act'))
+    if (!hosts.length) return
+    /* write the start value on every act at once, before anything is
+       observed: the stylesheet hides an act that has no inline
+       --progress, so this is what makes the heading visible (dim, in its
+       final place) and gives the tween a defined 0 to run from */
+    hosts.forEach((h) => h.style.setProperty('--progress', '0'))
+
+    let raf = 0
+    let started = false
+    let settle = 0
+    const finish = () => {
+      hosts.forEach((h) => h.style.setProperty('--progress', '1'))
+    }
+    const start = () => {
+      if (started) return
+      started = true
+      const t0 = performance.now()
+      const stagger = duration * 0.34
+      const span = duration + stagger * (hosts.length - 1)
+      const tick = (now: number) => {
+        for (let i = 0; i < hosts.length; i++) {
+          const local = (now - t0 - i * stagger) / duration
+          const p = local <= 0 ? 0 : local >= 1 ? 1 : easeOut(local)
+          hosts[i].style.setProperty('--progress', p.toFixed(4))
+        }
+        if (now - t0 < span) raf = requestAnimationFrame(tick)
+        else finish()
+      }
+      raf = requestAnimationFrame(tick)
+      /* rAF is suspended while the page is not visible — a background tab,
+         or a mobile browser that pauses on the way in. A tween driven only
+         by rAF would then sit at 0 for as long as that lasts, and the
+         headline is translated out of its mask at 0: invisible copy is
+         worse than no animation. So the end state is forced on a timer,
+         and again whenever the page comes back. The text is never lost. */
+      settle = window.setTimeout(finish, span + 400)
+    }
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && !started) start()
+      else if (document.visibilityState === 'visible') finish()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+
+    if (!('IntersectionObserver' in window)) {
+      start()
+      return () => {
+        document.removeEventListener('visibilitychange', onVisible)
+        cancelAnimationFrame(raf)
+        clearTimeout(settle)
+      }
+    }
+    const io = new IntersectionObserver(
+      (list) => {
+        for (const e of list) {
+          if (e.isIntersecting) {
+            start()
+            io.disconnect()
+          }
+        }
+      },
+      { threshold: 0.15 },
+    )
+    io.observe(el)
+    return () => {
+      io.disconnect()
+      document.removeEventListener('visibilitychange', onVisible)
+      cancelAnimationFrame(raf)
+      clearTimeout(settle)
+    }
+  }, [duration])
+
+  const Tag = as
+  return (
+    <Tag ref={root} className={`reveal ${className}`}>
+      {acts.map((act, i) => (
+        <span
+          className={`rv-act${isValidElement(act) ? ' rv-color' : ''}`}
+          key={i}
+        >
+          {/* the clip box is separate from the layers: `overflow` on the
+              same element that carries the translate does not reliably
+              clip in every engine, and `clip-path` on it produced a ghost
+              of the copy in testing */}
+          <span className="rv-clip">
+            <span className="rv-move">
+              <span className="rv-base">{act}</span>
+              <span className="rv-clone" aria-hidden="true">
+                {/* the mask sits on .rv-clone and the rise on the copy
+                    inside it: on one element, the gradient would travel
+                    with the text it is supposed to be revealing */}
+                <span className="rv-copy">{act}</span>
+              </span>
+            </span>
+          </span>
+        </span>
+      ))}
+    </Tag>
+  )
+}
+
 /* the reading rail: progress across the document, and the number of the
    section you are inside. RAF-throttled so a long scroll never queues more
    than one update per frame. */
@@ -434,10 +576,14 @@ export default function RefApp() {
           <div className="ref-shell ref-hero-in">
             <div>
               <span className="ref-eyebrow">حلول تصدير الملح المصري</span>
-              <h1 className="ref-h1">
-                إمداد موثوق من شمال سيناء
-                <em>إلى الأسواق العالمية</em>
-              </h1>
+              <Reveal
+                as="h1"
+                className="ref-h1"
+                acts={[
+                  'إمداد موثوق من شمال سيناء',
+                  <em key="alt">إلى الأسواق العالمية</em>,
+                ]}
+              />
               <p>
                 حلول ملح مصري متميزة من شمال سيناء — تحقّق جودة مستقل، وتعبئة احترافية،
                 وتصدير إلى العملاء حول العالم.

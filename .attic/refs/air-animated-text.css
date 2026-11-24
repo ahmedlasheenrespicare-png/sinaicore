@@ -1,0 +1,15 @@
+/* Reference excerpt — the only rules in air.inc's stylesheet that drive
+   its line reveal. Kept verbatim, with the site's whole 88 kB stylesheet
+   deliberately not committed; this is here so the technique can be
+   re-read without the network, and so it is obvious what was ported and
+   what was changed. See src/ref/RefApp.tsx (Reveal) and craft.css §14. */
+
+.AnimatedText_root__EjvJ9{width:100%}
+.AnimatedText_root_wrap__BPVP6{position:absolute;top:0}
+.AnimatedText_root_text__l2HSH{width:101%;position:relative}
+.AnimatedText_root_text__l2HSH{font-size:22vw!important}
+.AnimatedText_root_text___original__j20zv{visibility:hidden}
+.AnimatedText_root_text_clone__V27_a{position:absolute;top:0;left:0;--top:calc(100% - (var(--progress) * 150%));--bottom:calc(100% - (var(--progress) * 100%));-webkit-mask-image:linear-gradient(transparent var(--top),black var(--bottom));mask-image:linear-gradient(transparent var(--top),black var(--bottom))}
+.AnimatedText_root_text_clone__V27_a span{color:var(--fg)}
+.AnimatedText_root_text__l2HSH>span{width:100%;display:block;overflow:hidden;opacity:1;position:relative;translate:0 calc(100% - var(--progress)*100%)}
+.AnimatedText_root_text__l2HSH>span>span{display:inline-block;translate:0 0;color:rgba(var(--fg-rgb),.2)}

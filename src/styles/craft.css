@@ -2037,3 +2037,145 @@
     transition: none;
   }
 }
+
+/* ---------------------------------------------------------------- *
+ * 14. the masked line reveal
+ *
+ * Decoded from air.inc (the excerpt it came from is kept in
+ * .attic/refs/air-animated-text.css, so what was ported is on the record).
+ * Per line of the heading, two copies of the same words do two things off
+ * one number:
+ *
+ *   · the base holds the line in place, dimmed — type before ink;
+ *   · the full-colour copy is revealed bottom-up by a clip edge that
+ *     travels the height of the line as `--progress` runs 0→1.
+ *
+ * One number per line, read by CSS. The compositor does the work; no
+ * frame ever triggers layout and nothing had to be installed to do it.
+ *
+ * Departures from air, and why each one exists:
+ *
+ * · air splits every *word* into a span and dims each one. Arabic cannot
+ *   be cut that way — a word is shaped by its neighbours, so independent
+ *   inline boxes tear the cursive run apart mid-phrase. The line is the
+ *   unit here; the words inside it stay one text run.
+ *
+ * · air stacks the copy absolutely and hides the original. Here the two
+ *   layers are grid cells in one row: same box, same baseline, nothing to
+ *   measure and nothing to drift when the font loads or the window
+ *   resizes. An absolutely placed copy keeps its own margins while the
+ *   in-flow base collapses them — 11px of descent, measured, on a headline
+ *   whose second half is a 0.62em block with a margin.
+ *
+ * · air slides both layers and masks the copy with a travelling
+ *   `mask-image` whose stops are offset by 150% vs 100%. Three changes
+ *   came out of building it: sliding the dim base too leaves two
+ *   half-drawn copies of one line, which reads as a fault rather than as
+ *   motion, so only the colour moves; a negative-length gradient stop is
+ *   clamped by the browser instead of starting empty, so the mask paints
+ *   opaque at rest and the wipe never starts; and at this type size a
+ *   percentage-wide mask edge cuts a glyph in half. A `clip-path: inset()`
+ *   travelling the full height fixes all three — it is never negative, so
+ *   the hidden state is genuinely hidden, and it is cropped cleanly.
+ *
+ * · the coloured half of this headline cannot take the reveal at all:
+ *   `background-clip: text` paints the gradient against the glyphs and
+ *   ignores an ancestor's clip (tested both on the parent and on itself),
+ *   so that line rises as one layer in its full colour instead. Details
+ *   at the rule below.
+ * ---------------------------------------------------------------- */
+.reveal {
+  /* the heading's own ink, as channels the dimming layer can modulate */
+  --fg-rgb: 255 255 255;
+}
+
+.rv-act {
+  display: block;
+  position: relative;
+}
+
+/* The clip has its own box. `overflow: hidden` on the element that also
+   carries the translate does not clip reliably across engines, so the two
+   jobs are kept apart. Padding grows the paint box and the equal negative
+   margin keeps the layout height identical: this headline is set tight
+   (line-height ~1.14) and Arabic ascenders and descenders sit 17px above
+   and 16px below a 62px box — a bare overflow:hidden would shave the ink. */
+.rv-clip {
+  display: block;
+  position: relative;
+  padding-block: 0.34em;
+  margin-block: -0.34em;
+  overflow: hidden;
+}
+
+.rv-move {
+  /* one cell, two layers: same box, same line, no measurement needed */
+  display: grid;
+}
+
+.rv-base,
+.rv-clone {
+  grid-area: 1 / 1;
+  display: block;
+  min-width: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* the type before ink */
+  .rv-base {
+    color: rgb(var(--fg-rgb) / 0.26);
+  }
+
+  /* The wipe. One edge travels the height of the line, with a fixed
+     softness so the arrival reads as ink coming up rather than as letters
+     sliced in half — air can use percentage stops because its headline is
+     22vw; at this size a stop-to-stop gap of a few percent is a hard cut
+     through a glyph. `--edge` runs from a little below the box (nothing
+     visible) to the box's own bottom (everything visible). */
+  /* The gradient half of the headline is a special case, and after trying
+     it three ways the honest answer is that it cannot take the wipe. With
+     `background-clip: text` the colour is painted as a background against
+     the glyphs, and testing showed it escaping both an ancestor's
+     `clip-path` and one of its own — the second line stayed fully coloured
+     at progress 0 while the plain line beside it was correctly hidden.
+
+     So the coloured line rises instead of being inked in: one layer, no
+     duplicate, full colour throughout, cleanly cropped by the clip box.
+     It reads as the second beat rather than as a second technique, which
+     is what the stagger was for anyway. */
+  .rv-color .rv-clone {
+    display: none;
+  }
+  .rv-color .rv-base {
+    color: inherit;
+    translate: 0 calc((1 - var(--progress, 0)) * (100% + 0.45em));
+  }
+
+  .rv-clone {
+    /* The wipe is a clip, not a mask, and the reason is a browser
+       behaviour worth recording: a gradient mask whose first stop is a
+       negative length (`calc(0% - 60px)`) does not start empty — the stop
+       is clamped, and the whole layer paints opaque. The copy then appears
+       at full strength on the first frame and the wipe does nothing.
+       `inset()` takes a percentage of the box that is always in 0–100%,
+       so the hidden state is genuinely hidden, at any size and any font. */
+    clip-path: inset(calc((1 - var(--progress, 0)) * 100%) 0 0 0);
+    pointer-events: none;
+  }
+
+  /* and the copy rises over the last third of the wipe, so the line looks
+     as if it is settling into place as the ink reaches it */
+  .rv-copy {
+    display: block;
+    translate: 0 calc((1 - var(--progress, 0)) * 0.3em);
+  }
+}
+
+/* Reduced motion, or no JS driving it: the heading is simply the heading.
+   The dim and the mask live under the no-preference query, so there is
+   nothing to undo — only the duplicate layer to remove. */
+@media (prefers-reduced-motion: reduce) {
+  .rv-clone {
+    display: none;
+  }
+}
