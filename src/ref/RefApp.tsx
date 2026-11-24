@@ -1,6 +1,7 @@
 import { Suspense, isValidElement, lazy, useEffect, useRef, useState } from 'react'
 import { Icon } from './icons'
 import PanAct from './PanAct'
+import ExplodedAct from './ExplodedAct'
 import {
   nav,
   pillars,
@@ -615,6 +616,14 @@ export default function RefApp() {
 
         {/* ---------------------------------------- the aerial salt-pan act */}
         <PanAct />
+
+        {/* ------------------------------------------- the exploded assembly
+         Where the aerial act shows the ground, this shows the package: the
+         export bag taken apart piece by piece while the scroll bar drives
+         it. It sits after the flyover and before the prose because it is
+         the handover between them — what was harvested, and what it is
+         finally shipped in. */}
+        <ExplodedAct />
 
         {/* ------------------------------------------------ field notes
          The aerial act shows the pans from above; this is the prose that

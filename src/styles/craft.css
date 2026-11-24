@@ -2179,3 +2179,369 @@
     display: none;
   }
 }
+
+/* ---------------------------------------------------------------- *
+ * 15. the fixed 3D layer and the exploded act
+ *
+ * The architecture the brief asked for: one canvas, fixed, behind the
+ * page; the document scrolls over it. `z-index: 0` on the canvas and
+ * `z-index: 1` on the page content is the whole trick — but two details
+ * make it work rather than merely look like it works:
+ *
+ *   · the canvas is `pointer-events: none`. A fixed full-viewport layer
+ *     swallows every click on the page otherwise, and the failure is
+ *     silent: buttons look fine and do nothing.
+ *   · it is hidden until its act is in reach, and it fades. A canvas
+ *     that is always painted sits over the hero on load and over the
+ *     footer at the end, and the page's own background never shows.
+ * ---------------------------------------------------------------- */
+.ref-xcanvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  /* keeps the fixed layer on its own compositor layer, so scrolling the
+     text above it does not repaint the canvas */
+  will-change: opacity;
+}
+.ref-xcanvas.is-active {
+  opacity: 1;
+  /* The canvas is alpha:true so the model composites cleanly, which means
+     it paints no background of its own — and what showed through was the
+     page underneath: `.ref` is a light shell (243,245,247), so the bag sat
+     on white. A transparent canvas only works if something opaque is
+     behind it, and here nothing is. So the fixed layer carries its own
+     ground, faded in with it. This is the one place the "fixed canvas
+     behind the page" model needs a solid: a canvas is not a backdrop
+     unless it is allowed to be one. */
+  background:
+    radial-gradient(120% 100% at 50% 40%, #0d1a24 0%, #0a141d 55%, #070c14 100%);
+}
+
+/* the act itself is a tall transparent track: it exists to be scrolled
+   through. Its content is pinned for the length of it. */
+/* R3F sets the canvas's width and height as inline styles from its own
+   measurement. On this fixed layer that measurement was arriving as zero
+   and the canvas stayed at the 300x150 default — present in the DOM, sized
+   by nothing, painting an empty buffer. Pinning it in CSS removes the
+   dependency on that measurement entirely: the canvas is exactly the size
+   of the layer it lives in, whatever R3F believes. */
+.ref-xcanvas canvas {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.ref-xact {
+  position: relative;
+  z-index: 1;
+  height: 340vh;
+  background: transparent;
+}
+.ref-xact-pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  /* A soft edge only. The ground now lives on the canvas itself, so this
+     must not double up on it: the first version reached 96% opacity at the
+     edges and turned the model into a silhouette — and two rounds of
+     brightening the lights changed nothing, because the lights were never
+     the problem. What is left here just feathers the act into the sections
+     above and below. */
+  background: linear-gradient(
+    180deg,
+    rgba(6, 16, 24, 0.9) 0%,
+    rgba(6, 16, 24, 0) 12%,
+    rgba(6, 16, 24, 0) 88%,
+    rgba(6, 16, 24, 0.9) 100%
+  );
+}
+.ref-xact-in {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: grid;
+  gap: clamp(1rem, 3vw, 2.5rem);
+  /* the copy sits on the reading edge; the bag turns behind it, so the
+     type never competes with the model for the same pixels */
+  /* In RTL the first column is the right-hand one. The copy takes it; the
+     second column is left empty for the bag. The earlier order had the
+     empty column first, which pushed the list under the model and put the
+     text over its white body — visible in a screenshot and not in the DOM
+     tree, which is why the layout is checked by eye as well as by number. */
+  grid-template-columns: minmax(0, 0.62fr) minmax(0, 1fr);
+  align-items: center;
+}
+.ref-xact-space {
+  /* the empty column. Named rather than implied by a gap, so it is obvious
+     in the markup that the space is deliberate. */
+  min-height: 1px;
+}
+.ref-xact-head {
+  grid-column: 1 / -1;
+}
+.ref-xact-head .over {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  color: #7ebde1;
+  margin-block-end: 0.6rem;
+}
+.ref-xact-head h2 {
+  font-family: var(--font-serif-ar);
+  font-weight: 400;
+  font-size: clamp(1.7rem, 3.4vw, 2.9rem);
+  line-height: 1.16;
+  color: #fff;
+}
+
+/* the stops: a numbered list that reveals one entry at a time, keyed to
+   the same scroll position that drives the model */
+.ref-xact-stops {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-width: 34rem;
+}
+/* Only the stop you are inside is readable; the rest collapse to their
+   heading and a rule. Showing all seven at once made the act a wall of
+   text with the model behind it, which is the one thing a scroll-linked
+   product view must not be. The transition is on the shared properties
+   only, so nothing reflows as the list advances. */
+.ref-xact-stops li {
+  display: grid;
+  grid-template-columns: 2.2rem 1fr;
+  gap: 0.4rem 0.8rem;
+  padding: 0.5rem 0.7rem;
+  border-inline-start: 1px solid rgba(255, 255, 255, 0.1);
+  opacity: 0.32;
+  transition: opacity 0.55s ease, border-color 0.55s ease, background 0.55s ease;
+}
+.ref-xact-stops li p,
+.ref-xact-stops li .part {
+  /* the body of an inactive stop is not merely dimmed, it is out of the
+     way: a 0fr row collapses without a height animation */
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  margin-block-start: 0;
+  transition: grid-template-rows 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.45s ease, margin-block-start 0.55s ease;
+}
+.ref-xact-stops li p > *,
+.ref-xact-stops li p {
+  overflow: hidden;
+}
+.ref-xact-stops li.is-live {
+  opacity: 1;
+  border-inline-start-color: #d4884d;
+  background: linear-gradient(
+    90deg,
+    rgba(212, 136, 77, 0.07),
+    rgba(212, 136, 77, 0) 60%
+  );
+}
+.ref-xact-stops li.is-live p,
+.ref-xact-stops li.is-live .part {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  margin-block-start: 0.35rem;
+}
+[dir='rtl'] .ref-xact-stops li.is-live {
+  background: linear-gradient(
+    270deg,
+    rgba(212, 136, 77, 0.07),
+    rgba(212, 136, 77, 0) 60%
+  );
+}
+.ref-xact-stops .n {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  color: #d4884d;
+  padding-block-start: 0.35rem;
+}
+.ref-xact-stops h3 {
+  font-family: var(--font-serif-ar);
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: #fff;
+}
+.ref-xact-stops p {
+  font-size: 0.84rem;
+  line-height: 1.75;
+  color: #c2ccd4;
+  max-width: 30rem;
+}
+.ref-xact-stops .part {
+  display: block;
+  margin-block-start: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.08em;
+  color: #6f8a9c;
+  /* the node name is Latin and must not be reordered by the RTL run */
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: start;
+}
+
+.ref-xact-hint {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  color: #7f97a8;
+}
+.ref-xact-hint span {
+  display: block;
+  width: 1.6rem;
+  height: 1px;
+  background: currentColor;
+  animation: xhint 2.4s ease-in-out infinite;
+  transform-origin: 100% 50%;
+}
+@keyframes xhint {
+  0%, 100% { transform: scaleX(0.3); opacity: 0.35 }
+  50% { transform: scaleX(1); opacity: 1 }
+}
+
+@media (max-width: 900px) {
+  /* The veil was written for the desktop layout, where the copy occupies a
+     column and the bag has the rest of the screen. On a phone the copy is
+     full-width and the bag sits behind it, so the same gradient covers the
+     object almost completely — measured by hiding the pin: the model was
+     perfectly lit and simply under a 60% plate. Feathering it away in the
+     middle is what the narrow layout needs. */
+  .ref-xact-pin {
+    background: linear-gradient(
+      180deg,
+      rgba(6, 16, 24, 0.92) 0%,
+      rgba(6, 16, 24, 0.1) 18%,
+      rgba(6, 16, 24, 0.1) 52%,
+      rgba(6, 16, 24, 0.55) 74%,
+      rgba(6, 16, 24, 0.94) 100%
+    );
+  }
+  .ref-xact {
+    /* shorter on a phone: 340vh of scrolling is a long way to drag on a
+       touch screen, and the copy has fewer columns to hold the eye */
+    height: 280vh;
+  }
+  .ref-xact-in {
+    grid-template-columns: 1fr;
+  }
+  .ref-xact-space {
+    display: none;
+  }
+  .ref-xact-in {
+    /* the bag is centred behind the copy on a narrow screen; the copy gets
+       a darker plate of its own so the white model does not run through it */
+    padding-block: 2rem;
+  }
+  .ref-xact-stops {
+    /* A plate behind the copy, sized to the active stop rather than to the
+       whole list. The 0.94 background was correct for readability and
+       wrong for the model: on a phone the list is taller than half the
+       screen, so the plate covered the bag and the section read as text on
+       a dark rectangle. The veil now belongs to the live item only, which
+       is the only place text actually needs backing. */
+    background: none;
+    border: 0;
+    padding: 0;
+    gap: 0.3rem;
+  }
+  .ref-xact-stops li {
+    padding: 0.45rem 0.6rem;
+    border-radius: 2px;
+  }
+  .ref-xact-stops li.is-live {
+    background: rgba(6, 16, 24, 0.9);
+    border-inline-start-color: #d4884d;
+  }
+  /* Inactive stops lose their heading too, keeping only the number. A halo
+     was tried first and it is not enough over a white bag at this weight —
+     the text is legible but the screen looks dirty. What the reader needs
+     from an inactive stop is its position in the sequence, which the number
+     gives on its own. */
+  .ref-xact-stops li:not(.is-live) h3 {
+    display: none;
+  }
+  .ref-xact-stops li:not(.is-live) {
+    /* the numbers are a position indicator here, so they are laid out in a
+       tight row rather than as a list of rows */
+    display: block;
+    padding: 0;
+    border: 0;
+    width: auto;
+  }
+  .ref-xact-stops {
+    grid-auto-flow: row;
+  }
+  .ref-xact-stops li:not(.is-live) .n {
+    display: inline-block;
+    margin-inline-end: 0.5rem;
+  }
+  .ref-xact-stops .n {
+    padding-block-start: 0;
+  }
+  /* The pin stays centred and the copy block is capped in height, so the
+     model keeps the upper half of the screen. An earlier version pushed
+     the whole grid to `end`, which also pushed the *canvas* down out of
+     the fixed layer's frame — the bag vanished and the section still
+     looked plausible, which is why this is measured and not eyeballed. */
+  .ref-xact-in {
+    gap: 0.5rem;
+    /* The model owns the top of the screen and the copy the bottom. The
+       earlier centred layout put the live stop's heading right across the
+       bag's lower edge — legible, but it looked like a collision rather
+       than a composition. Anchoring the copy to the end of the column
+       separates them on any aspect. */
+    align-content: end;
+    max-height: 100%;
+    padding-block: 2.4rem 1.4rem;
+  }
+  .ref-xact-head h2 {
+    font-size: 1.45rem;
+  }
+  .ref-xact-head {
+    /* the heading sits over the model, so it needs a shadow to stay legible
+       against a white bag rather than a plate of its own */
+    text-shadow: 0 1px 12px rgba(6, 16, 24, 0.9), 0 0 3px rgba(6, 16, 24, 0.8);
+  }
+  .ref-xact-stops li {
+    padding: 0.4rem 0.5rem;
+  }
+  .ref-xact-stops p {
+    font-size: 0.8rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ref-xact {
+    height: auto;
+    padding-block: 4rem;
+  }
+  .ref-xact-pin {
+    position: static;
+    height: auto;
+    background: none;
+  }
+  .ref-xact-hint span {
+    animation: none;
+  }
+  .ref-xact-stops li {
+    opacity: 1;
+  }
+}
