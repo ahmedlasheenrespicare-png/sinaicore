@@ -981,8 +981,15 @@
   text-decoration: none;
   transition: color 0.25s var(--ease);
 }
-.nt-index a:hover {
+.nt-index a:hover,
+.nt-index a:focus-visible {
   color: var(--ref-copper);
+}
+/* the reference sheet styles bare links with the blue it uses for buttons;
+   in an index of chapters that reads as a button, not a page number */
+.nt-index a,
+.nt-index a:visited {
+  color: inherit;
 }
 .nt-index .n {
   grid-row: 1 / span 2;
@@ -1395,8 +1402,15 @@
   text-decoration: none;
   transition: color 0.25s var(--ease);
 }
-.nt-index a:hover {
+.nt-index a:hover,
+.nt-index a:focus-visible {
   color: var(--ref-copper);
+}
+/* the reference sheet styles bare links with the blue it uses for buttons;
+   in an index of chapters that reads as a button, not a page number */
+.nt-index a,
+.nt-index a:visited {
+  color: inherit;
 }
 .nt-index .n {
   grid-row: 1 / span 2;

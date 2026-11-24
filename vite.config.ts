@@ -19,11 +19,23 @@ export default defineConfig({
   build: {
     target: 'es2020',
     rollupOptions: {
+      /* One entry. The four cuts have been merged into a single document;
+         keeping the others as build inputs would ship three dead pages. */
       input: {
         main: 'index.html',
-        alt: 'alt.html',
-        ref: 'ref.html',
-        notes: 'notes.html',
+      },
+      output: {
+        /* three.js and its r3f/drei bindings are bigger than everything
+           else combined. Left alone, rollup hoists them into the main entry
+           and the first paint waits on a megabyte of WebGL runtime that only
+           the lazy plates need. Pinned to their own chunks so the document
+           renders immediately and the models stream in behind it. */
+        manualChunks(id: string) {
+          if (!id.includes('node_modules')) return
+          if (/[\\/](three|@react-three|three-stdlib|troika)[\\/]/.test(id)) return 'vendor-three'
+          if (/[\\/](react|react-dom|scheduler)[\\/]/.test(id)) return 'vendor-react'
+          return
+        },
       },
     },
     assetsInlineLimit: 2048,
