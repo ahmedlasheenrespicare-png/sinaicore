@@ -311,6 +311,54 @@
       img.style.transform = "translateY(" + off.toFixed(1) + "px) scale(1.06)";
     });
   }
+  /* ---------- Sticky pinned panels (reference: sticky top-0 h-svh) ----------
+     A chapter whose measured content fits inside a screen pins for a full
+     screen of scrolling while the 3D story advances; taller chapters keep
+     scrolling normally, so long copy is never clipped. */
+  var pinnedPanels = [];
+  var pinFades = [];   /* keep the fade triggers so re-running never duplicates them */
+  function setupPins(){
+    pinFades.forEach(function(t){ if(t && t.kill) t.kill(); });
+    pinFades = [];
+    var vh = window.innerHeight || 900;
+    var desktop = window.innerWidth >= 1024;
+    document.querySelectorAll(".chapter").forEach(function(sec){
+      var wrap = sec.querySelector(".wrap");
+      if(!wrap) return;
+      /* reset first so heights are measured honestly */
+      sec.classList.remove("is-pinned");
+      sec.style.height = "";
+      var contentH = wrap.scrollHeight;
+      var fits = desktop && contentH > 0 && contentH <= vh * 0.84;
+      if(!fits) return;
+      sec.classList.add("is-pinned");
+      var travel = Math.round(vh * 0.75);          /* extra scroll while pinned */
+      sec.style.height = (vh + travel) + "px";   /* one screen of panel + travel */
+      sec.dataset.travel = travel;
+    });
+    pinnedPanels = Array.prototype.slice.call(document.querySelectorAll(".chapter.is-pinned"));
+    /* Dim the pinned panel as its chapter hands over to the next one */
+    if(typeof gsap !== "undefined" && typeof ScrollTrigger !== "undefined"){
+      pinnedPanels.forEach(function(sec){
+        var wrap = sec.querySelector(".wrap");
+        pinFades.push(ScrollTrigger.create({
+          trigger: sec,
+          start: "bottom 78%",
+          end: "bottom 22%",
+          onUpdate: function(self){ sec.classList.toggle("panel-leaving", self.progress > .55); },
+          onLeave: function(){ sec.classList.remove("panel-leaving"); },
+          onLeaveBack: function(){ sec.classList.remove("panel-leaving"); }
+        }));
+      });
+    }
+    if(typeof measureBeats === "function") measureBeats();
+    if(typeof ScrollTrigger !== "undefined") ScrollTrigger.refresh();
+  }
+  setupPins();
+  window.addEventListener("resize", function(){ setupPins(); });
+  window.addEventListener("load", function(){ setupPins(); });
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ setupPins(); });
+
   /* ---------- Letter-by-letter heading reveal (reference back.out motion) ---------- */
   function splitLetters(el){
     var text = (el.getAttribute("aria-label") || el.textContent || "").trim().replace(/\s+/g, " ");

@@ -480,3 +480,36 @@ body:not(.loaded) #intro{opacity:0; pointer-events:none}
 .cursor-ring{position:fixed;left:0;top:0;width:32px;height:32px;border-radius:50%;border:1px solid rgba(201,106,27,.55);pointer-events:none;z-index:9997;transition:border-color .25s,opacity .3s;opacity:0}
 .cursor-ring.hot{border-color:#1A6B9C;border-width:2px}
 @media(hover:none),(pointer:coarse){.cursor-dot,.cursor-ring{display:none}}
+
+/* ================= v24: STICKY PINNED PANELS (reference behaviour) =================
+   Short chapters pin their text for a full screen while the 3D scrubs;
+   chapters whose content is taller than the viewport stay in normal flow
+   (decided at runtime in experience.js, so nothing is ever clipped).
+   ================================================================================= */
+.chapter.is-pinned{
+  display:block;
+  min-height:0;
+  padding:0;
+  position:relative;
+}
+.chapter.is-pinned .wrap{
+  position:sticky;
+  top:0;
+  height:100vh;
+  max-height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:6vh 48px;
+  box-sizing:border-box;
+}
+.chapter.is-pinned .wrap > *{max-width:100%}
+.chapter.is-pinned figure img{max-height:34vh;object-fit:cover}
+.chapter.is-pinned .specs-table{font-size:13px}
+
+/* exit fade: the pinned panel dims as its chapter hands over (reference data-fades) */
+.chapter.is-pinned.panel-leaving .wrap{opacity:.25;transition:opacity .35s ease}
+@media(max-width:1023px){
+  .chapter.is-pinned{display:block}
+  .chapter.is-pinned .wrap{position:static;height:auto;max-height:none;padding:20px 26px}
+}
