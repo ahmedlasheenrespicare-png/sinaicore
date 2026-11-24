@@ -25,7 +25,6 @@ function Plate({
   tag,
   hint,
   className = '',
-  shadowsAt,
 }: {
   kind: 'container' | 'crystal' | 'tablets' | 'fibc' | 'sack' | 'globe' | 'jar'
   dark?: boolean
@@ -33,14 +32,13 @@ function Plate({
   tag?: string
   hint?: string
   className?: string
-  shadowsAt?: number
 }) {
   return (
     <div className={`ref-feature-stage ${dark ? 'dark' : ''} ${className}`}>
       {tag && <span className="tag mono">{tag}</span>}
       {hint && <span className="hint mono">{hint}</span>}
       <Suspense fallback={null}>
-        <ModelStage kind={kind} dark={dark} camera={camera} shadowsAt={shadowsAt} />
+        <ModelStage kind={kind} dark={dark} camera={camera} />
       </Suspense>
     </div>
   )
@@ -163,7 +161,6 @@ export default function RefApp() {
                   kind="container"
                   dark
                   camera={{ position: [4.9, 2.9, 5.4], fov: 32 }}
-                  shadowsAt={-1.28}
                 />
               </Suspense>
               <span className="ref-hero-plate mono">20 / 40 FT · FOB ARISH / SUEZ</span>
@@ -292,9 +289,8 @@ export default function RefApp() {
                 kind="crystal"
                 tag="HALITE · NORTH SINAI"
                 hint="3D · crystal.glb"
-                camera={{ position: [3.4, 2.3, 3.9], fov: 33 }}
-                shadowsAt={-0.86}
-              />
+                camera={{ position: [2.0, 1.15, 2.9], fov: 30 }}
+                              />
               <div className="ref-feature-copy">
                 <h3>من بلورة الهاليت إلى شكارة مُختومة</h3>
                 <p>
@@ -386,8 +382,7 @@ export default function RefApp() {
                 kind="sack"
                 tag="50 KG · PRINTED SACK"
                 hint="3D · sack-50kg.glb · real print"
-                camera={{ position: [2.0, 1.25, 3.0], fov: 32 }}
-                shadowsAt={-0.68}
+                camera={{ position: [1.55, 0.95, 2.35], fov: 30 }}
               />
               <div className="ref-feature-copy">
                 <h3>شكارة ٥٠ كجم مطبوعة، جاهزة للتحميل</h3>
@@ -552,8 +547,7 @@ export default function RefApp() {
                 kind="jar"
                 tag="LAB SAMPLE"
                 hint="3D · sample-jar.glb"
-                camera={{ position: [1.5, 1.1, 2.1], fov: 32 }}
-                shadowsAt={-0.46}
+                camera={{ position: [2.6, 1.5, 4.0], fov: 28 }}
               />
             </div>
           </div>

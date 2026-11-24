@@ -201,26 +201,124 @@ function haliteCrystal({ sx = 1, sy = 1, sz = 1, sub = 2, chamfer = 0.12, rough 
 }
 
 function crystalCluster() {
+  /* A real halite specimen is a cluster of hopper-faced cubes, not spikes:
+     cubes grow faster at the edges than in the middle, so each face sinks
+     into a shallow stepped funnel. Build the cluster out of cubes of
+     different sizes, sunk into a rough rock base, and give each cube that
+     hopper relief — that is what catches the light and reads as salt. */
   const specs = [
-    { s: [0.46, 1.0, 0.42], pos: [0, 0.24, 0], rot: [0.02, 0.34, 0.02], seed: 3 },
-    { s: [0.3, 0.62, 0.3], pos: [0.44, -0.22, 0.1], rot: [0.16, 0.85, 0.28], seed: 11 },
-    { s: [0.34, 0.5, 0.26], pos: [-0.4, -0.3, 0.2], rot: [-0.12, 0.4, -0.26], seed: 23 },
-    { s: [0.2, 0.34, 0.2], pos: [0.16, -0.44, -0.3], rot: [0.34, 0.2, 0.08], seed: 41 },
+    { s: [0.26, 0.30, 0.25], pos: [-0.03, 0.20, 0.02], rot: [0.05, 0.30, 0.03], seed: 3, hop: 0.115 },
+    { s: [0.19, 0.23, 0.18], pos: [0.27, -0.02, 0.06], rot: [0.13, 0.92, 0.22], seed: 11, hop: 0.115 },
+    { s: [0.21, 0.18, 0.19], pos: [-0.26, -0.05, 0.16], rot: [-0.08, 0.46, -0.18], seed: 23, hop: 0.115 },
+    { s: [0.15, 0.19, 0.15], pos: [0.04, 0.02, -0.24], rot: [0.26, 0.16, 0.07], seed: 41, hop: 0.115 },
+    { s: [0.12, 0.12, 0.13], pos: [-0.14, 0.30, -0.14], rot: [0.20, 0.62, 0.26], seed: 57, hop: 0.115 },
+    { s: [0.10, 0.15, 0.10], pos: [0.24, 0.26, -0.10], rot: [-0.14, 1.22, 0.08], seed: 71, hop: 0.115 },
+    { s: [0.09, 0.09, 0.10], pos: [-0.30, 0.20, -0.06], rot: [0.10, 0.80, -0.30], seed: 83, hop: 0.1 },
   ]
   const geo = G()
   for (const s of specs) {
-    const crystal = haliteCrystal({ sx: s.s[0], sy: s.s[1], sz: s.s[2], seed: s.seed })
+    const cube = hopperCube({
+      sx: s.s[0], sy: s.s[1], sz: s.s[2],
+      seed: s.seed, hop: s.hop, round: 0.02, sub: 10,
+    })
     const m = new THREE.Matrix4()
       .makeRotationFromEuler(new THREE.Euler(s.rot[0], s.rot[1], s.rot[2]))
       .setPosition(s.pos[0], s.pos[1], s.pos[2])
-    merge(geo, crystal, m)
+    merge(geo, cube, m)
   }
-  // dark host rock the crystals grew out of
-  const rockMat = new THREE.Matrix4().makeTranslation(0, -0.62, 0)
-  const rock = haliteCrystal({ sx: 0.9, sy: 0.16, sz: 0.8, sub: 4, chamfer: 0.44, rough: 0.26, seed: 91 })
+  // dark shale the crystals grew out of — a low, broken slab, not a bowl
+  const rock = haliteCrystal({ sx: 0.52, sy: 0.10, sz: 0.46, sub: 7, chamfer: 0.36, rough: 0.30, seed: 91 })
   const rockGeo = G()
-  merge(rockGeo, rock, rockMat)
+  merge(rockGeo, rock, new THREE.Matrix4().makeTranslation(0, -0.30, 0))
   return { crystal: finalize(geo), rock: finalize(rockGeo) }
+}
+
+/* A hopper-faced halite cube.
+ *
+ * Watertight by construction: every face is generated through the same
+ * cube→sphere mapping (Marc Reynolds' watertight variant), then blended back
+ * toward the cube by `round`, so neighbouring faces meet exactly on the
+ * shared edge — no cracks, no spikes.
+ *
+ * On top of that, each face sinks into a shallow funnel toward its centre
+ * (`hop`), zero at the rim and maximum in the middle. That is the stepped
+ * "hopper" growth real halite shows when it crystallises from brine, and it
+ * is what gives the surface something for the light to break across.
+ */
+function hopperCube({ sx = 1, sy = 1, sz = 1, seed = 1, hop = 0.1, round = 0.14, sub = 6 } = {}) {
+  const faces = [
+    { axis: 0, sign: 1 }, { axis: 0, sign: -1 },
+    { axis: 1, sign: 1 }, { axis: 1, sign: -1 },
+    { axis: 2, sign: 1 }, { axis: 2, sign: -1 },
+  ]
+  // watertight cube->sphere: no cracks along the shared edges
+  const toSphere = (x, y, z) => {
+    const x2 = x * x, y2 = y * y, z2 = z * z
+    return [
+      x * Math.sqrt(Math.max(0, 1 - y2 / 2 - z2 / 2 + (y2 * z2) / 3)),
+      y * Math.sqrt(Math.max(0, 1 - z2 / 2 - x2 / 2 + (z2 * x2) / 3)),
+      z * Math.sqrt(Math.max(0, 1 - x2 / 2 - y2 / 2 + (x2 * y2) / 3)),
+    ]
+  }
+  const tris = []
+  for (const f of faces) {
+    const [u, v] = f.axis === 0 ? [1, 2] : f.axis === 1 ? [0, 2] : [0, 1]
+    const grid = []
+    for (let i = 0; i <= sub; i++) {
+      const row = []
+      for (let j = 0; j <= sub; j++) {
+        const a = (i / sub) * 2 - 1
+        const b = (j / sub) * 2 - 1
+        // unit cube point on this face
+        const c = [0, 0, 0]
+        c[f.axis] = f.sign
+        c[u] = a
+        c[v] = b
+        // round the silhouette: lerp cube → sphere, keeping the face flat
+        const sp = toSphere(c[0], c[1], c[2])
+        let p = [
+          c[0] * (1 - round) + sp[0] * round,
+          c[1] * (1 - round) + sp[1] * round,
+          c[2] * (1 - round) + sp[2] * round,
+        ]
+        // hopper: sink toward the face centre, zero on the rim so the shared
+        // edges stay welded
+        const d = Math.max(Math.abs(a), Math.abs(b))
+        /* Hopper relief: real halite from brine grows as a staircase —
+           concentric terraces stepping down toward the face centre, with the
+           outer rim standing proudest. Modelled as a stair of 4 steps inside
+           the frame (d < EDGE) and a wide bevelled rim outside it, so the
+           face is never a blank plane. */
+        const EDGE = 0.72
+        const inner = Math.min(1, d / EDGE)
+        const steps = 3
+        const t = 1 - inner
+        const stair = (Math.floor(t * steps) + 0.5) / steps
+        const rimF = Math.max(0, (d - EDGE) / (1 - EDGE))
+        const n = vnoise(a * 3.4 + seed * 5.3, b * 3.4 - seed, f.axis * 3.1 + seed) - 0.5
+        // depth: terraces down inside, then a hard chamfer up to the cube edge
+        /* the terrace risers are what catch the key and draw the staircase;
+           they need real depth or they vanish once flat-shaded */
+        const sink = hop * (stair * 1.0 + rimF * 2.0) + n * 0.018
+        p = [
+          p[0] - sp[0] * sink,
+          p[1] - sp[1] * sink,
+          p[2] - sp[2] * sink,
+        ]
+        row.push([p[0] * sx, p[1] * sy, p[2] * sz])
+      }
+      grid.push(row)
+    }
+    for (let i = 0; i < sub; i++) {
+      for (let j = 0; j < sub; j++) {
+        const a = grid[i][j], b = grid[i + 1][j], c = grid[i + 1][j + 1], d = grid[i][j + 1]
+        const flip = f.sign < 0
+        if (flip) tris.push(a, c, b, a, d, c)
+        else tris.push(a, b, c, a, c, d)
+      }
+    }
+  }
+  return flatNormals(tris)
 }
 
 /* ------------------------------------------------------------------ *
@@ -552,10 +650,24 @@ function bag(CFG = BAG_JUMBO, opts = {}) {
  * 03b — 25/50 kg tablets sack: the pillow-shaped white PP bag from the
  *       product photography (soft rounds, crimped flute seal at the mouth)
  * ------------------------------------------------------------------ */
-const PILLOW = { a: 0.40, b: 0.175, h: 0.90, exp: 3.4 }
+/* A filled 50 kg PP sack is much boxier than a cushion: soft shoulders, a
+   broad flat base it actually stands on, nearly parallel sides, and a flat
+   front panel where the print goes. `exp` drives how square the section is —
+   the reference photo's bag is a rounded rectangle, not an ellipse. */
+const PILLOW = { a: 0.40, b: 0.15, h: 0.92, exp: 6.0 }
 
-/* lateral scale of the pillow at height fraction v (0 = bottom, 1 = mouth) */
-const pillowK = (v) => Math.pow(Math.max(0, 1 - Math.pow(2 * v - 1, 4)), 1 / 3.1)
+/* lateral scale at height fraction v (0 = base, 1 = mouth).
+   Broad base, straight flanks, then a shoulder under the crimped mouth. */
+const pillowK = (v) => {
+  // the base: a filled bag spreads and settles, so the widest point is low
+  /* the settled foot: a soft outward roll over the bottom ~15%, not a flare */
+  const base = 0.94 + 0.1 * Math.pow(Math.min(1, Math.max(0, (0.16 - v) / 0.16)), 1.6)
+  // the shoulder: fabric gathers into the mouth over the top fifth
+  const shoulder = v > 0.78 ? 1 - Math.pow((v - 0.78) / 0.22, 1.9) * 0.62 : 1
+  // a gentle waist where the fill settles mid-bag, so the silhouette breathes
+  const waist = 1 - 0.035 * Math.exp(-Math.pow((v - 0.55) / 0.18, 2))
+  return Math.max(0.2, base * shoulder * waist)
+}
 
 function pillowSack() {
   const { a, b, h, exp } = PILLOW
@@ -705,7 +817,11 @@ function pillowSack() {
     return b * k * Math.pow(1 - Math.pow(ax, exp), 2 / exp)
   }
   const panel = G()
-  const py = -0.02, ph = 0.215, pw = a * 0.44, NU = 18, NV = 20
+  /* The reference print covers the whole front panel — mountain-and-crystal
+     mark, wordmark, descriptor, four assurance badges, then the weight. A
+     small stamp in the middle of a big white bag is the giveaway that this is
+     a model, so the panel runs nearly edge to edge. */
+  const py = 0.0, ph = 0.325, pw = a * 0.82, NU = 22, NV = 26
   const grid = []
   for (let i = 0; i <= NU; i++) {
     const row = []

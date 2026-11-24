@@ -367,6 +367,16 @@
   border-radius: 0;
   border: 1px solid var(--hair);
 }
+/* the plate's cyclorama: a studio backdrop that glows from the top-left,
+   falls to a soft floor and never seams against the 3D ground plane */
+.ref-feature-stage {
+  background:
+    radial-gradient(120% 100% at 30% 2%, #fbfcfd 0%, #eef1f3 40%, #dee4e8 74%, #cfd6da 100%);
+}
+.ref-feature-stage.dark {
+  background:
+    radial-gradient(115% 95% at 26% 4%, #1b3f55 0%, #14293a 40%, #0b1826 74%, #070d14 100%);
+}
 .ref-feature-stage .tag,
 .ref-feature-stage .hint {
   border-radius: 0;

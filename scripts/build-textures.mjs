@@ -269,7 +269,82 @@ function pansHDR(w = 640, h = 320) {
   return { w, h, rgb }
 }
 
+/* ------------------------------------------------------------------ *
+ * Studio HDRI — the rack the product plates are lit with.
+ *
+ * A real product shoot is: a big soft key overhead-left, a close white
+ * reflector filling the shadow side, a narrow strip light behind for the
+ * edge, and a dark floor. Encoded as an equirect here so PMREM can
+ * prefilter it — every plate then gets physical reflections, a clean
+ * gradient in glossy surfaces and a believable shadow side, instead of
+ * the flat canvas gradient it used before.
+ * ------------------------------------------------------------------ */
+function studioHDR(w = 512, h = 256) {
+  const rgb = new Float32Array(w * h * 3)
+  /* A product rig is not an even grey room. Clear and glossy subjects read
+     only when the environment has contrast: big bright sources standing in
+     a comparatively dark surround, the way photographers hang black flags
+     around glass. So: soft boxes at 6–30, everything else between 0.03 and
+     0.35, and a dark floor with a soft bounce. */
+  const keys = [
+    { az: -40, el: 56, r: 0.46, i: 34, tint: [1, 0.99, 0.97] }, // big key, high left
+    { az: -40, el: 56, r: 1.25, i: 3.0, tint: [1, 0.99, 0.97] }, // its falloff
+    { az: 78, el: 26, r: 0.55, i: 16, tint: [0.95, 0.98, 1] }, // white fill strip, right
+    { az: 170, el: 40, r: 0.34, i: 22, tint: [1, 0.98, 0.94] }, // narrow rim behind
+    { az: -128, el: 18, r: 0.5, i: 7, tint: [0.94, 0.97, 1] }, // kicker, back left
+    { az: 8, el: 78, r: 0.5, i: 6, tint: [1, 1, 1] }, // toplight
+  ]
+  const rad = (d) => (d * Math.PI) / 180
+  for (let y = 0; y < h; y++) {
+    const theta = (y / (h - 1)) * Math.PI // 0 = up
+    const dy = Math.cos(theta)
+    for (let x = 0; x < w; x++) {
+      const phi = (x / w) * Math.PI * 2
+      const dx = Math.sin(theta) * Math.cos(phi)
+      const dz = Math.sin(theta) * Math.sin(phi)
+      const i = (y * w + x) * 3
+      let r, g, b
+      if (dy >= 0) {
+        // the room's walls: dark, with a gentle gradient so reflections are
+        // not a flat black
+        const t = Math.pow(dy, 0.8)
+        r = 0.10 + 0.16 * t
+        g = 0.11 + 0.17 * t
+        b = 0.13 + 0.19 * t
+      } else {
+        // floor: dark seamless sweep with a soft bounce near the horizon
+        const t = Math.pow(-dy, 0.55)
+        r = 0.26 - 0.21 * t
+        g = 0.26 - 0.21 * t
+        b = 0.27 - 0.215 * t
+      }
+      for (const k of keys) {
+        const ka = rad(k.az)
+        const ke = rad(k.el)
+        const kx = Math.cos(ke) * Math.cos(ka)
+        const ky = Math.sin(ke)
+        const kz = Math.cos(ke) * Math.sin(ka)
+        const c = Math.max(0, dx * kx + dy * ky + dz * kz)
+        const spot = Math.pow(c, 2 / (k.r * k.r)) * k.i
+        r += spot * k.tint[0]
+        g += spot * k.tint[1]
+        b += spot * k.tint[2]
+      }
+      // a warm floor bounce, so the shadow side keeps a gradient
+      const bounce = Math.max(0, -dy) * 0.16
+      rgb[i] = r + bounce
+      rgb[i + 1] = g + bounce * 0.97
+      rgb[i + 2] = b + bounce * 0.9
+    }
+  }
+  return { w, h, rgb }
+}
+
 fs.mkdirSync(path.join(ROOT, 'public', 'hdr'), { recursive: true })
+const sh = studioHDR()
+writeRadiance(path.join(ROOT, 'public', 'hdr', 'studio.hdr'), sh.w, sh.h, sh.rgb)
+console.log(`  studio.hdr  ${(fs.statSync(path.join(ROOT, 'public', 'hdr', 'studio.hdr')).size / 1024).toFixed(1)} KB`)
+
 const hd = pansHDR()
 writeRadiance(path.join(ROOT, 'public', 'hdr', 'pans.hdr'), hd.w, hd.h, hd.rgb)
 console.log(`  pans.hdr  ${(fs.statSync(path.join(ROOT, 'public', 'hdr', 'pans.hdr')).size / 1024).toFixed(1)} KB`)
