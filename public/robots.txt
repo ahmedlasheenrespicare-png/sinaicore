@@ -1,0 +1,6 @@
+# SinaiCore — single-document site.
+User-agent: *
+Allow: /
+
+# The merged cuts are archived, not published. Nothing under /attic/ is built.
+Disallow: /attic/

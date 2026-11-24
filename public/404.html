@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>الصفحة غير موجودة — SinaiCore</title>
+    <meta name="robots" content="noindex" />
+    <link rel="icon" type="image/png" href="/brand/logo-mark.png" />
+    <link rel="preload" as="image" href="/brand/logo-mark.png" />
+    <style>
+      /* A 404 rendered from a single file, with no build step: if the router
+         or the host resolves a bad path, this must still paint before any
+         JavaScript runs. Uses the site's own palette and type stack. */
+      :root {
+        --ink: #2c2a28;
+        --hair: rgba(44, 42, 40, 0.16);
+        --copper: #c2712f;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100svh;
+        display: grid;
+        place-items: center;
+        padding: 6vw;
+        background: #fbfaf9;
+        color: var(--ink);
+        font-family: 'Amiri', 'Times New Roman', serif;
+        text-align: center;
+      }
+      .mark { width: 120px; height: auto; margin-block-end: 2.4rem; opacity: 0.9; }
+      .n {
+        font-family: Georgia, 'EB Garamond', serif;
+        font-size: 0.68rem;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: var(--copper);
+        margin-block-end: 1rem;
+      }
+      h1 {
+        font-size: clamp(1.6rem, 4.4vw, 2.6rem);
+        font-weight: 700;
+        line-height: 1.3;
+        margin: 0 0 0.9rem;
+        letter-spacing: -0.01em;
+      }
+      p {
+        max-width: 34ch;
+        margin: 0 auto 2rem;
+        line-height: 1.9;
+        color: rgba(44, 42, 40, 0.72);
+      }
+      a {
+        display: inline-block;
+        border: 1px solid var(--ink);
+        border-radius: 2px;
+        padding: 0.7rem 1.4rem;
+        color: inherit;
+        text-decoration: none;
+        font-size: 0.95rem;
+        transition: background 0.25s, color 0.25s;
+      }
+      a:hover { background: var(--ink); color: #fbfaf9; }
+      a:focus-visible { outline: 2px solid var(--copper); outline-offset: 3px; }
+      .links { display: flex; gap: 0.7rem; justify-content: center; flex-wrap: wrap; }
+      .links a:last-child { border-color: var(--hair); }
+      @media (prefers-reduced-motion: reduce) { a { transition: none; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img class="mark" src="/brand/logo-mark.png" alt="" aria-hidden="true" />
+      <div class="n">404 · NOT FOUND</div>
+      <h1>هذه الصفحة ليست هنا</h1>
+      <p>
+        الرابط الذي فتحته لم يعد موجودًا، أو ربما لم يكن موجودًا من الأصل. كل محتوى
+        الموقع الآن على صفحة واحدة.
+      </p>
+      <div class="links">
+        <a href="/">العودة إلى الصفحة الرئيسية</a>
+        <a href="/#products">كتالوج المنتجات</a>
+      </div>
+    </main>
+  </body>
+</html>

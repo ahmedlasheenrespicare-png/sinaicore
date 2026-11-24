@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { Icon } from './icons'
 import PanAct from './PanAct'
 import {
@@ -285,8 +285,55 @@ function QuoteBuilder() {
   )
 }
 
+/* the reading rail: progress across the document, and the number of the
+   section you are inside. RAF-throttled so a long scroll never queues more
+   than one update per frame. */
+function useReadingRail() {
+  const bar = useRef<HTMLElement>(null)
+  const [here, setHere] = useState<{ n: string; label: string } | null>(null)
+  useEffect(() => {
+    let raf = 0
+    const read = () => {
+      raf = 0
+      const max = document.documentElement.scrollHeight - window.innerHeight
+      const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0
+      if (bar.current) bar.current.style.transform = `scaleX(${p})`
+
+      // which counted section are we inside
+      const secs = Array.from(document.querySelectorAll<HTMLElement>('.ref-sec'))
+      const mid = window.innerHeight * 0.35
+      let found: HTMLElement | null = null
+      for (const el of secs) {
+        const r = el.getBoundingClientRect()
+        if (r.top <= mid && r.bottom > mid) found = el
+      }
+      if (!found) {
+        setHere(null)
+        return
+      }
+      const over = found.querySelector('.over')?.textContent?.trim() ?? ''
+      // the CSS counter is not readable from JS, so count position instead
+      const idx = String(secs.indexOf(found) + 1).padStart(2, '0')
+      setHere({ n: idx, label: over.split('·')[0].trim() })
+    }
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(read)
+    }
+    read()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+      if (raf) cancelAnimationFrame(raf)
+    }
+  }, [])
+  return { bar, here }
+}
+
 export default function RefApp() {
   const [on, setOn] = useState(false)
+  const rail = useReadingRail()
   useEffect(() => {
     const t = setTimeout(() => setOn(true), 60)
     document.body.classList.add('is-ref-page')
@@ -339,6 +386,9 @@ export default function RefApp() {
 
   return (
     <div className={`ref ${on ? 'is-on' : ''}`} id="top">
+      <div className="ref-rail" aria-hidden="true">
+        <span ref={rail.bar} />
+      </div>
       {/* ------------------------------------------------------- nav */}
       <nav className="ref-nav" aria-label="التنقل الرئيسي">
         <div className="ref-shell ref-nav-in">
@@ -356,6 +406,14 @@ export default function RefApp() {
             ))}
           </ul>
           <div className="ref-nav-right">
+            <span className={`ref-nav-here ${rail.here ? 'on' : ''}`} aria-hidden="true">
+              {rail.here && (
+                <>
+                  <b>{rail.here.n}</b>
+                  {rail.here.label}
+                </>
+              )}
+            </span>
             <div className="ref-lang" aria-hidden="true">
               <span className="on">ع</span>
               <span>EN</span>

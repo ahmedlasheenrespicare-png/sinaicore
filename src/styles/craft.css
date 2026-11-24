@@ -1971,3 +1971,69 @@
 .ref-quote .ref-btn {
   justify-self: start;
 }
+
+/* ==================================================================
+ * 13. the reading rail
+ *
+ * A hairline across the top that fills as you read, plus the current
+ * section number in the header. The reference site is a *document*; a
+ * document this long needs to tell you where you are without a sidebar.
+ * Two pixels, one transform — no layout, no repaint per frame.
+ * ================================================================== */
+.ref-rail {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: 2px;
+  z-index: 90;
+  pointer-events: none;
+  background: transparent;
+}
+.ref-rail span {
+  display: block;
+  block-size: 100%;
+  inline-size: 100%;
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  background: var(--ref-copper, #c2712f);
+  opacity: 0.9;
+}
+/* RTL: the bar must grow from the reading edge, i.e. the right */
+[dir='rtl'] .ref-rail span {
+  transform-origin: 100% 50%;
+}
+
+/* the section marker that appears in the nav once past the hero */
+.ref-nav-here {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  font-family: var(--font-serif-lat);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: inherit;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
+  pointer-events: none;
+}
+.ref-nav-here.on {
+  opacity: 0.6;
+  transform: none;
+}
+.ref-nav-here b {
+  font-weight: 400;
+  color: var(--ref-copper);
+}
+
+@media (max-width: 900px) {
+  .ref-nav-here {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ref-nav-here {
+    transition: none;
+  }
+}
