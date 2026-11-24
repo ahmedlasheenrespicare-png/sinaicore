@@ -618,3 +618,27 @@ body:not(.loaded) #intro{opacity:0; pointer-events:none}
   .lineup{grid-template-columns:1fr 1fr;gap:10px}
   .lineup-card h3{font-size:16px}
 }
+
+/* ================= v28: reference typography + % preloader ================= */
+
+/* wide, airy display type (reference "F i e l d  t o  S t i l l") */
+.hero h1{letter-spacing:.045em; font-weight:600}
+.hero h1 .line span{display:inline-block}
+.big-name{letter-spacing:.012em}
+.eyebrow2{letter-spacing:.34em}
+
+/* minimal loader: a big percentage, nothing else competing with it */
+#preloader{background:radial-gradient(900px 620px at 50% 40%,#16304a,#0E1A2B 78%)}
+.pre-inner{display:flex; flex-direction:column; align-items:center}
+.pre-logo{font-size:22px; letter-spacing:.12em; margin-bottom:34px; opacity:.9}
+.pre-bar{width:min(240px,54vw); margin:0 0 18px}
+.pre-meta{display:none}
+#preloader .pre-pct-big{
+  font-family:var(--serif); font-size:clamp(44px,7vw,84px); line-height:1;
+  font-weight:600; color:#fff; letter-spacing:-.02em; margin-bottom:22px;
+  font-variant-numeric:tabular-nums
+}
+#preloader .pre-label{
+  font-family:var(--mono); font-size:10px; letter-spacing:.34em;
+  text-transform:uppercase; color:#8fa6bd; margin-top:4px
+}

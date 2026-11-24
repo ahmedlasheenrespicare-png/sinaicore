@@ -99,7 +99,7 @@
       while(pts.length < N) pts.push(latLonToVec(rand(-50,70), rand(-170,170), 2.0));
       return pts;
     }
-    var SHAPES = [shapeCrystal(), shapeGranules(), shapeBag(), shapeGlobe()];
+    var SHAPES = [shapeCrystal(), shapeGranules(), shapeCloud(), shapeGlobe()];
     var COLORS = [
       new THREE.Color(0xffffff), new THREE.Color(0xcfe9f7),
       new THREE.Color(0xffffff), new THREE.Color(0x8fd0f0),
@@ -118,7 +118,7 @@
     sg.addColorStop(0,"rgba(255,255,255,1)"); sg.addColorStop(.35,"rgba(255,255,255,.9)"); sg.addColorStop(1,"rgba(255,255,255,0)");
     sx.fillStyle=sg; sx.fillRect(0,0,64,64);
     var sprite = new THREE.CanvasTexture(sc);
-    var mat = new THREE.PointsMaterial({size:.075, map:sprite, vertexColors:true, transparent:true, opacity:.96, depthWrite:false, blending:THREE.AdditiveBlending});
+    var mat = new THREE.PointsMaterial({size:.062, map:sprite, vertexColors:true, transparent:true, opacity:.72, depthWrite:false, blending:THREE.AdditiveBlending});
     var points = new THREE.Points(geo, mat);
     var group = new THREE.Group(); group.add(points); scene.add(group);
 

@@ -75,3 +75,11 @@ The scroll choreography now works like the reference's `sceneAt()`:
 - **Typography** — chapter headings split into letters and rise with `back.out(2)` / `stagger 0.028`; figures, stat rows, tables and quote blocks use `power3.out` reveals.
 - **Micro-interaction** — a soft brand-coloured cursor halo (dot + ring, ring expands on interactive elements), disabled for coarse pointers and reduced motion.
 - **Performance** — the whole scene is still procedural (0 KB of model data), with an adaptive particle budget and a preloader gate.
+
+
+## Product-hero layer (v28, from brocksbushes.moonshiners.co.uk)
+
+- **The bag is the protagonist.** The detailed 50 kg / FIBC model is on screen from the first chapter (it only steps aside for the globe in chapter 06), shown with studio lighting: ACES tone mapping, a 2048px soft-shadow key light with `radius`, blue rim light and a hemisphere fill.
+- **Floating elements.** 67 instanced salt bits — 34 small crystals, 20 granules, 8 medium shards and 5 large glassy crystals — orbit the bag at different radii, bob, spin and pulse; scroll velocity adds energy, and they hide when the globe takes the frame.
+- **Label & texture.** The front/back artwork is drawn at 1536 × 1920 with 16× anisotropy, and the PP weave doubles as a bump map so the fabric and the blue print read at close range (chapter 02 pushes the camera in).
+- **Typography & loader.** Wide-tracked display headings and a minimal loader that shows one big percentage over the brand mark.

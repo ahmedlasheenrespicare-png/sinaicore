@@ -12,8 +12,11 @@
     catch(e){ return; }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.12;
-    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMappingExposure = 1.18;
+    if("outputColorSpace" in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace;
+    else renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -24,8 +27,9 @@
     /* Lights: hemisphere + key with shadows + rim */
     scene.add(new THREE.HemisphereLight(0xffffff, 0x8fb3cc, .65));
     var key = new THREE.DirectionalLight(0xffffff, 1.35);
-    key.position.set(4,7,6); key.castShadow = true;
-    key.shadow.mapSize.set(1024,1024);
+    key.position.set(4.5,7.5,6.5); key.castShadow = true;
+    key.shadow.mapSize.set(2048,2048);
+    key.shadow.radius = 5; key.shadow.bias = -0.0006;
     key.shadow.camera.left=-6; key.shadow.camera.right=6;
     key.shadow.camera.top=6; key.shadow.camera.bottom=-6;
     scene.add(key);
@@ -36,7 +40,7 @@
 
     /* ---------- Textures (canvas-drawn, industrial detail) ---------- */
     function frontTexture(){
-      var c=document.createElement("canvas"); c.width=1024; c.height=1280;
+      var c=document.createElement("canvas"); c.width=1536; c.height=1920;
       var x=c.getContext("2d");
       var g=x.createLinearGradient(0,0,0,1280);
       g.addColorStop(0,"#ffffff"); g.addColorStop(1,"#e8f2f8");
@@ -70,10 +74,10 @@
       /* bottom wave */
       x.fillStyle="#1A6B9C"; x.beginPath(); x.moveTo(0,1120);
       x.bezierCurveTo(280,1060,720,1180,1024,1100); x.lineTo(1024,1280); x.lineTo(0,1280); x.fill();
-      var tex=new THREE.CanvasTexture(c); tex.anisotropy=8; tex.colorSpace=THREE.SRGBColorSpace; return tex;
+      var tex=new THREE.CanvasTexture(c); tex.anisotropy=16; if("colorSpace" in tex) tex.colorSpace=THREE.SRGBColorSpace; tex.minFilter=THREE.LinearMipmapLinearFilter; return tex;
     }
     function backTexture(){
-      var c=document.createElement("canvas"); c.width=1024; c.height=1280;
+      var c=document.createElement("canvas"); c.width=1536; c.height=1920;
       var x=c.getContext("2d");
       x.fillStyle="#14567d"; x.fillRect(0,0,1024,1280);
       x.fillStyle="#fff"; x.font="700 64px Georgia, serif"; x.textAlign="center";
@@ -89,7 +93,7 @@
       x.textAlign="center"; x.fillStyle="#cfe2ee"; x.font="500 32px Arial";
       x.fillText("☂  Keep Dry      ↑↑  This Side Up      ⚖  50 kg",512,1080);
       x.fillText("info@sinaicore.com  ·  +20 110 753 9914",512,1150);
-      var tex=new THREE.CanvasTexture(c); tex.anisotropy=8; tex.colorSpace=THREE.SRGBColorSpace; return tex;
+      var tex=new THREE.CanvasTexture(c); tex.anisotropy=16; if("colorSpace" in tex) tex.colorSpace=THREE.SRGBColorSpace; tex.minFilter=THREE.LinearMipmapLinearFilter; return tex;
     }
     function saltTexture(){
       var c=document.createElement("canvas"); c.width=512; c.height=512;
@@ -117,8 +121,10 @@
     /* ---------- Detailed bag: shell, liner, salt, gussets, loops, folds ---------- */
     var bag = new THREE.Group(); scene.add(bag);
     var W=2.3, H=2.9, D=.95;
-    var ppMat = new THREE.MeshStandardMaterial({map:ppTexture(), roughness:.85});
-    var frontMat = new THREE.MeshStandardMaterial({map:frontTexture(), roughness:.55});
+    var weaveTex = ppTexture();
+    weaveTex.wrapS = weaveTex.wrapT = THREE.RepeatWrapping; weaveTex.repeat.set(6,6);
+    var ppMat = new THREE.MeshStandardMaterial({map:weaveTex, bumpMap:weaveTex, bumpScale:.02, roughness:.82});
+    var frontMat = new THREE.MeshStandardMaterial({map:frontTexture(), bumpMap:weaveTex, bumpScale:.012, roughness:.62, metalness:.02});
     var backMat = new THREE.MeshStandardMaterial({map:backTexture(), roughness:.7});
     var linerMat = new THREE.MeshStandardMaterial({color:0xa9d0e8, roughness:.3, transparent:true, opacity:.5});
     var saltMat = new THREE.MeshStandardMaterial({map:saltTexture(), roughness:.95});
@@ -172,14 +178,53 @@
       innerCrystals.add(im);
     }
     innerCrystals.scale.setScalar(.001); bag.add(innerCrystals);
-    /* Floating crystals around bag */
-    var crystals = [];
-    for(var ck=0; ck<14; ck++){
-      var fm = new THREE.Mesh(crysGeo, crysMat);
-      fm.position.set((Math.random()-.5)*5.5, (Math.random()-.5)*4.2, (Math.random()-.5)*2.5);
-      fm.userData = {s: Math.random()*6.28, sp: .4+Math.random()*.8, y: fm.position.y};
-      scene.add(fm); crystals.push(fm);
+    /* ---------- Floating elements (reference: product hero with floating bits) ----------
+       Salt crystals, granules and a few large shards of different sizes drift and
+       orbit around the bag; scroll speed adds energy, so they react to the story. */
+    var floats = [];
+    var floatGroup = new THREE.Group(); scene.add(floatGroup);
+    var matCrystal = new THREE.MeshStandardMaterial({color:0xffffff, roughness:.18, metalness:.04, transparent:true, opacity:.96});
+    var matGranule = new THREE.MeshStandardMaterial({color:0xf2f8fc, roughness:.42, metalness:.02});
+    var matLarge   = new THREE.MeshStandardMaterial({color:0xeaf5fb, roughness:.12, metalness:.06, transparent:true, opacity:.62});
+    var geoOcta = new THREE.OctahedronGeometry(1);
+    var geoIco  = new THREE.IcosahedronGeometry(1, 0);
+    var geoDodec= new THREE.DodecahedronGeometry(1, 0);
+    function addFloat(kind, size, radius, angle, yBase, speed, opacityBoost){
+      var geo = kind === "shard" ? geoIco : (kind === "granule" ? geoDodec : geoOcta);
+      var mat = kind === "large" ? matLarge : (kind === "granule" ? matGranule : matCrystal);
+      var m = new THREE.Mesh(geo, mat);
+      m.scale.setScalar(size);
+      m.castShadow = false; m.receiveShadow = false;
+      m.userData = {
+        radius: radius, angle: angle, yBase: yBase,
+        speed: speed, bob: Math.random()*6.28, bobSpeed: .4 + Math.random()*.7,
+        spin: (Math.random()-.5)*.9, spin2: (Math.random()-.5)*.9,
+        baseScale: size, parallax: .6 + Math.random()*1.4
+      };
+      floatGroup.add(m); floats.push(m);
+      return m;
     }
+    /* small crystals — the majority, read as "salt dust" */
+    for(var f1=0; f1<34; f1++){
+      addFloat("crystal", .035 + Math.random()*.075, 1.9 + Math.random()*2.6,
+               Math.random()*6.28, (Math.random()-.5)*4.6, .05 + Math.random()*.13);
+    }
+    /* granules — rounder, slightly larger, fewer */
+    for(var f2=0; f2<20; f2++){
+      addFloat("granule", .05 + Math.random()*.07, 2.1 + Math.random()*2.2,
+               Math.random()*6.28, (Math.random()-.5)*4.0, .04 + Math.random()*.1);
+    }
+    /* medium shards */
+    for(var f3=0; f3<8; f3++){
+      addFloat("shard", .12 + Math.random()*.1, 2.6 + Math.random()*1.8,
+               Math.random()*6.28, (Math.random()-.5)*3.2, .03 + Math.random()*.07);
+    }
+    /* a few big glassy crystals for depth */
+    for(var f4=0; f4<5; f4++){
+      addFloat("large", .2 + Math.random()*.14, 3.1 + Math.random()*1.4,
+               Math.random()*6.28, (Math.random()-.5)*2.6, .02 + Math.random()*.05);
+    }
+
     /* Ground shadow catcher */
     var ground = new THREE.Mesh(new THREE.PlaneGeometry(30,30),
       new THREE.ShadowMaterial({opacity:.22}));
@@ -229,6 +274,24 @@
       bag.position.y = cur.y + Math.sin(time*.9)*.08;
       bag.scale.setScalar(cur.s);
       camera.position.z = cur.camZ;
+      /* floating elements: orbit + bob + scroll energy (reference product hero) */
+      var vel = (window.__story && window.__story.velocity) || 0;
+      var energy = 1 + Math.min(.7, Math.abs(vel) * .12);
+      floatGroup.rotation.y = bag.rotation.y * .35;
+      floatGroup.visible = bagAmt > .12;   /* they belong to the bag chapters */
+      floats.forEach(function(fm, fi){
+        var u = fm.userData;
+        u.angle += u.speed * .006 * energy;
+        u.bob += u.bobSpeed * .012 * energy;
+        var r = u.radius * (1 + Math.sin(u.bob*.7) * .04);
+        fm.position.x = Math.cos(u.angle) * r;
+        fm.position.z = Math.sin(u.angle) * r * .55;
+        fm.position.y = u.yBase + Math.sin(u.bob) * .18;
+        fm.rotation.x += u.spin * .004 * energy;
+        fm.rotation.y += u.spin2 * .004 * energy;
+        var pulse = 1 + Math.sin(u.bob*1.3 + fi) * .06;
+        fm.scale.setScalar(u.baseScale * pulse);
+      });
       key.intensity = 1.35 * cur.light; rim.intensity = .7 * cur.light; /* per-chapter lighting */
       var mx = (window.__mouse && window.__mouse.x) || 0;
       var my = (window.__mouse && window.__mouse.y) || 0;
@@ -260,10 +323,12 @@
       });
       /* Solid bag fades in only in Scene 3 (morph to bag shape) */
       var W = (window.__story && window.__story.weights) || [1,0,0,0];
-      var bagAmt = W[2] || 0;
+      /* the bag is the protagonist: visible from the first screen, it only
+         steps back while the globe (chapter 06) takes the frame */
+      var bagAmt = 1 - Math.min(1, (W[3] || 0) * 1.25);
       canvas.style.opacity = String(Math.max(0, Math.min(1, bagAmt*1.6)));
       var pc = document.getElementById("particles-canvas");
-      if(pc) pc.style.opacity = String(1 - bagAmt*.55);
+      if(pc) pc.style.opacity = String(.35 + .5 * (1 - bagAmt));
       renderer.render(scene, camera);
     }
     wrap.hidden = false;

@@ -145,10 +145,11 @@
   (function(){
     var fill = document.getElementById("pre-fill");
     var pct = document.getElementById("pre-pct");
+    var pctBig = document.getElementById("pre-pct-big");
     var started = Date.now(), p = 0, done = false;
     function finish(){
       if(done) return; done = true;
-      p = 100; if(fill) fill.style.width = "100%"; if(pct) pct.textContent = "100%";
+      p = 100; if(fill) fill.style.width = "100%"; if(pct) pct.textContent = "100%"; if(pctBig) pctBig.textContent = "100%";
       setTimeout(function(){
         document.body.classList.add("loaded");
         if(typeof ScrollTrigger !== "undefined") ScrollTrigger.refresh();
@@ -160,6 +161,7 @@
       p = Math.min(target, p + Math.random()*9 + 3);
       if(fill) fill.style.width = p + "%";
       if(pct) pct.textContent = Math.round(p) + "%";
+      if(pctBig) pctBig.textContent = Math.round(p) + "%";
       if(p >= target && document.readyState === "complete") { clearInterval(timer); finish(); }
       if(Date.now() - started > 6000){ clearInterval(timer); finish(); }
     }, 90);
