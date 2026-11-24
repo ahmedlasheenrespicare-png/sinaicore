@@ -1,0 +1,54 @@
+/* ================================================================== *
+ * SinaiCore — design tokens
+ *
+ * A printed field notebook set on warm paper, with the SinaiCore navy,
+ * sea blue and copper running through it as rules, numerals and small
+ * printed marks. The WebGL stage lives behind everything; the document
+ * scrolls over it.
+ * ================================================================== */
+
+:root {
+  /* ---------- paper & ink ---------- */
+  --paper: #f4efe4;
+  --paper-2: #ece5d7;
+  --paper-3: #e3dac9;
+  --paper-deep: #d8cdb9;
+  --ink: #0e1a2b;
+  --ink-2: #1b2839;
+  --ink-3: #4e5a68;
+  --ink-4: #7b8590;
+  --rule: #d3c8b6;
+  --rule-2: #b8ab97;
+  --rule-strong: #8f8371;
+
+  /* ---------- brand ---------- */
+  --blue: #1a6b9c;
+  --blue-deep: #124c70;
+  --blue-pale: #d7e6ee;
+  --copper: #c2712f;
+  --copper-2: #a8531f;
+  --copper-pale: #eed9c6;
+  --salt: #fbfaf6;
+
+  /* ---------- type ---------- */
+  --f-serif: 'Amiri', 'EB Garamond Variable', Georgia, 'Times New Roman', serif;
+  --f-ui: 'Cairo Variable', 'Tahoma', system-ui, sans-serif;
+  --f-lat: 'EB Garamond Variable', 'EB Garamond', Georgia, serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  /* ---------- rhythm ---------- */
+  --gutter: clamp(1.25rem, 3.4vw, 4.5rem);
+  --measure: 33.5rem;
+  --measure-wide: 44rem;
+  --page: 92rem;
+  --rail-w: 13.5rem;
+  --header-h: clamp(4.25rem, 6vw, 5.5rem);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-io: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* live values written by the scroll layer */
+  --progress: 0;
+  --chapter: 0;
+  --vel: 0;
+}

@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>SinaiCore — ملاحظات الميدان · من مياه البحر إلى ملح المائدة</title>
+    <meta
+      name="description"
+      content="ثمانية فصول من داخل ملّاحة على ساحل العريش: كيف يتبخّر البحر، وتُكسر القشرة، ويخرج الملح أبيض ناعماً في شكارة خمسين كيلو. تجربة ثلاثية الأبعاد تفاعلية من SinaiCore."
+    />
+    <meta name="theme-color" content="#f4efe4" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="SinaiCore — ملاحظات الميدان" />
+    <meta
+      property="og:description"
+      content="ثمانية فصول من داخل ملّاحة على ساحل العريش. من مياه البحر إلى ملح المائدة."
+    />
+    <meta property="og:image" content="/media/halite-poster.png" />
+    <meta property="og:locale" content="ar_EG" />
+    <link rel="icon" href="/brand/logo-mark.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/brand/logo-mark.png" />
+    <link rel="preload" as="image" href="/brand/logo-mark.png" />
+    <link rel="preload" as="image" href="/brand/logo-header-reverse.png" />
+  </head>
+  <body class="is-booting">
+    <a class="skip" href="#story">تخطَّ إلى المحتوى</a>
+
+    <!-- ================= PRELOADER ================= -->
+    <div class="loader" id="loader" aria-hidden="true">
+      <div class="loader__veil loader__veil--a"></div>
+      <div class="loader__veil loader__veil--b"></div>
+      <div class="loader__inner">
+        <div class="loader__brand">
+          <img class="loader__logo" src="/brand/logo-header-reverse.png" alt="" />
+        </div>
+
+        <div class="loader__meter">
+          <div class="loader__row">
+            <span class="loader__label">جارٍ تحميل البلّورة</span>
+            <span class="loader__count" id="loader-count">00</span>
+          </div>
+          <div class="loader__track"><span class="loader__fill" id="loader-fill"></span></div>
+          <div class="loader__meta" dir="ltr">
+            <span>DRACO · KHR</span>
+            <span>31.13° N · 33.80° E</span>
+            <span>08 CHAPTERS</span>
+          </div>
+        </div>
+
+        <div class="loader__foot" dir="ltr">
+          <span>SINAI CORE · FIELD NOTES</span>
+          <span>2026</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= FIXED 3D STAGE ================= -->
+    <div class="stage" aria-hidden="true">
+      <canvas id="gl" class="stage__canvas"></canvas>
+      <div class="stage__glow"></div>
+      <div class="stage__poster" id="stage-poster"></div>
+      <div class="stage__scrim"></div>
+    </div>
+    <div class="grain" aria-hidden="true"></div>
+
+    <!-- ================= CHROME ================= -->
+    <header class="chrome" id="chrome">
+      <a class="chrome__brand" href="#top" data-scroll aria-label="SinaiCore — الصفحة الرئيسية">
+        <img class="chrome__mark" src="/brand/logo-mark.png" alt="" />
+        <span class="chrome__word" aria-hidden="true" dir="ltr"><em>Sinai</em><span>Core</span></span>
+        <span class="chrome__tag">At the Core of Quality and Purity</span>
+      </a>
+
+      <div class="chrome__running" aria-live="polite">
+        <span class="chrome__running-num" id="running-num">٠٠</span>
+        <span class="chrome__running-rule"></span>
+        <span class="chrome__running-title" id="running-title">ملاحظات الميدان</span>
+      </div>
+
+      <div class="chrome__actions">
+        <a class="chrome__link" href="#quote" data-scroll>اطلب عرض سعر</a>
+        <button class="chrome__menu" id="menu-open" aria-expanded="false" aria-controls="menu">
+          <span class="chrome__menu-label">الفهرس</span>
+          <span class="chrome__menu-icon" aria-hidden="true"><i></i><i></i></span>
+        </button>
+      </div>
+
+      <div class="chrome__progress" id="chrome-progress"></div>
+    </header>
+
+    <!-- ================= CHAPTER RAIL ================= -->
+    <nav class="rail" id="rail" aria-label="فهرس الفصول">
+      <div class="rail__head">
+        <span class="rail__label">الفصول</span>
+        <span class="rail__count" id="rail-count" dir="ltr">٠١ / ٠٨</span>
+      </div>
+      <ol class="rail__list" id="rail-list"></ol>
+      <div class="rail__foot">
+        <span class="rail__hint">اضغط للانتقال</span>
+        <span class="rail__draco">DRACO</span>
+      </div>
+    </nav>
+
+    <!-- ================= MOBILE CHAPTER BAR ================= -->
+    <nav class="mobile-nav" id="mobile-nav" aria-label="تنقل الفصول">
+      <a class="mobile-nav__home" href="#top" data-scroll aria-label="المقدمة">
+        <img src="/brand/logo-mark.png" alt="" />
+      </a>
+      <span class="mobile-nav__current" id="mobile-current">٠٠ — ملاحظات الميدان</span>
+      <div class="mobile-nav__arrows">
+        <button id="mobile-prev" type="button" aria-label="الفصل السابق">السابق</button>
+        <button id="mobile-next" type="button" aria-label="الفصل التالي">التالي</button>
+      </div>
+    </nav>
+
+    <!-- ================= STORY ================= -->
+    <main class="story" id="story">
+      <!-- HERO -->
+      <section class="hero" id="top" data-chapter="0">
+        <div class="hero__inner">
+          <div class="hero__copy">
+          <p class="hero__kicker" data-reveal>ملاحظات ميدانية · شمال سيناء · ٣١٫١٣° شمالاً ٣٣٫٨٠° شرقاً</p>
+
+          <h1 class="hero__title">
+            <span class="hero__line"><span data-hero-line>من مياه البحر</span></span>
+            <span class="hero__line"><span data-hero-line>إلى ملح المائدة</span></span>
+          </h1>
+
+          <p class="hero__lede" data-reveal>
+            ثمانية فصول من داخل ملّاحة واحدة على ساحل العريش — كيف يتبخّر البحر، وكيف تُكسر
+            القشرة، وكيف يخرج الملح أبيضَ ناعماً في شكارة خمسين كيلو. القصة كلها هنا، ومعهد
+            الصور ليس للزينة.
+          </p>
+
+          <div class="hero__actions" data-reveal>
+            <a class="btn" href="#water" data-scroll>
+              <span>ابدأ القراءة</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v14M6 12l6 6 6-6" /></svg>
+            </a>
+            <span class="hero__hint">أو مرّر لأسفل</span>
+          </div>
+
+          <dl class="hero__meta" data-reveal>
+            <div><dt>الفصول</dt><dd>٠٨</dd></div>
+            <div><dt>الدرجات</dt><dd>٠٥</dd></div>
+            <div><dt>الموانئ</dt><dd>٠٢</dd></div>
+            <div><dt>القارات</dt><dd>٠٦</dd></div>
+          </dl>
+          </div>
+        </div>
+
+        <div class="hero__stamp" aria-hidden="true">
+          <span>SINAI CORE</span>
+          <span>FIELD NOTES · 2026</span>
+        </div>
+
+        <div class="hero__scroll" aria-hidden="true">
+          <span>SCROLL</span>
+          <i></i>
+        </div>
+      </section>
+
+      <!-- EIGHT CHAPTERS (rendered from src/data/chapters.js) -->
+      <div class="chapters" id="chapters"></div>
+
+      <!-- NUMBERS -->
+      <section class="numbers" id="numbers">
+        <header class="numbers__head">
+          <p class="overline" data-reveal>THE NUMBERS · 01—10</p>
+          <h2 class="numbers__title" data-reveal>الأرقام في صفحة واحدة</h2>
+          <p class="numbers__sub" data-reveal>كل ما سبق، مختصراً في جدول يُقرأ في دقيقة.</p>
+        </header>
+
+        <div class="numbers__table" role="table" aria-label="أرقام SinaiCore">
+          <div class="numbers__rows" id="numbers-rows"></div>
+        </div>
+
+        <div class="numbers__grades">
+          <p class="overline" data-reveal>THE FIVE GRADES</p>
+          <div class="grades" id="grades"></div>
+        </div>
+      </section>
+
+      <!-- QUOTE -->
+      <section class="quote" id="quote">
+        <div class="quote__copy">
+          <p class="overline" data-reveal>REQUEST · FOB EL ARISH</p>
+          <h2 class="quote__title" data-reveal>طلب عرض سعر</h2>
+          <p class="quote__body" data-reveal>
+            أرسل المقاس والكمية والميناء. نرد بمواصفة مكتوبة وسعر ثابت صالح لأسبوعين، مع شهادة
+            تحليل للدفعة التي ستُشحن فعلاً.
+          </p>
+
+          <ol class="steps" id="steps"></ol>
+
+          <div class="quote__contact" data-reveal>
+            <a href="tel:+201107539914" class="quote__contact-link">
+              <span>هاتف</span>
+              <strong>+20 110 753 9914</strong>
+            </a>
+            <a href="mailto:info@sinaicore.com" class="quote__contact-link">
+              <span>بريد</span>
+              <strong>info@sinaicore.com</strong>
+            </a>
+            <a href="https://www.sinaicore.com" class="quote__contact-link" target="_blank" rel="noreferrer">
+              <span>الموقع</span>
+              <strong>www.sinaicore.com</strong>
+            </a>
+          </div>
+        </div>
+
+        <form class="quote__form" id="quote-form" novalidate>
+          <div class="field">
+            <label for="q-grade">الدرجة</label>
+            <select id="q-grade" name="grade" required>
+              <option value="">اختر الدرجة</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="q-pack">التعبئة</label>
+            <select id="q-pack" name="pack" required>
+              <option value="">اختر التعبئة</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="q-port">الميناء</label>
+            <select id="q-port" name="port" required>
+              <option value="">اختر الميناء</option>
+            </select>
+          </div>
+
+          <div class="field field--half">
+            <label for="q-qty">الكمية (طن)</label>
+            <input id="q-qty" name="qty" type="number" min="1" step="1" inputmode="numeric" placeholder="٢٥" />
+          </div>
+
+          <div class="field field--half">
+            <label for="q-email">البريد الإلكتروني</label>
+            <input id="q-email" name="email" type="email" inputmode="email" placeholder="name@company.com" />
+          </div>
+
+          <div class="field field--full">
+            <label for="q-note">ملاحظة (اختياري)</label>
+            <textarea id="q-note" name="note" rows="3" placeholder="المواصفة، الشحنة، موعد التسليم…"></textarea>
+          </div>
+
+          <button class="btn btn--copper" type="submit">
+            <span>اطلب عرض سعر</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </button>
+
+          <p class="quote__form-note" id="quote-note" role="status"></p>
+        </form>
+      </section>
+
+      <!-- FOOTER -->
+      <footer class="footer" id="colophon">
+        <div class="footer__top">
+          <div class="footer__brand">
+            <img src="/brand/logo-header-reverse.png" alt="SinaiCore — At the Core of Quality and Purity" />
+          </div>
+          <p class="footer__line">
+            من قلب سيناء إلى ستّ قارات. ملح بحري طبيعي، مغسول ومكرّر، بدرجات ومواصفات مكتوبة
+            لكل شحنة.
+          </p>
+        </div>
+
+        <div class="footer__grid">
+          <div class="footer__col footer__col--offices">
+            <p class="footer__overline">OFFICES</p>
+            <div id="footer-offices"></div>
+          </div>
+
+          <div class="footer__col">
+            <p class="footer__overline">INDEX</p>
+            <nav class="footer__nav" aria-label="فهرس الموقع">
+              <a href="#top" data-scroll>المقدمة</a>
+              <a href="#water" data-scroll>المياه</a>
+              <a href="#grade" data-scroll>الفرز</a>
+              <a href="#pack" data-scroll>التعبئة</a>
+              <a href="#numbers" data-scroll>الأرقام</a>
+              <a href="#quote" data-scroll>اطلب عرض سعر</a>
+            </nav>
+          </div>
+
+          <div class="footer__col">
+            <p class="footer__overline">CONTACT</p>
+            <div class="footer__contact">
+              <a href="tel:+201107539914">+20 110 753 9914</a>
+              <a href="mailto:info@sinaicore.com">info@sinaicore.com</a>
+              <a href="https://www.sinaicore.com" target="_blank" rel="noreferrer">www.sinaicore.com</a>
+            </div>
+          </div>
+
+          <div class="footer__col footer__col--map">
+            <p class="footer__overline">DESTINATIONS</p>
+            <ul class="footer__dest" id="footer-dest"></ul>
+          </div>
+        </div>
+
+        <div class="footer__base">
+          <p>© 2026 SinaiCore for Salts &amp; Minerals · All rights reserved.</p>
+          <p class="footer__craft">
+            تجربة تمرير بثلاثية الأبعاد · <span>GSAP ScrollTrigger</span> · مشهد
+            <span>Three.js</span> مضغوط بـ<span>Draco</span>
+          </p>
+        </div>
+      </footer>
+    </main>
+
+    <!-- ================= MENU ================= -->
+    <div class="menu" id="menu" role="dialog" aria-modal="true" aria-label="فهرس الفصول" aria-hidden="true">
+      <div class="menu__panel">
+        <div class="menu__head">
+          <div>
+            <p class="overline">THE INDEX · 01—08</p>
+            <p class="menu__title">ثمانية فصول من ملّاحة واحدة</p>
+          </div>
+          <button class="menu__close" id="menu-close" aria-label="إغلاق الفهرس">
+            <span></span><span></span>
+          </button>
+        </div>
+
+        <ol class="menu__list" id="menu-list"></ol>
+
+        <div class="menu__foot">
+          <div class="menu__foot-block">
+            <p class="overline">TELEPHONE</p>
+            <a href="tel:+201107539914">+20 110 753 9914</a>
+          </div>
+          <div class="menu__foot-block">
+            <p class="overline">EMAIL</p>
+            <a href="mailto:info@sinaicore.com">info@sinaicore.com</a>
+          </div>
+          <div class="menu__foot-block">
+            <p class="overline">OFFICE</p>
+            <span>العريش · شمال سيناء</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cursor" id="cursor" aria-hidden="true">
+      <div class="cursor__dot"></div>
+      <div class="cursor__ring"></div>
+    </div>
+
+    <noscript>
+      <div class="noscript">
+        <p>هذه التجربة تحتاج JavaScript لعرض المجسم ثلاثي الأبعاد. يمكنك قراءة الفصول أدناه.</p>
+      </div>
+    </noscript>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
