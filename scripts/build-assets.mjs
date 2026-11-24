@@ -362,23 +362,23 @@ function revolved(profile, segments = 96) {
   return finalize(g)
 }
 
-function tablet({ r = 0.5, h = 0.26, groove = true } = {}) {
-  const bevel = h * 0.16
+/* A water-softening tablet is a pressed puck: a plump cylinder with a small
+   edge break and a flat face. The product photo shows no deep concentric
+   groove — that read as a stack of rings — so the face is flat with only the
+   faintest dishing, which is what the press actually leaves. */
+function tablet({ r = 0.5, h = 0.34 } = {}) {
+  const bevel = Math.min(h * 0.12, r * 0.05)
   const prof = [
     [0, -h / 2],
-    [r * 0.72, -h / 2],
-    [r * 0.93, -h / 2 + bevel * 0.45],
-    [r, -h / 2 + bevel * 1.4],
-    [r, h / 2 - bevel * 1.4],
-    [r * 0.93, h / 2 - bevel * 0.45],
-    [r * 0.74, h / 2],
-    groove ? [r * 0.7, h / 2] : [0, h / 2],
-    groove ? [r * 0.7, h / 2 - h * 0.06] : [0, h / 2],
-    groove ? [r * 0.46, h / 2 - h * 0.06] : [0, h / 2],
-    groove ? [r * 0.43, h / 2 - h * 0.02] : [0, h / 2],
-    [0, h / 2 - h * 0.02],
+    [r - bevel * 1.6, -h / 2],
+    [r - bevel * 0.35, -h / 2 + bevel * 0.5],
+    [r, -h / 2 + bevel * 1.5],
+    [r, h / 2 - bevel * 1.5],
+    [r - bevel * 0.35, h / 2 - bevel * 0.5],
+    [r - bevel * 1.6, h / 2],
+    [0, h / 2],
   ]
-  return revolved(prof, 72)
+  return revolved(prof, 80)
 }
 
 /* ------------------------------------------------------------------ *
@@ -1467,16 +1467,39 @@ console.log('SinaiCore — building 3D assets')
   ])
 }
 
-/* 02 tablets */
+/* 02 tablets — a heap poured onto the surface, as in the product photo:
+   eleven pucks lying at varied angles, overlapping, some tipped up on edge.
+   Built as a jittered pile rather than a stack so it reads as bulk. */
 {
-  const t = tablet({ r: 0.5, h: 0.26 })
+  const t = tablet({ r: 0.5, h: 0.34 })
   const geo = G()
-  const Y = 0.28
-  merge(geo, t, new THREE.Matrix4().makeRotationY(0.2).multiply(new THREE.Matrix4().makeTranslation(0, -Y, 0)))
-  merge(geo, t, new THREE.Matrix4().makeRotationY(1.1).setPosition(0, 0, 0))
-  merge(geo, t, new THREE.Matrix4().makeRotationY(2.4).multiply(new THREE.Matrix4().makeTranslation(0.02, Y, 0.03)))
+  /* [x, y, z, tip, yaw] — tip rolls a puck onto its edge */
+  /* [x, y, z, lean, yaw]; six seated on the surface, five layered on top.
+     Leans stay small so pucks rest against each other instead of passing
+     through — the photo shows a loose heap, not a spill. */
+  const pile = [
+    [-0.40, 0.19, 0.22, 0.0, 0.4],
+    [0.06, 0.19, 0.42, 0.0, 1.3],
+    [0.46, 0.19, 0.12, 0.0, 2.2],
+    [-0.10, 0.19, -0.22, 0.0, 0.9],
+    [0.38, 0.19, -0.40, 0.0, 1.7],
+    [-0.52, 0.19, -0.34, 0.0, 2.8],
+    [-0.24, 0.53, 0.06, 0.0, 0.2],
+    [0.24, 0.53, -0.02, 0.0, 1.9],
+    [0.02, 0.55, 0.34, 0.12, 0.7],
+    [-0.46, 0.54, 0.10, 0.18, 1.1],
+    [0.30, 0.56, 0.34, 0.1, 2.5],
+    [0.00, 0.86, 0.14, 0.0, 1.4],
+  ]
+  for (const [x, y, z, tip, yaw] of pile) {
+    const m = new THREE.Matrix4()
+      .makeTranslation(x, y, z)
+      .multiply(new THREE.Matrix4().makeRotationY(yaw))
+      .multiply(new THREE.Matrix4().makeRotationZ(tip))
+    merge(geo, t, m)
+  }
   const g = finalize(geo)
-  renderPreview(path.join(OUT_PREVIEW, '02-tablets.png'), [{ geo: g, color: [236, 240, 238] }], { eye: [1.75, 1.25, 1.9], target: [0, -0.02, 0], fov: 30 })
+  renderPreview(path.join(OUT_PREVIEW, '02-tablets.png'), [{ geo: g, color: [236, 240, 238] }], { eye: [2.9, 2.0, 3.1], target: [0, 0.0, 0], fov: 30 })
   await writeGLB('tablets.glb', [
     { name: 'softening_tablets', geo: g, material: { name: 'tablet_compressed', color: [0.95, 0.96, 0.95], roughness: 0.72 } },
   ])
