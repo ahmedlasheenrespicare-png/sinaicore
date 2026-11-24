@@ -3,6 +3,13 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  /* Two servers on two ports, because there are two things to look at and
+     one preview pane that shows one page per port.
+
+     5173 — the real site, at `/`.
+     5174 — the reference rebuild, at `/`. It is the *root* page on purpose:
+     the preview proxy opens the origin, not a path, so a rebuild reachable
+     only at `/ref-field.html` is a rebuild nobody sees. */
   server: {
     host: '0.0.0.0',
     port: 5173,
