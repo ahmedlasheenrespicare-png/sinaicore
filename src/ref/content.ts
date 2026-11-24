@@ -845,11 +845,11 @@ export const quote = {
 export const colophon = {
   line1: 'ملاحظات الميدان',
   line2: 'SinaiCore · At the Core of Quality and Purity',
-  note: 'صفحة تحريرية بديلة. التصميم الأساسي على الصفحة الرئيسية، والنسخة المرجعية على /ref.html.',
+  note: 'موقع واحد. الملاحظات الميدانية وتحميل الحاويات أقسام داخل هذه الصفحة.',
   links: [
-    ['الصفحة الرئيسية', '/index.html'],
-    ['النسخة المرجعية', '/ref.html'],
-    ['النسخة البديلة', '/alt.html'],
+    ['الصفحة الرئيسية', '/'],
+    ['ملاحظات الميدان', '#process'],
+    ['تحميل الحاويات', '#logistics'],
   ],
 }
 
@@ -934,4 +934,14 @@ export const seaRoutes = [
   { id: 'suez-bab', name: 'آسيا', nameLat: 'Asia · Shanghai', note: '22–26 d' },
   { id: 'gulf', name: 'الخليج', nameLat: 'Gulf · Jebel Ali', note: '4–6 d' },
   { id: 'eastafrica', name: 'شرق أفريقيا', nameLat: 'E. Africa · Mombasa', note: '8–10 d' },
+]
+
+/** The packing formats the published page actually offers, as one list so
+ *  the quote builder and the FAQ cannot drift apart. */
+export const packings = [
+  'شكائر 25 كجم',
+  'شكائر 50 كجم',
+  'شكائر جامبو FIBC — 1 طن',
+  'شكائر جامبو FIBC — 1.5 طن',
+  'سائب (Bulk)',
 ]

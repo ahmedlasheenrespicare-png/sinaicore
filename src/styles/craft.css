@@ -1892,3 +1892,82 @@
     transition: none;
   }
 }
+
+/* ==================================================================
+ * 12. the quote builder
+ *
+ * Three selects and a composed mailto. Set as a printed order form:
+ * hairline rows, label in the mono face on the reading edge, the control
+ * itself carrying no chrome beyond a rule.
+ * ================================================================== */
+.ref-quote {
+  display: grid;
+  gap: 0;
+  margin-block: 1rem 0;
+  border-block-start: 1px solid var(--hair);
+  max-inline-size: 30rem;
+}
+.ref-quote-row {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.8rem;
+  border-block-end: 1px solid var(--hair-soft);
+  padding-block: 0.15rem;
+}
+.ref-quote-row label {
+  font-family: var(--font-serif-lat);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+.ref-quote-row select {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding-block: 0.55rem;
+  font: inherit;
+  font-family: var(--font-serif-ar);
+  font-size: 0.95rem;
+  color: inherit;
+  cursor: pointer;
+  inline-size: 100%;
+  /* the marker sits on the reading edge, so the control reads as a row of
+     the form rather than a native dropdown */
+  /* the caret is drawn with two gradients because a native arrow cannot be
+     recoloured; positioned with logical keywords so it lands on the reading
+     edge in RTL and the trailing edge in LTR without a second rule */
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: left 55%, left 55%;
+  background-size: 0.34rem 0.34rem, 0.34rem 0.34rem;
+  background-repeat: no-repeat;
+  padding-inline-start: 0;
+  padding-inline-end: 1.2rem;
+  text-align: start;
+}
+.ref-quote-row select:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 3px;
+}
+.ref-quote-row select option {
+  color: #2c2a28;
+  background: #fff;
+}
+.ref-quote-sum {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0.8rem 0 0.9rem;
+  font-size: 0.82rem;
+  opacity: 0.8;
+}
+.ref-quote-sum .mono {
+  font-family: var(--font-serif-lat);
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  opacity: 0.55;
+}
+.ref-quote .ref-btn {
+  justify-self: start;
+}

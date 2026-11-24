@@ -19,6 +19,7 @@ import {
   chapters,
   loadStops,
   seaRoutes,
+  packings,
   contact,
 } from './content'
 
@@ -195,6 +196,91 @@ function GradesBand() {
           camera={{ position: g.camera.position, fov: g.camera.fov }}
         />
       </div>
+    </div>
+  )
+}
+
+
+/* ---------------------------------------------------------------- *
+ * The quote builder.
+ *
+ * The page ends in a mailto, which asks a buyer to compose a message from
+ * nothing — the hardest possible action after reading 25,000 pixels of
+ * spec. This asks only the three things the export team actually needs to
+ * price a shipment (grade, packing, port) and writes the email for them.
+ *
+ * No backend, no form service, no network: the button is a mailto with a
+ * fully composed body. That keeps the promise that nothing here calls a
+ * third party, and it still works with JavaScript loading late.
+ * ---------------------------------------------------------------- */
+function QuoteBuilder() {
+  const [grade, setGrade] = useState(grades[0].id)
+  const [packing, setPacking] = useState(packings[0])
+  const [port, setPort] = useState(ports[0].id)
+
+  const g = grades.find((x) => x.id === grade) ?? grades[0]
+  const p = ports.find((x) => x.id === port) ?? ports[0]
+
+  const subject = `طلب عرض سعر — ${g.name} · ${packing} · FOB ${p.title}`
+  const body = [
+    'السادة SinaiCore،',
+    '',
+    'نرجو عرض سعر للطلب التالي:',
+    '',
+    `• الدرجة: ${g.name} (${g.latin})`,
+    `• النقاوة: ${g.nacl} · الرطوبة: ${g.moisture}`,
+    `• التعبئة: ${packing}`,
+    `• ميناء الشحن: ${p.title} — FOB`,
+    `• الكمية المطلوبة: `,
+    '',
+    'نرجو إرفاق شهادة التحليل (COA) وورقة المواصفات (TDS) مع العرض.',
+    '',
+    'مع الشكر،',
+  ].join('\n')
+
+  return (
+    <div className="ref-quote">
+      <div className="ref-quote-row">
+        <label htmlFor="q-grade">الدرجة</label>
+        <select id="q-grade" value={grade} onChange={(e) => setGrade(e.target.value)}>
+          {grades.map((x) => (
+            <option key={x.id} value={x.id}>
+              {x.name} — {x.nacl}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="ref-quote-row">
+        <label htmlFor="q-pack">التعبئة</label>
+        <select id="q-pack" value={packing} onChange={(e) => setPacking(e.target.value)}>
+          {packings.map((x) => (
+            <option key={x} value={x}>
+              {x}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="ref-quote-row">
+        <label htmlFor="q-port">ميناء الشحن</label>
+        <select id="q-port" value={port} onChange={(e) => setPort(e.target.value)}>
+          {ports.map((x) => (
+            <option key={x.id} value={x.id}>
+              {x.title} — {x.sub}
+            </option>
+          ))}
+        </select>
+      </div>
+      <p className="ref-quote-sum">
+        <span className="mono">SUMMARY</span>
+        {g.name} · {packing} · FOB {p.title}
+      </p>
+      <a
+        className="ref-btn"
+        href={`mailto:${contact.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`}
+      >
+        <Icon name="mail" size={16} />
+        أرسل الطلب — معبّأ مسبقًا
+      </a>
     </div>
   )
 }
@@ -850,14 +936,15 @@ export default function RefApp() {
                     <b style={{ direction: 'ltr' }}>{contact.phone}</b>
                   </li>
                 </ul>
-                <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
-                  <a className="ref-btn" href={`mailto:${contact.email}`}>
-                    <Icon name="mail" size={16} />
-                    راسلنا
-                  </a>
+                <QuoteBuilder />
+                <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginBlockStart: '0.7rem' }}>
                   <a className="ref-btn ghost" href={`tel:${contact.phone.replace(/\s/g, '')}`}>
                     <Icon name="phone" size={16} />
                     اتصل الآن
+                  </a>
+                  <a className="ref-btn ghost" href={`mailto:${contact.email}`}>
+                    <Icon name="mail" size={16} />
+                    راسلنا مباشرة
                   </a>
                 </div>
               </div>
@@ -916,14 +1003,17 @@ export default function RefApp() {
                 <li>
                   <a href="#contact">تواصل معنا</a>
                 </li>
+                {/* these pointed at two pages that were merged in and
+                    deleted — the content now lives on this page under
+                    #process and #logistics, so the links follow it */}
                 <li>
-                  <a className="ref-switch" href="/notes.html" style={{ marginBlockStart: '0.6rem' }}>
-                    ملاحظات الميدان · EDITORIAL CUT
+                  <a className="ref-switch" href="#process" style={{ marginBlockStart: '0.6rem' }}>
+                    ملاحظات الميدان · FIELD NOTES
                   </a>
                 </li>
                 <li>
-                  <a className="ref-switch" href="/alt.html">
-                    النسخة البديلة · CONTAINER CUT
+                  <a className="ref-switch" href="#logistics">
+                    تحميل الحاويات · CONTAINER LOADING
                   </a>
                 </li>
               </ul>
