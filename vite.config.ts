@@ -19,10 +19,14 @@ export default defineConfig({
   build: {
     target: 'es2020',
     rollupOptions: {
-      /* One entry. The four cuts have been merged into a single document;
-         keeping the others as build inputs would ship three dead pages. */
+      /* Two entries, both live. `index.html` is the real site. `ref-field`
+         is the separate preview: a study of another site's motion and 3D,
+         served from its own URL so it cannot be confused with our page or
+         inherit its styles. It is listed here so `npm run build` proves it
+         compiles, not only the dev server. */
       input: {
         main: 'index.html',
+        'ref-field': 'ref-field.html',
       },
       output: {
         /* three.js and its r3f/drei bindings are bigger than everything
