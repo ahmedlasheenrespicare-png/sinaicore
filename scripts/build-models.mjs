@@ -60,10 +60,17 @@ class Soup {
     }
   }
 
-  geometry() {
+  /** `smooth` welds the surface first so normals are averaged across faces —
+   *  what fabric needs. Steel and halite stay flat shaded. */
+  geometry(smooth = false) {
     const geometry = new THREE.BufferGeometry()
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(this.points, 3))
     geometry.setAttribute('uv', new THREE.Float32BufferAttribute(this.uvs, 2))
+    if (smooth) {
+      const welded = mergeVertices(geometry, 1e-5)
+      welded.computeVertexNormals()
+      return welded
+    }
     // Flat shading: every triangle keeps its own normal, which is exactly what
     // corrugated steel and faceted halite want.
     geometry.computeVertexNormals()
@@ -351,7 +358,7 @@ function buildContainer() {
    that 0.61 aspect and the artwork never looks stretched. */
 /* Filled proportions, not the flat panel: 55 × 95 cm of fabric holds 50 kg of
    salt and swells to about 61 × 86 cm standing — the silhouette in the photo. */
-const SACK = { width: 1.44, height: 2.06, depth: 0.64, rings: 30, segments: 56 }
+const SACK = { width: 1.44, height: 2.06, depth: 0.64, rings: 40, segments: 72 }
 const SACK_PROFILE = [
   [0, 0.802, 0.404],
   [0.1, 0.812, 0.436],
@@ -413,17 +420,25 @@ function sackSurface(theta, t) {
   // is gathered instead.
   const creaseWindow =
     THREE.MathUtils.smoothstep(t, 0.03, 0.14) * (1 - THREE.MathUtils.smoothstep(t, 0.86, 0.96))
-  const fold = toe * (1 - 0.034 * creaseAt(theta) * (0.35 + 0.65 * creaseWindow))
+  const fold = toe * (1 - 0.058 * creaseAt(theta) * (0.35 + 0.65 * creaseWindow))
   const x = w * Math.sign(cos) * Math.pow(Math.abs(cos), 2 / n) * fold
   const z = d * Math.sign(sin) * Math.pow(Math.abs(sin), 2 / n) * fold
 
   // Woven PP never hangs perfectly; two low-frequency ripples fake the folds
   // that a 50 kg load puts into the fabric.
   const wrinkle =
-    1 + 0.026 * Math.sin(6 * theta + 9 * t) + 0.014 * Math.sin(11 * theta - 5.5 * t) +
-    0.008 * Math.sin(19 * theta + 2 * t) + 0.005 * Math.sin(27 * theta - 13 * t)
+    1 + 0.03 * Math.sin(6 * theta + 9 * t) + 0.016 * Math.sin(11 * theta - 5.5 * t) +
+    0.011 * Math.sin(19 * theta + 2 * t) + 0.0075 * Math.sin(27 * theta - 13 * t) +
+    0.005 * Math.sin(41 * theta + 17 * t)
   // Under the folded top the fabric puckers into short horizontal creases; the
   // same happens where the load settles at the base.
+  // Fine horizontal crinkle lines, the ones that catch the light across the face.
+  const crinkleCurve = Math.sin(21 * t + 1.6 * Math.sin(5 * theta))
+  const crinkle =
+    0.008 *
+    Math.sign(crinkleCurve) *
+    Math.pow(Math.abs(crinkleCurve), 0.55) *
+    (0.35 + 0.65 * Math.sin(Math.PI * t))
   const puckers =
     0.006 * Math.sin(34 * t + 2.4 * Math.sin(3 * theta)) * Math.exp(-Math.pow((t - 0.93) / 0.05, 2)) +
     0.005 * Math.sin(46 * t - 1.7 * Math.sin(4 * theta)) * Math.exp(-Math.pow((t - 0.1) / 0.06, 2))
@@ -433,6 +448,15 @@ function sackSurface(theta, t) {
     -0.014 *
     Math.exp(-Math.pow((theta - (Math.PI / 2 + 0.62)) / 0.085, 2)) *
     THREE.MathUtils.smoothstep(t, 0.18, 0.42)
+  // Where the fabric is gathered into the welt it creases diagonally out of
+  // each top corner — the marks that make the top of a filled sack read right.
+  const shoulderCrease =
+    -0.02 *
+    Math.exp(-Math.pow((t - 0.885) / 0.05, 2)) *
+    Math.exp(-Math.pow((Math.abs(Math.cos(theta)) - 0.66) / 0.22, 2))
+  // The bottom hem is a folded welt too, so the fabric lifts just above the
+  // floor before it tucks under the bag.
+  const hemLip = 0.009 * Math.exp(-Math.pow((t - 0.035) / 0.022, 2))
   // The side gussets bulge in slow, uneven lobes; this is what makes the
   // silhouette of a filled sack wobble instead of running dead straight.
   const sideLobe =
@@ -447,8 +471,13 @@ function sackSurface(theta, t) {
     -0.012 * Math.exp(-Math.pow((t - 0.06) / 0.05, 2)) *
     Math.exp(-Math.pow(Math.abs(Math.sin(theta)) / 0.25, 2))
   return {
-    x: (x + sideLobe) * wrinkle + lean + puckers + frontFold,
-    z: (z + dents) * wrinkle + puckers * 0.7 + frontFold,
+    x: (x + sideLobe + hemLip * Math.sign(x)) * wrinkle + lean + puckers + crinkle + frontFold + shoulderCrease,
+    z:
+      (z + dents + hemLip * Math.sign(z)) * wrinkle +
+      puckers * 0.7 +
+      crinkle * 0.8 +
+      frontFold +
+      shoulderCrease * 0.8,
     w,
     d,
     n,
@@ -511,8 +540,8 @@ function buildSack() {
   const shoulderW = SACK_PROFILE[SACK_PROFILE.length - 1][1] * 0.885
   const mouth = [
     [height / 2 + 0.002, shoulderW * 1.0, 0.060, 0, 2.15],
-    [height / 2 + 0.02, shoulderW * 1.022, 0.058, 0.3, 3.2],
-    [height / 2 + 0.044, shoulderW * 1.022, 0.052, 0.66, 4.2],
+    [height / 2 + 0.02, shoulderW * 1.055, 0.058, 0.3, 3.2],
+    [height / 2 + 0.044, shoulderW * 1.055, 0.052, 0.66, 4.2],
     [height / 2 + 0.056, shoulderW * 1.0, 0.046, 1, 4.6],
   ]
   const mouthPoint = (j, band, offset = 0) => {
@@ -551,8 +580,8 @@ function buildSack() {
   // UVs so the artwork wraps the front panel without seaming the sides.
   const cols = 24
   const rows = 22
-  const t0 = 0.05
-  const t1 = 0.955
+  const t0 = 0.075
+  const t1 = 0.94
   const spread = 0.98
   const panelPoint = (c, r) => {
     const s = (c / cols) * 2 - 1
@@ -579,12 +608,12 @@ function buildSack() {
 
   // Cheap baked occlusion: real sacks are dirty and shadowed in every fold, and
   // a vertex tint sells that far better than a uniform base colour.
-  const bodyGeometry = body.geometry()
-  const panelGeometry = panel.geometry()
+  const bodyGeometry = body.geometry(true)
+  const panelGeometry = panel.geometry(true)
   bakeOcclusion(bodyGeometry, bottom, height, 1)
   // The print panel barely shades: a real print is evenly inked, only the
   // very edges fall into the bag's own shadow.
-  bakeOcclusion(panelGeometry, bottom, height, 0.22)
+  bakeOcclusion(panelGeometry, bottom, height, 0.8)
 
   return [
     { name: 'sack-body', geometry: bodyGeometry, material: 'SackBody' },
@@ -604,10 +633,10 @@ function bakeOcclusion(geometry, bottom, height, strength) {
     const crease = creaseAt(Math.atan2(z / d, x / w))
 
     let shade = 0
-    shade += 0.14 * crease * (1 - Math.abs(t - 0.5) * 0.5)
+    shade += 0.22 * crease * (1 - Math.abs(t - 0.5) * 0.5)
     shade += 0.3 * Math.exp(-Math.pow(t / 0.07, 2))
     shade += 0.16 * Math.exp(-Math.pow((t - 0.9) / 0.06, 2))
-    shade += 0.3 * THREE.MathUtils.clamp((t - 0.955) / 0.045, 0, 1)
+    shade += 0.5 * THREE.MathUtils.clamp((t - 0.93) / 0.07, 0, 1)
     shade += 0.05 * (0.5 + 0.5 * Math.sin(9 * Math.atan2(z, x) + 11 * t))
     const ao = THREE.MathUtils.clamp(1 - shade * strength, 0.5, 1)
     colors.push(ao, ao, ao)

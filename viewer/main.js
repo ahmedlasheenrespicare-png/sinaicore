@@ -21,15 +21,17 @@ const scene = new THREE.Scene()
 scene.background = null
 
 const camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 100)
-camera.position.set(1.62, 0.2, 5.15)
+camera.position.set(1.55, 0.55, 5.2)
 
 /* A studio box gives the PP sheen something to reflect without shipping an HDRI. */
 const pmrem = new THREE.PMREMGenerator(renderer)
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
 scene.environmentIntensity = 0.34
 
-const key = new THREE.DirectionalLight('#fff6ea', 2.05)
-key.position.set(2.9, 6.4, 4.2)
+// A single softbox from the left, like the warehouse light in the reference:
+// it lights one side of the bag and lets the other fall away.
+const key = new THREE.DirectionalLight('#fff4e4', 2.5)
+key.position.set(-3.4, 5.2, 3.4)
 key.castShadow = true
 key.shadow.mapSize.set(2048, 2048)
 key.shadow.camera.near = 1
@@ -42,7 +44,7 @@ key.shadow.bias = -0.0006
 key.shadow.radius = 3
 scene.add(key)
 
-const rim = new THREE.DirectionalLight('#bfe3dd', 1.15)
+const rim = new THREE.DirectionalLight('#cfe0e6', 0.85)
 rim.position.set(-4.4, 2.4, -3.2)
 scene.add(rim)
 
@@ -60,7 +62,7 @@ floor.receiveShadow = true
 scene.add(floor)
 
 const controls = new OrbitControls(camera, renderer.domElement)
-controls.target.set(0, 0.02, 0)
+controls.target.set(0, 0.06, 0)
 controls.enableDamping = true
 controls.dampingFactor = 0.07
 controls.enablePan = false
@@ -96,6 +98,14 @@ loader
     // bag instead of on a brighter plate.
     const weave = await new THREE.TextureLoader().loadAsync(`/textures/sack-weave.png?${stamp}`)
     weave.wrapS = weave.wrapT = THREE.RepeatWrapping
+    // The crumple map is a tangent-space normal map, so it must stay in linear
+    // space and tile on its own clock.
+    const crumple = await new THREE.TextureLoader().loadAsync(`/textures/sack-crumple.png?${stamp}`)
+    crumple.wrapS = crumple.wrapT = THREE.RepeatWrapping
+    crumple.repeat.set(2, 2)
+    crumple.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy())
+
+    weave.repeat.set(4, 9)
     weave.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy())
 
     const printed = new THREE.MeshPhysicalMaterial({
@@ -103,7 +113,9 @@ loader
       color: '#f3f4f5',
       vertexColors: true,
       bumpMap: weave,
-      bumpScale: 0.03,
+      bumpScale: 0.045,
+      normalMap: crumple,
+      normalScale: new THREE.Vector2(0.5, 0.5),
       roughnessMap: weave,
       roughness: 0.95,
       metalness: 0,
@@ -118,7 +130,9 @@ loader
       color: '#f3f4f5',
       vertexColors: true,
       bumpMap: weave,
-      bumpScale: 0.03,
+      bumpScale: 0.045,
+      normalMap: crumple,
+      normalScale: new THREE.Vector2(0.6, 0.6),
       roughnessMap: weave,
       roughness: 0.96,
       metalness: 0,

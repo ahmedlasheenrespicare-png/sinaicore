@@ -170,11 +170,51 @@ function wovenWeave() {
   return data
 }
 
+
+/** Woven-PP crumple: soft ridges and long folds encoded as a tangent-space
+ *  normal map, so the sack's surface keeps its cloth relief under any light
+ *  without paying for a denser mesh. Tiles seamlessly. */
+function sackCrumple() {
+  const height = new Float32Array(SIZE * SIZE)
+  const tau = Math.PI * 2
+  for (let y = 0; y < SIZE; y++) {
+    for (let x = 0; x < SIZE; x++) {
+      const u = x / SIZE
+      const v = y / SIZE
+      // long horizontal folds, gently waved so they never look ruled
+      const fold = Math.sin(tau * (v * 3) + 0.9 * Math.sin(tau * u * 2)) * 0.5
+      const fold2 = Math.sin(tau * (v * 7 + u * 1) + 1.7) * 0.18
+      // soft vertical creases where the fabric was folded flat
+      const crease = Math.pow(Math.abs(Math.sin(tau * u * 4 + 0.5 * Math.sin(tau * v * 3))), 0.7)
+      // crumple detail
+      const ridge = 1 - Math.abs(fbm(u * 6, v * 6, 4, 6) * 2 - 1)
+      height[y * SIZE + x] = fold + fold2 + (0.55 - crease * 0.35) + ridge * 0.5
+    }
+  }
+  const data = new Uint8Array(SIZE * SIZE * 4)
+  const strength = 2.6
+  const at = (x, y) => height[(((y % SIZE) + SIZE) % SIZE) * SIZE + (((x % SIZE) + SIZE) % SIZE)]
+  for (let y = 0; y < SIZE; y++) {
+    for (let x = 0; x < SIZE; x++) {
+      const dx = (at(x + 1, y) - at(x - 1, y)) * strength
+      const dy = (at(x, y + 1) - at(x, y - 1)) * strength
+      const len = Math.hypot(dx, dy, 1)
+      const i = (y * SIZE + x) * 4
+      data[i] = Math.round(((-dx / len) * 0.5 + 0.5) * 255)
+      data[i + 1] = Math.round(((-dy / len) * 0.5 + 0.5) * 255)
+      data[i + 2] = Math.round(((1 / len) * 0.5 + 0.5) * 255)
+      data[i + 3] = 255
+    }
+  }
+  return data
+}
+
 /* --------------------------------- encode --------------------------------- */
 
 const targets = [
   { name: 'salt-detail', data: saltGrain(), isUASTC: false, mipmaps: true },
   { name: 'sack-weave', data: wovenWeave(), isUASTC: false, mipmaps: true },
+  { name: 'sack-crumple', data: sackCrumple(), isUASTC: false, mipmaps: true, normal: true },
 ]
 
 const report = []
@@ -189,7 +229,7 @@ for (const target of targets) {
     isUASTC: target.isUASTC,
     generateMipmap: target.mipmaps,
     isPerceptual: false,
-    isNormalMap: false,
+    isNormalMap: Boolean(target.normal),
     qualityLevel: 190,
     compressionLevel: 3,
     uastcLDRQualityLevel: 2,

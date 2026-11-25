@@ -104,11 +104,12 @@ for (const sheet of sheets) {
   await page.setViewport({
     width: Math.round(696 * MM),
     height: Math.round(900 * MM),
-    deviceScaleFactor: 0.47,
+    // 1.7k tall: the print stays crisp when the bag fills the frame.
+    deviceScaleFactor: 0.8,
   })
   await new Promise((resolve) => setTimeout(resolve, 300))
   await page.screenshot({ path: path.join(webDir, 'sack-50kg-texture.png'), type: 'png' })
-  console.log('public/artwork/sack-50kg-texture.png  (~1080 px trim texture)')
+  console.log('public/artwork/sack-50kg-texture.png  (~1850 px trim texture)')
   await page.close()
 }
 
