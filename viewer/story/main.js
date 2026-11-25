@@ -117,8 +117,8 @@ const contactShadow = (width, depth, opacity = 1) => {
 const applyViewOffset = () => {
   const width = stage.clientWidth
   const height = stage.clientHeight
-  if (width < 1080) camera.setViewOffset(width, height, 0, height * 0.13, width, height)
-  else camera.setViewOffset(width, height, -width * 0.15, 0, width, height)
+  if (width < 1080) camera.setViewOffset(width, height, 0, height * 0.08, width, height)
+  else camera.clearViewOffset()
 }
 applyViewOffset()
 
@@ -136,8 +136,8 @@ const CAMERA_KEYS = [
   { pos: new THREE.Vector3(0.9, 1.15, 6.7), target: new THREE.Vector3(0, -0.12, 0.25) },
   { pos: new THREE.Vector3(0.5, 1.26, 5.15), target: new THREE.Vector3(0, 0.1, 0.15) },
   { pos: new THREE.Vector3(2.2, 1.12, 8.5), target: new THREE.Vector3(0.12, -0.3, 0.8) },
-  { pos: new THREE.Vector3(0.97, -0.18, 3.3), target: new THREE.Vector3(0.35, -1.0, 1.62) },
-  { pos: new THREE.Vector3(2.95, 1.22, 8.3), target: new THREE.Vector3(0.72, -0.66, 0.66) },
+  { pos: new THREE.Vector3(0.95, -0.1, 2.25), target: new THREE.Vector3(0.35, -0.95, 1.62) },
+  { pos: new THREE.Vector3(2.5, 2.35, 8.7), target: new THREE.Vector3(0.3, -0.5, 1.05) },
 ]
 const camPath = new THREE.CatmullRomCurve3(CAMERA_KEYS.map((k) => k.pos), false, 'catmullrom', 0.4)
 const targetPath = new THREE.CatmullRomCurve3(CAMERA_KEYS.map((k) => k.target), false, 'catmullrom', 0.4)
@@ -247,14 +247,14 @@ loader
     const tabletSource = tabletGltf.scene.getObjectByProperty('isMesh', true)
     const grain = await new THREE.TextureLoader().loadAsync(`${BASE}textures/salt-detail.png?${stamp}`)
     grain.wrapS = grain.wrapT = THREE.RepeatWrapping
-    grain.repeat.set(3, 3)
+    grain.repeat.set(4, 4)
 
     const tabletMaterial = new THREE.MeshPhysicalMaterial({
       color: '#f7f5ee',
-      roughness: 0.74,
+      roughness: 0.86,
       metalness: 0,
       bumpMap: grain,
-      bumpScale: 0.03,
+      bumpScale: 0.055,
       sheen: 0.4,
       sheenRoughness: 0.62,
       sheenColor: new THREE.Color('#fffdf7'),
@@ -384,11 +384,11 @@ function buildPour(source, material) {
     const hero = i === 0
     let end = hero ? focusPoint.clone() : new THREE.Vector3()
     if (!hero) {
-      let distance = 0.6 + rnd() * 1.0
-      const angle = (rnd() * 2 - 1) * 1.15
+      let distance = 0.55 + rnd() * 1.35
+      const angle = (rnd() * 2 - 1) * 1.85
       for (let tries = 0; tries < 14; tries++) {
-        end.set(0.3 + Math.sin(angle) * distance * 1.1, FLOOR + 0.05, 0.5 + Math.cos(angle) * distance)
-        end.z = Math.min(end.z, 0.98)
+        end.set(0.3 + Math.sin(angle) * distance * 1.35, FLOOR + 0.05, 0.5 + Math.cos(angle) * distance)
+        end.z = Math.min(end.z, 0.62)
         // Keep a clean disc around the hero, and keep the copy column empty.
         if (end.distanceTo(focusPoint) > 1.28 && !onCopy(end)) break
         distance -= 0.16
@@ -504,7 +504,7 @@ function buildAnnotations(centre) {
 
   const radius = 0.115
   const half = 0.05
-  const dimY = half + radius * 0.34 * 0.8
+  const dimY = half + radius * 0.52
   const thickAnchorX = radius * 1.14
 
   const leaderMaterial = new THREE.MeshBasicMaterial({ color: INK, transparent: true, opacity: 0 })
@@ -860,7 +860,7 @@ let lastY = 0
    heard on the window — but never when it starts on something you can use. */
 const interactiveTarget = (target) =>
   target instanceof Element &&
-  !!target.closest('a, button, input, textarea, select, .panel-inner, .story, .rail, .bar, .hs-card')
+  !!target.closest('a, button, input, textarea, select, .ov, .story, .rail, .bar, .hs-card')
 
 window.addEventListener('pointerdown', (event) => {
   if (interactiveTarget(event.target)) return
@@ -939,8 +939,8 @@ function applyBag(elapsed) {
   const { spin, tilt, side, open } = state.bag
   bagRoot.rotation.y = spin * 0.92 + Math.sin(elapsed * 0.25) * 0.012
   bagRoot.rotation.z = tilt * -0.42
-  bagRoot.position.x = side * 1.5
-  bagRoot.position.z = -side * 0.6
+  bagRoot.position.x = side * 1.1
+  bagRoot.position.z = -side * 0.7
 
   if (!mouth) return
   mouth.group.visible = open > 0.01
@@ -961,6 +961,72 @@ function updatePour() {
     if (t <= 0) pourMesh.setMatrixAt(i, dummy.matrix.makeScale(0.0001, 0.0001, 0.0001))
   }
   pourMesh.instanceMatrix.needsUpdate = true
+}
+
+/* -------------------------------------------------------------------------- */
+/*  HUD — the copy rides on the model                                        */
+/* -------------------------------------------------------------------------- */
+const hudEls = {
+  hero: document.getElementById('ov-hero'),
+  purity: document.getElementById('ov-purity'),
+  pack: document.getElementById('ov-pack'),
+  pour: document.getElementById('ov-pour'),
+  count: document.getElementById('ov-count'),
+  tablet: document.getElementById('ov-tablet'),
+  standard: document.getElementById('ov-standard'),
+  why: document.getElementById('ov-why'),
+  where: document.getElementById('ov-where'),
+  supply: document.getElementById('ov-supply'),
+  countValue: document.getElementById('hud-count'),
+  places: [...document.querySelectorAll('#places li')],
+}
+
+const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v)
+/* Fade in over a→b, hold, fade out over c→d. */
+const ramp = (p, a, b, c, d) =>
+  p < b ? clamp01((p - a) / Math.max(b - a, 1e-4)) : p > c ? 1 - clamp01((p - c) / Math.max(d - c, 1e-4)) : 1
+
+const fadeHud = (el, v) => {
+  if (!el) return
+  const e = Math.round(v * 100) / 100
+  if (el.dataset.v === String(e)) return
+  el.dataset.v = String(e)
+  el.style.opacity = String(e)
+  el.style.transform = `translateY(${(1 - e) * 14}px)`
+}
+
+let landedTablets = -1
+const syncHud = (p) => {
+  if (!hudEls.hero) return
+  fadeHud(hudEls.hero, ramp(p, -1, 0, 0.06, 0.1))
+  fadeHud(hudEls.purity, ramp(p, 0.03, 0.09, 0.13, 0.17))
+  fadeHud(hudEls.pack, ramp(p, 0.12, 0.17, 0.19, 0.23))
+  fadeHud(hudEls.pour, ramp(p, 0.235, 0.28, 0.36, 0.41))
+  fadeHud(hudEls.count, ramp(p, 0.25, 0.3, 0.38, 0.43))
+  fadeHud(hudEls.tablet, ramp(p, 0.44, 0.48, 0.56, 0.61))
+  fadeHud(hudEls.standard, ramp(p, 0.49, 0.54, 0.56, 0.61))
+  fadeHud(hudEls.why, ramp(p, 0.64, 0.68, 0.73, 0.77))
+  fadeHud(hudEls.where, ramp(p, 0.79, 0.83, 0.88, 0.92))
+  fadeHud(hudEls.supply, ramp(p, 0.93, 0.97, 2, 3))
+
+  /* The counter is the model talking: it only counts tablets that landed. */
+  if (hudEls.countValue && tablets.length) {
+    const u = state.pour.u
+    let landed = 0
+    for (const tablet of tablets) {
+      if ((u - tablet.delay) / tablet.duration >= 0.96) landed++
+    }
+    if (landed !== landedTablets) {
+      landedTablets = landed
+      hudEls.countValue.textContent = String(landed).padStart(2, '0')
+    }
+  }
+
+  /* The four places tick on as the sack arrives in the left-hand field. */
+  const local = clamp01((p - 0.795) / 0.055)
+  hudEls.places.forEach((li, index) => {
+    li.classList.toggle('is-on', local > index / 4.4)
+  })
 }
 
 function tick() {
@@ -985,6 +1051,7 @@ function tick() {
   applyCamera()
   setAnnotationWeight(state.annot.v)
   updateDims()
+  syncHud(smoothProgress)
   // A card whose anchor has faded out would float over nothing.
   if (openHotspotId && state.annot.v < 0.35) closeHotspot()
 
