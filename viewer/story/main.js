@@ -11,6 +11,8 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
 import { CSS2DObject, CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { PRODUCTS, PRODUCT_ORDER } from './products.js'
+import { CHAPTERS } from './chapters.js'
 
 gsap.registerPlugin(ScrollTrigger)
 // Never stretch timelines to cover a slow frame: real time wins, so a stall
@@ -40,6 +42,7 @@ const langToggle = document.getElementById('lang-toggle')
 let lang = 'en'
 
 const t = (en, ar) => (lang === 'ar' ? ar : en)
+const L = (en, ar) => ({ en, ar })
 
 /* Arabic is joined script: it can never be split into per-letter boxes, so the
    headings swap as whole words and the word-rise animation is skipped. */
@@ -67,6 +70,9 @@ function setLanguage(next, { store = true } = {}) {
   langToggle.textContent = arabic ? 'EN' : 'AR'
   langToggle.setAttribute('aria-label', arabic ? 'English' : 'العربية')
   document.title = arabic ? 'SinaiCore · ملح، مضغوط.' : 'SinaiCore · Salt, pressed.'
+  applyProductCopy()
+  renderSwitcher()
+  renderChapters()
   applyAnnotationCopy()
   if (openHotspotId) renderHotspotCopy(openHotspotId)
 
@@ -228,6 +234,9 @@ let pourCount = 0
 let annotationRoot = null
 let dissolveMesh = null
 let dissolveHalo = null
+let sackMaterial = null
+let baseSackTexture = null
+const sackTextures = new Map()
 let focusPoint = new THREE.Vector3(0.35, FLOOR + 0.05, 1.62)
 
 const heroContact = contactShadow(0.66, 0.66, 0)
@@ -253,6 +262,7 @@ loader
     crumple.repeat.set(2, 2)
     crumple.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy())
 
+    baseSackTexture = texture
     const printed = new THREE.MeshPhysicalMaterial({
       map: texture,
       color: '#ffffff',
@@ -284,6 +294,8 @@ loader
       sheenColor: new THREE.Color('#ffffff'),
       envMapIntensity: 0.26,
     })
+
+    sackMaterial = printed
 
     model = gltf.scene
     model.traverse((node) => {
@@ -323,6 +335,15 @@ loader
       sheenColor: new THREE.Color('#fffdf7'),
       envMapIntensity: 0.45,
     })
+
+    shapes.tablet = tabletSource.geometry
+    try {
+      const crystal = await loader.loadAsync(`${BASE}models/salt-crystal.glb?${stamp}`)
+      const crystalMesh = crystal.scene.getObjectByProperty('isMesh', true)
+      if (crystalMesh) shapes.crystal = unitGeometry(crystalMesh)
+    } catch (error) {
+      console.warn('salt-crystal.glb missing — coarse salts fall back to tablets', error)
+    }
 
     buildPour(tabletSource, tabletMaterial)
     buildAnnotations(focusPoint)
@@ -457,33 +478,50 @@ function buildMouth(topY, halfW, halfD, fabric) {
 /* -------------------------------------------------------------------------- */
 /*  The pour: one InstancedMesh, one bezier per tablet                        */
 /* -------------------------------------------------------------------------- */
-const COUNT = 64
+/* One instanced mesh carries whichever product is on stage: the capacity is
+   the biggest particle set, and `.count` trims it down per product. */
+const MAX_COUNT = 260
+const PARTICLE_SIZE = { tablet: 0.108, grain: 0.021, crystal: 0.042 }
+let product = PRODUCTS.tablets
 
 function buildPour(source, material) {
   const geometry = source.geometry.clone()
-  pourMesh = new THREE.InstancedMesh(geometry, material, COUNT)
+  pourMesh = new THREE.InstancedMesh(geometry, material, MAX_COUNT)
   pourMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
   pourMesh.frustumCulled = false
   pourMesh.castShadow = true
   pourMesh.receiveShadow = true
   scene.add(pourMesh)
-  pourCount = COUNT
+  seedParticles()
+}
 
-  let seed = 20261126
-  const rnd = () => {
-    seed = (seed * 1664525 + 1013904223) % 4294967296
-    return seed / 4294967296
-  }
+/* Where the copy column sits on the close-up (k3): nothing may land behind it,
+   or the glass panel blurs a giant particle across the table of specs. */
+const copyProbe = new THREE.PerspectiveCamera(30, 1, 0.05, 100)
+copyProbe.position.copy(CAMERA_KEYS[3].pos)
+copyProbe.lookAt(CAMERA_KEYS[3].target)
+const probe = new THREE.Vector3()
 
-  /* Where the copy column sits on the close-up (k3): nothing may land behind it,
-     or the glass panel blurs a giant tablet across the table of specs. */
-  const copyProbe = new THREE.PerspectiveCamera(30, stage.clientWidth / stage.clientHeight, 0.05, 100)
-  copyProbe.position.copy(CAMERA_KEYS[3].pos)
-  copyProbe.lookAt(CAMERA_KEYS[3].target)
-  copyProbe.setViewOffset(stage.clientWidth, stage.clientHeight, -stage.clientWidth * 0.15, 0, stage.clientWidth, stage.clientHeight)
-  copyProbe.updateMatrixWorld()
+/* Reseed the particle set for the product on stage: the same arcs, the same
+   hero, only the count and the size of what falls changes. */
+function seedParticles() {
+  const { kind, count, size } = product.particle
+  const total = Math.min(count, MAX_COUNT)
+  pourCount = total
+  pourMesh.count = total
+  tablets.length = 0
+
+  copyProbe.aspect = stage.clientWidth / stage.clientHeight
+  copyProbe.setViewOffset(
+    stage.clientWidth,
+    stage.clientHeight,
+    -stage.clientWidth * 0.15,
+    0,
+    stage.clientWidth,
+    stage.clientHeight,
+  )
   copyProbe.updateProjectionMatrix()
-  const probe = new THREE.Vector3()
+  copyProbe.updateMatrixWorld()
   const onCopy = (point) => {
     probe.copy(point).project(copyProbe)
     const x = (probe.x * 0.5 + 0.5) * stage.clientWidth
@@ -491,15 +529,37 @@ function buildPour(source, material) {
     return x < stage.clientWidth * 0.68 && y < stage.clientHeight * 0.92
   }
 
-  for (let i = 0; i < COUNT; i++) {
-    // The first tablet is the hero: it lands centre-stage for the callouts.
-    const hero = i === 0
+  let seed = 20261126
+  const rnd = () => {
+    seed = (seed * 1664525 + 1013904223) % 4294967296
+    return seed / 4294967296
+  }
+
+  /* A tablet stands alone in the close-up; grains and crystals are shown as a
+     small heap, so the chapter still has something to look at. */
+  const heap = kind === 'tablet' ? 1 : (product.particle.heap?.count ?? 9)
+  const heapScale = kind === 'tablet' ? 1 : (product.particle.heap?.scale ?? 1.5)
+
+  for (let i = 0; i < total; i++) {
+    const hero = i < heap
     let end = hero ? focusPoint.clone() : new THREE.Vector3()
+    if (hero && i > 0) {
+      const angle = (i / heap) * Math.PI * 2 + rnd() * 0.5
+      const radius = 0.045 + rnd() * 0.085
+      end.x += Math.sin(angle) * radius
+      end.z += Math.cos(angle) * radius
+      end.y += rnd() * 0.045
+    }
     if (!hero) {
       let distance = 0.55 + rnd() * 1.35
       const angle = (rnd() * 2 - 1) * 1.85
+      const spread = kind === 'grain' ? 0.72 : 1
       for (let tries = 0; tries < 14; tries++) {
-        end.set(0.3 + Math.sin(angle) * distance * 1.35, FLOOR + 0.05, 0.5 + Math.cos(angle) * distance)
+        end.set(
+          0.3 + Math.sin(angle) * distance * 1.35 * spread,
+          FLOOR + 0.05 + (kind === 'tablet' ? 0 : rnd() * 0.09),
+          0.5 + Math.cos(angle) * distance * spread,
+        )
         end.z = Math.min(end.z, 0.62)
         // Keep a clean disc around the hero, and keep the copy column empty.
         if (end.distanceTo(focusPoint) > 1.28 && !onCopy(end)) break
@@ -508,24 +568,75 @@ function buildPour(source, material) {
       }
     }
 
-    tablets.push({
+    const scale = hero
+      ? (kind === 'tablet' ? PARTICLE_SIZE.tablet : PARTICLE_SIZE[kind] * size * heapScale)
+      : kind === 'tablet'
+        ? PARTICLE_SIZE.tablet + rnd() * 0.016
+        : PARTICLE_SIZE[kind] * size * (0.72 + rnd() * 0.62)
+
+    tablets[i] = {
       end,
       hero,
       lift: 0.18 + rnd() * 0.34,
       drift: 0.34 + rnd() * 0.5,
-      delay: (i / COUNT) * 0.32 + rnd() * 0.05,
+      delay: (i / total) * 0.32 + rnd() * 0.05,
       duration: 0.42 + rnd() * 0.2,
-      scale: 0.108 + rnd() * 0.016,
+      scale,
       restYaw: rnd() * Math.PI * 2,
+      restPitch: kind === 'tablet' ? 0 : (rnd() - 0.5) * 0.7,
+      restRoll: kind === 'tablet' ? 0 : (rnd() - 0.5) * 0.7,
+      squash:
+        kind === 'tablet'
+          ? new THREE.Vector3(1, 0.88, 1)
+          : new THREE.Vector3(0.78 + rnd() * 0.4, 0.78 + rnd() * 0.4, 0.78 + rnd() * 0.4),
       spinAxis: new THREE.Vector3(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).normalize(),
       spinAmount: 2.4 + rnd() * 4.4,
       jitter: new THREE.Vector3((rnd() - 0.5) * 0.26, -0.05 - rnd() * 0.1, (rnd() - 0.5) * 0.1),
-    })
+    }
   }
 
+  /* Grains are never one flat colour: a little per-particle shade keeps a
+     pile from reading as a printed sheet. */
+  const base = new THREE.Color(product.particle.tint)
+  const shade = new THREE.Color()
+  for (let i = 0; i < total; i++) {
+    shade.copy(base).offsetHSL(0, 0, (rnd() - 0.5) * 0.08)
+    pourMesh.setColorAt(i, shade)
+  }
+  for (let i = total; i < MAX_COUNT; i++) pourMesh.setColorAt(i, base)
+  if (pourMesh.instanceColor) pourMesh.instanceColor.needsUpdate = true
+
   const matrix = new THREE.Matrix4()
-  for (let i = 0; i < COUNT; i++) pourMesh.setMatrixAt(i, matrix.makeScale(0.0001, 0.0001, 0.0001))
+  for (let i = 0; i < MAX_COUNT; i++) pourMesh.setMatrixAt(i, matrix.makeScale(0.0001, 0.0001, 0.0001))
   pourMesh.instanceMatrix.needsUpdate = true
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Particle shapes: tablets, refined grains, screened crystals               */
+/* -------------------------------------------------------------------------- */
+const shapes = {}
+
+/* Normalise a loaded mesh so one unit of scale is one unit of radius. */
+function unitGeometry(source) {
+  const geometry = source.geometry.clone()
+  geometry.computeBoundingSphere()
+  const r = geometry.boundingSphere?.radius || 1
+  geometry.scale(1 / r, 1 / r, 1 / r)
+  return geometry
+}
+
+function shapeFor(kind) {
+  if (kind === 'grain') {
+    // A faceted pebble: salt grains are chipped, not moulded, but they are not
+    // stars either — the shape does the work, the squash below breaks it up.
+    if (!shapes.grain) {
+      const g = new THREE.IcosahedronGeometry(1, 0)
+      g.computeVertexNormals()
+      shapes.grain = g
+    }
+    return shapes.grain
+  }
+  return shapes[kind] || shapes.tablet
 }
 
 const dummy = new THREE.Object3D()
@@ -560,13 +671,16 @@ function pourAt(tablet, u, index) {
   // Tumble in flight, then settle flat as it lands.
   const settled = THREE.MathUtils.smoothstep(t, 0.72, 1)
   tmpQuat.setFromAxisAngle(tablet.spinAxis, eased * tablet.spinAmount)
-  restQuat.setFromEuler(new THREE.Euler(0, tablet.restYaw, 0))
+  restQuat.setFromEuler(
+    new THREE.Euler(tablet.restPitch ?? 0, tablet.restYaw, tablet.restRoll ?? 0),
+  )
   tmpQuat.slerp(restQuat, settled)
 
   dummy.position.copy(tmpC)
   dummy.quaternion.copy(tmpQuat)
   const grow = Math.min(1, t * 6) * tablet.scale
-  dummy.scale.set(grow, grow * 0.88, grow)
+  const squash = tablet.squash ?? { x: 1, y: 0.88, z: 1 }
+  dummy.scale.set(grow * squash.x, grow * squash.y, grow * squash.z)
   dummy.updateMatrix()
   pourMesh.setMatrixAt(index, dummy.matrix)
   return t
@@ -731,8 +845,9 @@ const updateDims = () => {
 
 const setAnnotationWeight = (value) => {
   if (!annotationRoot) return
-  // On a phone the callouts would land on top of the copy column.
-  const v = stage.clientWidth < 1080 ? 0 : value
+  // On a phone the callouts would land on top of the copy column, and only the
+  // tablet has dimensions to draw.
+  const v = stage.clientWidth < 1080 || product.particle.kind !== 'tablet' ? 0 : value
   annotationRoot.visible = v > 0.005
   const [barMaterial, leaderMaterial] = annotationRoot.userData.materials ?? []
   if (barMaterial) barMaterial.opacity = 0.92 * THREE.MathUtils.clamp(v * 1.3, 0, 1)
@@ -783,21 +898,50 @@ const cardParts = {
 const closeButton = document.getElementById('hs-close')
 let openHotspotId = null
 
-function closeHotspot() {
-  if (!openHotspotId) return
-  const button = hotspotButtons.get(openHotspotId)
-  button?.classList.remove('is-on')
-  button?.setAttribute('aria-expanded', 'false')
-  button?.focus({ preventScroll: true })
+/* The card serves two masters: a hotspot on the tablet, or the product's own
+   spec sheet from the readout corner. Either way it closes the same way. */
+function closeCard({ restoreFocus = true } = {}) {
+  if (openCard === 'hotspot' && openHotspotId) {
+    const button = hotspotButtons.get(openHotspotId)
+    button?.classList.remove('is-on')
+    button?.setAttribute('aria-expanded', 'false')
+    if (restoreFocus) button?.focus({ preventScroll: true })
+  }
+  if (openCard === 'spec' && restoreFocus) copyEls.specOpen?.focus({ preventScroll: true })
   openHotspotId = null
+  openCard = null
   card.hidden = true
+}
+
+const closeHotspot = () => closeCard()
+
+/* The written spec sheet for whichever product is on stage. */
+function renderSpecCard() {
+  if (openCard !== 'spec') return
+  const arabic = lang === 'ar'
+  card.classList.add('is-ar')
+  cardParts.kicker.textContent = pick(product.name)
+  cardParts.title.textContent = arabic ? 'المواصفات' : 'Specification'
+  cardParts.body.textContent = pick(product.hero.line)
+  cardParts.arabic.textContent = ''
+  cardParts.rows.innerHTML = product.specs
+    .map((row) => `<div><dt>${pick(row.label)}</dt><dd>${pick(row.value)}</dd></div>`)
+    .join('')
+}
+
+function openSpecSheet() {
+  closeCard({ restoreFocus: false })
+  openCard = 'spec'
+  renderSpecCard()
+  card.hidden = false
+  closeButton.focus({ preventScroll: true })
 }
 
 function renderHotspotCopy(id) {
   const copy = HOTSPOT_COPY[id]
   if (!copy) return
   const arabic = lang === 'ar'
-  card.classList.toggle('is-ar', arabic)
+  card.classList.remove('is-ar')
   cardParts.kicker.textContent = arabic ? copy.kickerAr : copy.kicker
   cardParts.title.textContent = arabic ? copy.titleAr : copy.title
   cardParts.body.textContent = arabic ? copy.bodyAr : copy.body
@@ -809,9 +953,11 @@ function renderHotspotCopy(id) {
 
 function toggleHotspot(id) {
   const wasOpen = openHotspotId === id
-  closeHotspot()
+  closeCard({ restoreFocus: false })
   if (wasOpen) return
   if (!HOTSPOT_COPY[id]) return
+  openCard = 'hotspot'
+  card.classList.remove('is-ar')
   renderHotspotCopy(id)
   card.hidden = false
   const button = hotspotButtons.get(id)
@@ -821,7 +967,7 @@ function toggleHotspot(id) {
   closeButton.focus({ preventScroll: true })
 }
 
-closeButton?.addEventListener('click', closeHotspot)
+closeButton?.addEventListener('click', () => closeCard())
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') closeHotspot()
 })
@@ -896,6 +1042,13 @@ const computeProgress = () => {
 }
 
 const onScroll = () => {
+  // The magazine is print: the 3D chrome steps out of its way.
+  if (mag.section) {
+    document.body.classList.toggle(
+      'is-editorial',
+      mag.section.getBoundingClientRect().top < window.innerHeight * 0.45,
+    )
+  }
   if (lockedProgress !== null) return
   targetProgress = computeProgress()
 }
@@ -924,7 +1077,17 @@ function splitLetters(heading, source = heading.textContent) {
   return letters
 }
 
-function buildStory() {
+/* The timeline is rebuilt per product: only the tablet erodes on screen, so
+   only the tablet gets the dissolve tween. */
+function buildTimeline() {
+  // A rebuilt timeline must start from the same values it started from the
+  // first time, or the camera would begin wherever the reader left it.
+  Object.assign(state.bag, { spin: 0, open: 0, tilt: 0, side: 0 })
+  state.cam.k = 0
+  state.pour.u = 0
+  state.annot.v = 0
+  state.dissolve.v = 0
+
   const timeline = gsap.timeline({ paused: true, defaults: { ease: 'none' } })
   timeline
     .to(state.bag, { spin: 1, duration: 0.14, ease: 'power1.inOut' }, 0.02)
@@ -939,13 +1102,26 @@ function buildStory() {
     .to(state.bag, { open: 0, duration: 0.06, ease: 'power2.inOut' }, 0.44)
     .to(state.annot, { v: 1, duration: 0.06, ease: 'power1.out' }, 0.42)
     .to(state.annot, { v: 0, duration: 0.05, ease: 'power1.in' }, 0.56)
-    .to(state.dissolve, { v: 1, duration: 0.155, ease: 'power1.inOut' }, 0.575)
+
+  if (!product.dissolve.fixed) {
+    timeline.to(state.dissolve, { v: 1, duration: 0.155, ease: 'power1.inOut' }, 0.575)
+  }
+
+  timeline
     .to(state.cam, { k: 4, duration: 0.13, ease: 'power1.inOut' }, 0.7)
     // The tweens stop short of 1; a zero-length set at the end makes the
     // timeline duration exactly 1 so progress() and the scroll agree.
     .set({}, {}, 1)
 
+  if (story) story.kill()
   story = timeline
+  story.progress(smoothProgress || 0)
+  return timeline
+}
+
+function buildStory() {
+  applyProductCopy()
+  buildTimeline()
 
   /* Display headings set letter by letter; everything else rises into place
      as its panel takes the screen. */
@@ -992,7 +1168,7 @@ function buildStory() {
   measurePanels()
   onScroll()
   smoothProgress = targetProgress
-  timeline.progress(smoothProgress)
+  story.progress(smoothProgress)
   setStep(smoothProgress < 0.2 ? 0 : smoothProgress < 0.42 ? 1 : smoothProgress < 0.72 ? 2 : 3)
 }
 
@@ -1106,7 +1282,7 @@ function applyCamera() {
   const portrait =
     camera.aspect < 1 ? Math.min(1.45, Math.pow(1 / camera.aspect, 0.35)) : 1
   const back =
-    1 + (portrait - 1) * THREE.MathUtils.smoothstep(state.cam.k, 1.6, 2.6)
+    (1 + (portrait - 1) * THREE.MathUtils.smoothstep(state.cam.k, 1.6, 2.6)) * product.sack.back
 
   camera.position.copy(camTarget).addScaledVector(offset, back)
   camera.lookAt(camTarget)
@@ -1193,6 +1369,228 @@ const hudEls = {
   places: [...document.querySelectorAll('#places li')],
 }
 
+/* Every string the product switch rewrites lives here. */
+const copyEls = {
+  heroTitle: document.getElementById('hero-title'),
+  heroLine: document.getElementById('hero-line'),
+  purityValue: document.getElementById('purity-value'),
+  purityLabel: document.getElementById('purity-label'),
+  packTitle: document.getElementById('pack-title'),
+  packTags: document.getElementById('pack-tags'),
+  pourTitle: document.getElementById('pour-title'),
+  pourLine: document.getElementById('pour-line'),
+  countLabel: document.getElementById('count-label'),
+  closeEyebrow: document.getElementById('close-eyebrow'),
+  railClose: document.getElementById('rail-close'),
+  closeTitle: document.getElementById('close-title'),
+  closeLine: document.getElementById('close-line'),
+  standardValue: document.getElementById('standard-value'),
+  standardLabel: document.getElementById('standard-label'),
+  whyTitle: document.getElementById('why-title'),
+  whyLine: document.getElementById('why-line'),
+  dissolveUnit: document.getElementById('dissolve-unit'),
+  dissolveLabel: document.getElementById('dissolve-label'),
+  whereTitle: document.getElementById('where-title'),
+  places: document.getElementById('places'),
+  specOpen: document.getElementById('spec-open'),
+  switcher: document.getElementById('product-switch'),
+}
+
+const pick = (value) => (lang === 'ar' ? value.ar : value.en)
+
+/* A heading is a row of glyph boxes in English and plain text in Arabic. */
+function setHeading(el, text) {
+  if (!el) return
+  el.textContent = ''
+  if (lang === 'ar') {
+    el.classList.add('is-ar')
+    el.textContent = text
+    return
+  }
+  el.classList.remove('is-ar')
+  const letters = splitLetters(el, text)
+  if (letters.length) gsap.set(letters, { yPercent: 0, opacity: 1 })
+}
+
+function applyProductCopy() {
+  const p = product
+  setHeading(copyEls.heroTitle, pick(p.hero.title))
+  copyEls.heroLine.textContent = pick(p.hero.line)
+  copyEls.purityValue.textContent = p.purity.value
+  copyEls.purityLabel.textContent = pick(p.purity.label)
+
+  setHeading(copyEls.packTitle, pick(p.pack.title))
+  copyEls.packTags.innerHTML = p.pack.tags.map((tag) => `<li>${pick(tag)}</li>`).join('')
+
+  setHeading(copyEls.pourTitle, pick(p.pour.title))
+  copyEls.pourLine.textContent = pick(p.pour.line)
+  copyEls.countLabel.textContent = pick(p.pour.countLabel)
+
+  copyEls.closeEyebrow.textContent = pick(p.close.eyebrow)
+  copyEls.railClose.textContent = `03 ${pick(p.close.nav)}`
+  setHeading(copyEls.closeTitle, pick(p.close.title))
+  copyEls.closeLine.textContent = pick(p.close.line)
+  copyEls.standardValue.textContent = p.close.standard.value
+  copyEls.standardLabel.textContent = p.close.standard.label
+
+  setHeading(copyEls.whyTitle, pick(p.why.title))
+  copyEls.whyLine.textContent = pick(p.why.line)
+
+  copyEls.dissolveUnit.textContent = pick(p.dissolve.unit)
+  copyEls.dissolveLabel.textContent = pick(p.dissolve.label)
+
+  setHeading(copyEls.whereTitle, pick(p.where.title))
+  copyEls.places.innerHTML = p.where.places
+    .map((place, i) => `<li data-place="${i}"><i>${String(i + 1).padStart(2, '0')}</i><span>${pick(place)}</span></li>`)
+    .join('')
+  hudEls.places = [...copyEls.places.querySelectorAll('li')]
+
+  if (copyEls.specOpen) copyEls.specOpen.textContent = lang === 'ar' ? 'المواصفات' : 'Specification'
+  if (openCard) renderSpecCard()
+}
+
+/* -------------------------------------------------------------------------- */
+/*  The product switch — one scene, five products                            */
+/* -------------------------------------------------------------------------- */
+const PRODUCT_KEY = 'sinaicore:product'
+let openCard = null
+
+function renderSwitcher() {
+  if (!copyEls.switcher) return
+  copyEls.switcher.innerHTML = PRODUCT_ORDER.map((id) => {
+    const entry = PRODUCTS[id]
+    const on = entry.id === product.id
+    return `<button type="button" data-product="${id}" class="${on ? 'is-on' : ''}" aria-pressed="${on}">${pick(entry.short)}</button>`
+  }).join('')
+}
+
+async function loadSackTexture(file) {
+  if (!file) return baseSackTexture
+  if (sackTextures.has(file)) return sackTextures.get(file)
+  const texture = await new THREE.TextureLoader().loadAsync(`${BASE}artwork/${file}?${stamp}`)
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy())
+  sackTextures.set(file, texture)
+  return texture
+}
+
+async function setProduct(id, { store = true } = {}) {
+  const next = PRODUCTS[id]
+  if (!next) return
+  const changed = next.id !== product.id
+  product = next
+
+  if (sackMaterial) {
+    const texture = await loadSackTexture(next.sack.texture)
+    if (texture) {
+      sackMaterial.map = texture
+      sackMaterial.needsUpdate = true
+    }
+  }
+  sack.scale.setScalar(next.sack.scale)
+
+  if (pourMesh) {
+    pourMesh.geometry = shapeFor(next.particle.kind)
+    // The tint rides on the instances, so the material itself stays white.
+    pourMesh.material.color.set('#ffffff')
+    pourMesh.material.roughness = next.particle.rough
+  }
+  if (dissolveMesh) dissolveMesh.geometry = shapeFor(next.particle.kind)
+  if (pourMesh) seedParticles()
+  if (next.dissolve.fixed) state.dissolve.v = 0
+
+  applyProductCopy()
+  renderSwitcher()
+  if (story && changed) buildTimeline()
+
+  if (store) {
+    try {
+      localStorage.setItem(PRODUCT_KEY, next.id)
+    } catch {
+      // Private mode: the choice just doesn't outlive the visit.
+    }
+  }
+}
+
+copyEls.switcher?.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-product]')
+  if (button) setProduct(button.dataset.product)
+})
+
+copyEls.specOpen?.addEventListener('click', openSpecSheet)
+
+/* -------------------------------------------------------------------------- */
+/*  The salt flats — the editorial half, rendered from the chapter list       */
+/* -------------------------------------------------------------------------- */
+const mag = {
+  section: document.getElementById('mag'),
+  eyebrow: document.getElementById('mag-eyebrow'),
+  title: document.getElementById('mag-title'),
+  lede: document.getElementById('mag-lede'),
+  list: document.getElementById('mag-list'),
+  foot: document.getElementById('mag-foot'),
+}
+
+const MAG_COPY = {
+  eyebrow: L('The salt flats · eight chapters', 'ملاحات سيناء · ثمانية فصول'),
+  title: L('From seawater to sack', 'من ماء البحر إلى الشيكارة'),
+  lede: L(
+    'Eight steps between the sea and a fifty-kilo sack — photographed on the pans, with no models at all.',
+    'ثماني خطوات بين البحر وشيكارة من خمسين كيلو — مصوّرة على الأحواض، وبلا أي مجسّم ثلاثي الأبعاد.',
+  ),
+  foot: L('El-Arish · North Sinai, Egypt', 'العريش · شمال سيناء، مصر'),
+}
+
+const magObserver = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return
+      entry.target.classList.add('is-in')
+      magObserver.unobserve(entry.target)
+    })
+  },
+  { rootMargin: '0px 0px -10% 0px', threshold: 0.08 },
+)
+
+function renderChapters() {
+  if (!mag.list) return
+  const arabic = lang === 'ar'
+  const pick2 = (value) => (arabic ? value.ar : value.en)
+
+  mag.eyebrow.textContent = pick2(MAG_COPY.eyebrow)
+  mag.title.textContent = pick2(MAG_COPY.title)
+  mag.lede.textContent = pick2(MAG_COPY.lede)
+  mag.foot.textContent = pick2(MAG_COPY.foot)
+
+  mag.list.innerHTML = CHAPTERS.map(
+    (chapter) => `
+      <article class="chap">
+        <figure class="chap__plate">
+          <img src="${BASE}${chapter.plate}" alt="${pick2(chapter.caption)}" loading="lazy" decoding="async" width="1408" height="792" />
+          <figcaption>${chapter.n} · ${pick2(chapter.caption)}</figcaption>
+        </figure>
+        <div class="chap__text">
+          <p class="chap__num">${chapter.n} · ${pick2(chapter.eyebrow)}</p>
+          <h3 class="chap__title">${pick2(chapter.title)}</h3>
+          <p class="chap__lead">${pick2(chapter.lead)}</p>
+          <p class="chap__body">${pick2(chapter.body)}</p>
+          ${chapter.note ? `<p class="chap__note">${pick2(chapter.note)}</p>` : ''}
+          <dl class="chap__stats">
+            ${chapter.stats
+              .map((stat) => `<div><dt>${stat.value}</dt><dd>${pick2(stat.label)}</dd></div>`)
+              .join('')}
+          </dl>
+        </div>
+      </article>`,
+  ).join('')
+
+  magObserver.disconnect()
+  mag.list.querySelectorAll('.chap').forEach((article) => {
+    if (reduceMotion) article.classList.add('is-in')
+    else magObserver.observe(article)
+  })
+}
+
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v)
 /* Fade in over a→b, hold, fade out over c→d. */
 const ramp = (p, a, b, c, d) =>
@@ -1220,10 +1618,13 @@ const syncHud = (p) => {
   fadeHud(hudEls.why, ramp(p, 0.58, 0.62, 0.76, 0.8))
   fadeHud(hudEls.dissolve, ramp(p, 0.6, 0.645, 0.76, 0.8))
 
-  /* The diameter counts down as the disc actually shrinks. */
+  /* The readout counts down while the tablet actually erodes; every other
+     product keeps a fixed number, so it simply sits there. */
   if (hudEls.diameter) {
-    const mm = Math.max(6, 25 - state.dissolve.v * 17)
-    const label = `${Math.round(mm)}`
+    const { from, to, fixed } = product.dissolve
+    const value = fixed ? from : from - state.dissolve.v * (from - to)
+    const rounded = Math.abs(value) >= 10 ? Math.round(value) : Math.round(value * 10) / 10
+    const label = `${rounded}`
     if (hudEls.diameter.dataset.mm !== label) {
       hudEls.diameter.dataset.mm = label
       hudEls.diameter.textContent = label
@@ -1351,3 +1752,11 @@ try {
   savedLang = null
 }
 setLanguage(savedLang === 'ar' ? 'ar' : 'en', { store: false })
+
+let savedProduct = null
+try {
+  savedProduct = localStorage.getItem(PRODUCT_KEY)
+} catch {
+  savedProduct = null
+}
+setProduct(savedProduct && PRODUCTS[savedProduct] ? savedProduct : 'tablets', { store: false })

@@ -262,9 +262,29 @@
   </div>
 </div>
 <script>
-  if (new URLSearchParams(location.search).has('trim')) {
+  const params = new URLSearchParams(location.search)
+  if (params.has('trim')) {
     document.documentElement.classList.add('trim')
   }
+
+  /* The same press sheet prints every product in the line: the claim block,
+     the third badge and the net weight are the only things that change. */
+  const CLAIMS = {
+    refined: ['VACUUM REFINED', 'FREE FLOWING', 'FOOD GRADE FINE SALT'],
+    washed: ['WASHED', 'SCREENED', 'INDUSTRIAL GRADE SALT'],
+    rock: ['ROCK SALT', 'CRUSHED', 'INDUSTRIAL GRADE SALT'],
+    road: ['DE-ICING SALT', 'SCREENED', 'ROAD &amp; RUNWAY GRADE'],
+  }
+  const claim = CLAIMS[params.get('product')]
+  if (claim) {
+    document.querySelectorAll('.claim span').forEach((el, i) => {
+      if (claim[i]) el.innerHTML = claim[i]
+    })
+    const third = document.querySelectorAll('.icons b')[2]
+    if (third) third.innerHTML = params.get('badge') || 'INDUSTRIAL<br />GRADE'
+  }
+  const weight = params.get('weight')
+  if (weight) document.querySelector('.net b').textContent = weight
 </script>
 </body>
 </html>
