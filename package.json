@@ -13,6 +13,7 @@
     "assets": "npm run models && npm run textures",
     "artwork": "node scripts/build-artwork.mjs",
     "viewer": "vite --config viewer/vite.config.ts",
+    "story": "vite --config viewer/story/vite.config.ts",
     "brand": "node scripts/build-brand.mjs"
   },
   "dependencies": {
