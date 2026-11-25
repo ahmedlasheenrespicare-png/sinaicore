@@ -37,6 +37,32 @@
   font-weight: 500;
 }
 
+@font-face {
+  font-family: 'Print Serif';
+  src: url('../node_modules/@fontsource/playfair-display/files/playfair-display-latin-700-normal.woff2') format('woff2');
+  font-weight: 700;
+}
+@font-face {
+  font-family: 'Print Sans';
+  src: url('../node_modules/@fontsource/montserrat/files/montserrat-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'Print Sans';
+  src: url('../node_modules/@fontsource/montserrat/files/montserrat-latin-500-normal.woff2') format('woff2');
+  font-weight: 500;
+}
+@font-face {
+  font-family: 'Print Sans';
+  src: url('../node_modules/@fontsource/montserrat/files/montserrat-latin-700-normal.woff2') format('woff2');
+  font-weight: 700;
+}
+@font-face {
+  font-family: 'Print Sans';
+  src: url('../node_modules/@fontsource/montserrat/files/montserrat-latin-800-normal.woff2') format('woff2');
+  font-weight: 800;
+}
+
 :root {
   --teal-900: #0d3d41;
   --teal-700: #17595c;

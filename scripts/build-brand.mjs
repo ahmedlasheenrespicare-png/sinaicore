@@ -49,7 +49,9 @@ const jobs = [
     target: 'sinaicore-mark-mono.png',
     floor: 0.06,
     cropTop: 0.6,
-    ink: '#14459a',
+    ink: '#0a3b8c',
+    scale: 3,
+    blackKey: true,
   },
 ]
 
@@ -69,16 +71,29 @@ for (const job of jobs) {
   const file = path.join(brandDir, job.source)
   const dataUrl = `data:image/png;base64,${(await readFile(file)).toString('base64')}`
 
-  const result = await page.evaluate(async (src, floor, cropTop, ink) => {
+  const result = await page.evaluate(async (src, floor, cropTop, ink, scale, blackKey) => {
     const image = new Image()
     image.src = src
     await image.decode()
 
     const canvas = document.createElement('canvas')
-    canvas.width = image.naturalWidth
-    canvas.height = Math.round(image.naturalHeight * cropTop)
+    canvas.width = Math.round(image.naturalWidth * scale)
+    canvas.height = Math.round(image.naturalHeight * cropTop * scale)
     const ctx = canvas.getContext('2d')
-    ctx.drawImage(image, 0, 0)
+    // Line art survives the upscale cleanly; the mask is thresholded below.
+    ctx.imageSmoothingEnabled = true
+    ctx.imageSmoothingQuality = 'high'
+    ctx.drawImage(
+      image,
+      0,
+      0,
+      image.naturalWidth,
+      Math.round(image.naturalHeight * cropTop),
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    )
 
     const frame = ctx.getImageData(0, 0, canvas.width, canvas.height)
     const data = frame.data
@@ -87,6 +102,13 @@ for (const job of jobs) {
       const g = data[i + 1]
       const b = data[i + 2]
       const key = Math.max(r, g, b) / 255
+      if (blackKey) {
+        // The logo was rendered premultiplied over pure black, so the key is
+        // "is this pixel black at all": the ink stays at full opacity and the
+        // anti-aliased rim feathers over a couple of levels.
+        data[i + 3] = key <= 0.02 ? 0 : Math.round(Math.min(1, (key - 0.02) / 0.03) * 255)
+        continue
+      }
       const alpha = key <= floor ? 0 : Math.min(1, (key - floor) / (1 - floor))
       if (alpha === 0) {
         data[i + 3] = 0
@@ -110,18 +132,18 @@ for (const job of jobs) {
         const r = data[i] / 255
         const g = data[i + 1] / 255
         const b = data[i + 2] / 255
-        // Ink coverage follows how far the darkest channel sits below paper:
-        // saturated paint reads as solid ink, white facets as bare paper.
-        const inkAmount = Math.min(1, (1 - Math.min(r, g, b)) * 1.18)
-        const mix = 1 - inkAmount
-        // S-curve: mid tones commit to either ink or paper, like a real print.
-        const curve = mix * mix * (3 - 2 * mix)
-        // Solid ink with an alpha derived from coverage: no white plate is left
-        // behind, so the mark sits on the fabric without a visible box.
+        // A real one-colour print puts solid ink wherever the logo had paint
+        // and leaves bare fabric only in the white facets. Paint is detected by
+        // chroma (blue vs. neutral) or by darkness, then feathered to a hard
+        // edge so the mark reads as printed, not as a faded photo.
+        const hi = Math.max(r, g, b)
+        const lo = Math.min(r, g, b)
+        const raw = Math.max((hi - lo) / 0.22, (1 - hi) / 0.22)
+        const paint = Math.min(1, Math.max(0, (raw - 0.6) / 0.4))
         data[i] = ir
         data[i + 1] = ig
         data[i + 2] = ib
-        data[i + 3] = Math.round((data[i + 3] / 255) * (1 - curve) * 255)
+        data[i + 3] = Math.round((data[i + 3] / 255) * paint * 255)
       }
       ctx.putImageData(frame, 0, 0)
     }
@@ -132,7 +154,7 @@ for (const job of jobs) {
       height: canvas.height,
       png: canvas.toDataURL('image/png').split(',')[1],
     }
-  }, dataUrl, job.floor, job.cropTop ?? 1, job.ink ?? null)
+  }, dataUrl, job.floor, job.cropTop ?? 1, job.ink ?? null, job.scale ?? 1, job.blackKey ?? false)
 
   const target = path.join(brandDir, job.target)
   await writeFile(target, Buffer.from(result.png, 'base64'))

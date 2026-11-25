@@ -625,7 +625,7 @@ function SackAsset({ scale = 1, position = [0, 0, 0], texture }: SackProps) {
        the blue). */
     const printed = new THREE.MeshStandardMaterial({
       map: texture,
-      color: '#d6d0c3',
+      color: '#c9c1b0',
       vertexColors: true,
       bumpMap: maps.weave,
       bumpScale: 0.024,
@@ -635,7 +635,7 @@ function SackAsset({ scale = 1, position = [0, 0, 0], texture }: SackProps) {
       envMapIntensity: 0.24,
     })
     const fabric = new THREE.MeshStandardMaterial({
-      color: '#d1cabd',
+      color: '#c9c1b0',
       vertexColors: true,
       envMapIntensity: 0.38,
       bumpMap: maps.weave,

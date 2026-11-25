@@ -28,7 +28,7 @@ const pmrem = new THREE.PMREMGenerator(renderer)
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
 scene.environmentIntensity = 0.34
 
-const key = new THREE.DirectionalLight('#fff4e2', 2.2)
+const key = new THREE.DirectionalLight('#fff6ea', 2.05)
 key.position.set(2.9, 6.4, 4.2)
 key.castShadow = true
 key.shadow.mapSize.set(2048, 2048)
@@ -92,20 +92,32 @@ loader
     texture.colorSpace = THREE.SRGBColorSpace
     texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy())
 
+    // The printed panel takes the fabric's own base tint, so the ink sits on the
+    // bag instead of on a brighter plate.
+    const weave = await new THREE.TextureLoader().loadAsync(`/textures/sack-weave.png?${stamp}`)
+    weave.wrapS = weave.wrapT = THREE.RepeatWrapping
+    weave.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy())
+
     const printed = new THREE.MeshStandardMaterial({
       map: texture,
-      color: '#ffffff',
+      color: '#f5f3ec',
       vertexColors: true,
-      roughness: 0.92,
+      bumpMap: weave,
+      bumpScale: 0.022,
+      roughnessMap: weave,
+      roughness: 0.95,
       metalness: 0,
       envMapIntensity: 0.24,
     })
     const fabric = new THREE.MeshStandardMaterial({
-      color: '#f1eee5',
+      color: '#f5f3ec',
       vertexColors: true,
+      bumpMap: weave,
+      bumpScale: 0.022,
+      roughnessMap: weave,
       roughness: 0.96,
       metalness: 0,
-      envMapIntensity: 0.28,
+      envMapIntensity: 0.26,
     })
 
     model = gltf.scene

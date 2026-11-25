@@ -351,14 +351,14 @@ function buildContainer() {
    that 0.61 aspect and the artwork never looks stretched. */
 const SACK = { width: 1.3, height: 2.15, depth: 0.6, rings: 28, segments: 48 }
 const SACK_PROFILE = [
-  [0, 0.78, 0.4],
-  [0.12, 0.805, 0.432],
-  [0.34, 0.815, 0.437],
-  [0.55, 0.8, 0.42],
-  [0.72, 0.772, 0.368],
-  [0.86, 0.744, 0.268],
-  [0.95, 0.718, 0.152],
-  [1, 0.702, 0.086],
+  [0, 0.802, 0.404],
+  [0.1, 0.812, 0.436],
+  [0.3, 0.82, 0.442],
+  [0.52, 0.815, 0.43],
+  [0.7, 0.806, 0.4],
+  [0.86, 0.793, 0.328],
+  [0.96, 0.784, 0.19],
+  [1, 0.776, 0.072],
 ]
 
 const smooth = (a) => a * a * (3 - 2 * a)
@@ -391,8 +391,9 @@ function creaseAt(theta) {
 /** Point on the bag's skin. `theta` runs around the bag, `t` bottom → top. */
 function sackSurface(theta, t) {
   const base = sackProfile(t)
-  // Rounded shoulders: the section relaxes towards a circle as it nears the roll.
-  const n = 3.4 - 1.25 * smooth(THREE.MathUtils.clamp((t - 0.72) / 0.28, 0, 1))
+  // The shoulders gather in the last few centimetres, so the section relaxes
+  // towards a circle only right under the welt.
+  const n = 3.4 - 1.15 * smooth(THREE.MathUtils.clamp((t - 0.83) / 0.17, 0, 1))
   const cos = Math.cos(theta)
   const sin = Math.sin(theta)
 
@@ -417,15 +418,20 @@ function sackSurface(theta, t) {
   // Woven PP never hangs perfectly; two low-frequency ripples fake the folds
   // that a 50 kg load puts into the fabric.
   const wrinkle =
-    1 + 0.018 * Math.sin(6 * theta + 9 * t) + 0.009 * Math.sin(11 * theta - 5.5 * t) +
-    0.005 * Math.sin(19 * theta + 2 * t) + 0.004 * Math.sin(27 * theta - 13 * t)
+    1 + 0.026 * Math.sin(6 * theta + 9 * t) + 0.014 * Math.sin(11 * theta - 5.5 * t) +
+    0.008 * Math.sin(19 * theta + 2 * t) + 0.005 * Math.sin(27 * theta - 13 * t)
+  // Under the folded top the fabric puckers into short horizontal creases; the
+  // same happens where the load settles at the base.
+  const puckers =
+    0.006 * Math.sin(34 * t + 2.4 * Math.sin(3 * theta)) * Math.exp(-Math.pow((t - 0.93) / 0.05, 2)) +
+    0.005 * Math.sin(46 * t - 1.7 * Math.sin(4 * theta)) * Math.exp(-Math.pow((t - 0.1) / 0.06, 2))
   // A filled bag never stands plumb: the fabric leans off its base.
   const lean = 0.035 * Math.sin(t * Math.PI * 1.15) - 0.012
   // Two dents where the bottom corners take the brunt of the load.
   const dents =
     -0.012 * Math.exp(-Math.pow((t - 0.06) / 0.05, 2)) *
     Math.exp(-Math.pow(Math.abs(Math.sin(theta)) / 0.25, 2))
-  return { x: x * wrinkle + lean, z: (z + dents) * wrinkle, w, d, n }
+  return { x: x * wrinkle + lean + puckers, z: (z + dents) * wrinkle + puckers * 0.7, w, d, n }
 }
 
 function sackNormal(theta, t) {
@@ -477,21 +483,20 @@ function buildSack() {
 
   // Sealed mouth: the bag is pinched flat and stitched, so the top two rings
   // collapse into a thin slab.
-  // The reference sack is closed with a narrow gathered roll, not a wide flat
-  // flap: the fabric pinches, rolls over itself and is stitched along the top.
+  // The reference sack is closed by folding the mouth over itself and stitching
+  // it into a flat welt — a straight band that sits a little wider than the
+  // shoulders, with the two top corners poking out as small ears.
   const leant = 0.035 * Math.sin(Math.PI * 1.15) - 0.012
+  const shoulderW = SACK_PROFILE[SACK_PROFILE.length - 1][1] * 0.8
   const mouth = [
-    [height / 2 + 0.002, 0.556, 0.07, 0],
-    [height / 2 + 0.016, 0.548, 0.058, 0.3],
-    [height / 2 + 0.032, 0.534, 0.05, 0.65],
-    [height / 2 + 0.04, 0.522, 0.046, 1],
+    [height / 2 + 0.002, shoulderW * 1.0, 0.060, 0, 2.15],
+    [height / 2 + 0.02, shoulderW * 1.022, 0.058, 0.3, 3.2],
+    [height / 2 + 0.044, shoulderW * 1.022, 0.052, 0.66, 4.2],
+    [height / 2 + 0.056, shoulderW * 1.0, 0.046, 1, 4.6],
   ]
   const mouthPoint = (j, band, offset = 0) => {
     const theta = (j / segments) * Math.PI * 2
-    const [, w, d, drift] = mouth[band]
-    // Same section exponent as the shoulder, so the roll never steps out past
-    // the body at the corners.
-    const n = 2.15
+    const [, w, d, drift, n] = mouth[band]
     const cos = Math.cos(theta)
     const sin = Math.sin(theta)
     return V(
@@ -512,10 +517,12 @@ function buildSack() {
     body.tri(topCentre, topRing[(j + 1) % segments], topRing[j])
   }
 
-  // Stitch dashes: two rows of short ribs along the sealed flap.
+  // Stitch dashes: two rows of short ribs along the sealed welt, one row on
+  // each face, exactly where the real sack is sewn.
   for (const side of [-1, 1]) {
-    for (let k = -8; k <= 8; k++) {
-      addBox(body, [0.026, 0.006, 0.008], [k * 0.06 + leant, height / 2 + 0.03, side * 0.05])
+    for (let k = -7; k <= 7; k++) {
+      addBox(body, [0.024, 0.004, 0.0035], [k * 0.064 + leant, height / 2 + 0.014, side * 0.0575])
+      addBox(body, [0.024, 0.004, 0.0035], [k * 0.064 + leant, height / 2 + 0.042, side * 0.0495])
     }
   }
 
@@ -554,7 +561,9 @@ function buildSack() {
   const bodyGeometry = body.geometry()
   const panelGeometry = panel.geometry()
   bakeOcclusion(bodyGeometry, bottom, height, 1)
-  bakeOcclusion(panelGeometry, bottom, height, 0.62)
+  // The print panel barely shades: a real print is evenly inked, only the
+  // very edges fall into the bag's own shadow.
+  bakeOcclusion(panelGeometry, bottom, height, 0.22)
 
   return [
     { name: 'sack-body', geometry: bodyGeometry, material: 'SackBody' },

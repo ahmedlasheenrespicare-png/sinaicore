@@ -8,12 +8,12 @@
   @page { size: 570mm 920mm; margin: 0; }
   @media print { html, body { background: #fff; } }
 
-  /* The reference photograph is a white woven PP sack printed in one blue.
-     Everything below works in that single ink so the panel can go to press as
-     a one-colour job (and reads correctly on white fabric in 3D). */
+  /* Traced from the reference photograph of the real sack: white woven PP
+     printed in one blue. Sizes below are read off the photo against the
+     550 × 900 mm trim, so the face maps 1:1 onto the 3D sack. */
   :root {
-    --ink-blue: #0f3f92;
-    --bag-white: #fcfbf7;
+    --ink-blue: #06357f;
+    --bag-white: #f8f9fb;
   }
 
   /* 570 × 920 mm sheet, 10 mm bleed, trim 550 × 900 mm */
@@ -25,44 +25,47 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 48mm 42mm 38mm;
+    padding: 42mm 40mm 40mm;
     text-align: center;
   }
 
-  .mark { width: 205mm; height: auto; display: block; }
+  .mark { width: 278mm; height: auto; display: block; }
 
   .word {
-    margin-top: 8mm;
-    font-family: 'DejaVu Serif', Georgia, 'Times New Roman', serif;
+    margin-top: 9mm;
+    font-family: 'Print Serif', Georgia, 'Times New Roman', serif;
     font-weight: 700;
-    font-size: 78mm;
-    line-height: 1;
-    letter-spacing: -0.015em;
+    font-size: 82mm;
+    line-height: 0.94;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
   }
   .tagline {
-    margin-top: 6mm;
-    font-family: 'DejaVu Serif', Georgia, serif;
-    font-weight: 400;
-    font-size: 25mm;
+    margin-top: 7mm;
+    font-family: 'Print Sans', Arial, sans-serif;
+    font-weight: 500;
+    font-size: 18.5mm;
     letter-spacing: 0.005em;
+    white-space: nowrap;
   }
   .rule {
-    width: 130mm;
-    height: 1.6mm;
+    width: 104mm;
+    height: 1.7mm;
     background: var(--ink-blue);
-    margin: 16mm auto 0;
+    margin: 15mm auto 0;
+    opacity: 0.9;
   }
 
   .claim {
-    margin-top: 18mm;
+    margin-top: 17mm;
     display: flex;
     flex-direction: column;
-    gap: 4mm;
-    font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif;
+    gap: 3mm;
+    font-family: 'Print Sans', Arial, sans-serif;
     font-weight: 700;
-    font-size: 31mm;
-    letter-spacing: 0.04em;
-    line-height: 1.3;
+    font-size: 24mm;
+    letter-spacing: 0.035em;
+    line-height: 1.24;
     white-space: nowrap;
   }
 
@@ -70,52 +73,68 @@
     margin-top: 30mm;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 10mm;
+    gap: 8mm;
     width: 100%;
   }
   .icons > div { display: flex; flex-direction: column; align-items: center; gap: 7mm; }
-  .icons svg { width: 62mm; height: 62mm; display: block; }
+  .icons svg { width: 68mm; height: 68mm; display: block; }
   .icons b {
-    font-family: 'DejaVu Sans', Arial, sans-serif;
+    font-family: 'Print Sans', Arial, sans-serif;
     font-weight: 700;
-    font-size: 12.5mm;
-    letter-spacing: 0.07em;
+    font-size: 15mm;
+    letter-spacing: 0.06em;
     line-height: 1.3;
   }
 
   .net {
     margin-top: auto;
-    padding-top: 26mm;
+    padding-top: 24mm;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2mm;
+    gap: 1mm;
+  }
+  .net .row {
+    display: flex;
+    align-items: center;
+    gap: 16mm;
+  }
+  .net .row i {
+    display: block;
+    width: 55mm;
+    height: 1.7mm;
+    background: var(--ink-blue);
+    opacity: 0.9;
   }
   .net span {
-    font-family: 'DejaVu Sans', Arial, sans-serif;
-    font-weight: 700;
-    font-size: 20mm;
-    letter-spacing: 0.14em;
+    font-family: 'Print Sans', Arial, sans-serif;
+    font-weight: 800;
+    font-size: 21mm;
+    letter-spacing: 0.12em;
   }
   .net b {
-    font-family: 'DejaVu Sans', Arial, sans-serif;
-    font-weight: 700;
-    font-size: 86mm;
+    font-family: 'Print Sans', Arial, sans-serif;
+    font-weight: 800;
+    font-size: 84mm;
     line-height: 1;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
   }
 
   .origin {
-    margin-top: 14mm;
-    font-family: 'DejaVu Sans', Arial, sans-serif;
-    font-weight: 700;
-    font-size: 27mm;
-    letter-spacing: 0.06em;
+    margin-top: 12mm;
+    font-family: 'Print Sans', Arial, sans-serif;
+    font-weight: 800;
+    font-size: 22mm;
+    letter-spacing: 0.055em;
   }
   .site {
-    margin-top: 8mm;
-    font-family: 'DejaVu Serif', Georgia, serif;
-    font-size: 25mm;
+    margin-top: 9mm;
+    /* splits the leftover height above and below, so the print block sits
+       centred on the panel like it does on the real sack */
+    margin-bottom: auto;
+    font-family: 'Print Sans', Arial, sans-serif;
+    font-weight: 500;
+    font-size: 22mm;
     letter-spacing: 0.01em;
   }
 
@@ -124,7 +143,7 @@
     position: absolute;
     top: 0; bottom: 0; width: 60mm;
     pointer-events: none;
-    background: linear-gradient(to right, rgba(20, 69, 154, 0.028), rgba(20, 69, 154, 0));
+    background: linear-gradient(to right, rgba(10, 59, 140, 0.03), rgba(10, 59, 140, 0));
   }
   .fold.l { left: 0; }
   .fold.r { right: 0; transform: scaleX(-1); }
@@ -169,40 +188,42 @@
 
     <div class="icons">
       <div>
-        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round">
-          <circle cx="24" cy="24" r="21" />
-          <path d="M24 11c5 6.2 7.4 9.6 7.4 12.6a7.4 7.4 0 1 1-14.8 0C16.6 20.6 19 17.2 24 11z" />
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" stroke-width="2.1" />
+          <path d="M24 10.5c4.7 6.1 7.1 9.8 7.1 13.1a7.1 7.1 0 0 1-14.2 0c0-3.3 2.4-7 7.1-13.1z" fill="currentColor" />
+          <path d="M21.6 24.6c-1.3 1.6-2 2.8-2 3.9a3 3 0 0 0 2.4 3" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" />
         </svg>
         <b>NATURAL<br />SOURCE</b>
       </div>
       <div>
-        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round">
-          <circle cx="24" cy="24" r="21" />
-          <path d="M24 9.5 33.5 18 24 38.5 14.5 18z" />
-          <path d="M14.5 18h19M24 9.5 20 18l4 20.5L28 18z" />
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" stroke-width="2.1" />
+          <path d="M24 9.2 34.6 18.7 24 39 13.4 18.7z" fill="currentColor" />
+          <path d="M13.4 18.7h21.2M24 9.2l-3.9 9.5L24 39l3.9-20.3L24 9.2z" fill="none" stroke="#fff" stroke-width="1.5" stroke-linejoin="round" />
         </svg>
         <b>HIGH<br />PURITY</b>
       </div>
       <div>
-        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round">
-          <circle cx="24" cy="24" r="21" />
-          <circle cx="24" cy="20" r="7.5" />
-          <path d="M24 20l1 4M18.6 25.6 16 36l8-3 8 3-2.6-10.4" />
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" stroke-width="2.1" />
+          <path d="M24.00 6.40 26.90 8.78 30.60 8.17 31.92 11.68 35.43 13.00 34.82 16.70 37.20 19.60 34.82 22.50 35.43 26.20 31.92 27.52 30.60 31.03 26.90 30.42 24.00 32.80 21.10 30.42 17.40 31.03 16.08 27.52 12.57 26.20 13.18 22.50 10.80 19.60 13.18 16.70 12.57 13.00 16.08 11.68 17.40 8.17 21.10 8.78Z" fill="currentColor" />
+          <circle cx="24" cy="19.6" r="6.1" fill="none" stroke="#fff" stroke-width="1.9" />
+          <path d="M24 25.6 20.6 34h6.8L24 25.6z" fill="currentColor" />
         </svg>
         <b>FOOD<br />GRADE</b>
       </div>
       <div>
-        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round">
-          <circle cx="24" cy="24" r="21" />
-          <path d="M24 10.5 34 14.5v9c0 6.4-4.2 11.4-10 14-5.8-2.6-10-7.6-10-14v-9z" />
-          <path d="M19.5 24.2l3.2 3.2 6-6.4" />
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" stroke-width="2.1" />
+          <path d="M24 9.4 34.4 13.2v9.1c0 6.9-4.3 12.4-10.4 15.3-6.1-2.9-10.4-8.4-10.4-15.3v-9.1z" fill="currentColor" />
+          <path d="M19.3 23.9l3.4 3.4 6.2-6.8" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
         <b>QUALITY<br />ASSURED</b>
       </div>
     </div>
 
     <div class="net">
-      <span>NET WEIGHT</span>
+      <div class="row"><i></i><span>NET WEIGHT</span><i></i></div>
       <b>50 kg</b>
     </div>
 
@@ -223,7 +244,7 @@
   <div class="slug">
     <span><b>SINAICORE</b> · 50 KG WOVEN PP SACK — FRONT PANEL</span>
     <span>TRIM 550 × 900 mm · BLEED 10 mm · 1 COLOUR (PANTONE 2945 C) · DIELINE IN CYAN</span>
-    <span>REV 09 / SC-08</span>
+    <span>REV 10 / SC-08</span>
   </div>
 </div>
 <script>
