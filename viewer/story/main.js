@@ -75,11 +75,46 @@ floor.position.y = FLOOR
 floor.receiveShadow = true
 scene.add(floor)
 
-/* The left column carries the copy, so the frustum slides right. */
+/* A soft contact pool under an object keeps it from looking like it floats:
+   the shadow map alone reads as a detached grey smudge on an invisible floor. */
+const contactTexture = (() => {
+  const size = 128
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = size
+  const ctx = canvas.getContext('2d')
+  const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2)
+  gradient.addColorStop(0, 'rgba(24, 43, 41, 0.34)')
+  gradient.addColorStop(0.45, 'rgba(24, 43, 41, 0.17)')
+  gradient.addColorStop(1, 'rgba(24, 43, 41, 0)')
+  ctx.fillStyle = gradient
+  ctx.fillRect(0, 0, size, size)
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  return texture
+})()
+
+const contactShadow = (width, depth, opacity = 1) => {
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(width, depth),
+    new THREE.MeshBasicMaterial({
+      map: contactTexture,
+      transparent: true,
+      opacity,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+  )
+  mesh.rotation.x = -Math.PI / 2
+  mesh.renderOrder = 1
+  return mesh
+}
+
+/* The copy column rides on the left (or at the bottom on narrow screens),
+   so the frustum slides away from it. */
 const applyViewOffset = () => {
   const width = stage.clientWidth
   const height = stage.clientHeight
-  if (width < 1080) camera.clearViewOffset()
+  if (width < 1080) camera.setViewOffset(width, height, 0, height * 0.13, width, height)
   else camera.setViewOffset(width, height, -width * 0.15, 0, width, height)
 }
 applyViewOffset()
@@ -97,9 +132,9 @@ const state = {
 const CAMERA_KEYS = [
   { pos: new THREE.Vector3(0.9, 1.15, 6.7), target: new THREE.Vector3(0, -0.12, 0.25) },
   { pos: new THREE.Vector3(0.5, 1.26, 5.15), target: new THREE.Vector3(0, 0.1, 0.15) },
-  { pos: new THREE.Vector3(1.95, 1.05, 7.2), target: new THREE.Vector3(0.15, -0.3, 0.8) },
-  { pos: new THREE.Vector3(0.5, -0.18, 3.3), target: new THREE.Vector3(-0.12, -1.0, 1.62) },
-  { pos: new THREE.Vector3(2.85, 1.35, 7.9), target: new THREE.Vector3(0.8, -0.58, 0.65) },
+  { pos: new THREE.Vector3(2.2, 1.12, 8.5), target: new THREE.Vector3(0.12, -0.3, 0.8) },
+  { pos: new THREE.Vector3(0.97, -0.18, 3.3), target: new THREE.Vector3(0.35, -1.0, 1.62) },
+  { pos: new THREE.Vector3(2.95, 1.22, 8.3), target: new THREE.Vector3(0.72, -0.66, 0.66) },
 ]
 const camPath = new THREE.CatmullRomCurve3(CAMERA_KEYS.map((k) => k.pos), false, 'catmullrom', 0.4)
 const targetPath = new THREE.CatmullRomCurve3(CAMERA_KEYS.map((k) => k.target), false, 'catmullrom', 0.4)
@@ -116,6 +151,9 @@ bagRoot.position.set(0, FLOOR, 0)
 scene.add(bagRoot)
 const sack = new THREE.Group()
 bagRoot.add(sack)
+const bagContact = contactShadow(2.5, 2.1, 0.9)
+bagContact.position.y = 0.004
+bagRoot.add(bagContact)
 let bagHeight = 2.06
 
 let model = null
@@ -124,7 +162,11 @@ let mouthAnchor = null
 let pourMesh = null
 let pourCount = 0
 let annotationRoot = null
-let focusPoint = new THREE.Vector3(-0.12, FLOOR + 0.05, 1.62)
+let focusPoint = new THREE.Vector3(0.35, FLOOR + 0.05, 1.62)
+
+const heroContact = contactShadow(0.66, 0.66, 0)
+heroContact.position.set(focusPoint.x, FLOOR + 0.003, focusPoint.z)
+scene.add(heroContact)
 
 const tablets = []
 
@@ -318,18 +360,36 @@ function buildPour(source, material) {
     return seed / 4294967296
   }
 
+  /* Where the copy column sits on the close-up (k3): nothing may land behind it,
+     or the glass panel blurs a giant tablet across the table of specs. */
+  const copyProbe = new THREE.PerspectiveCamera(30, stage.clientWidth / stage.clientHeight, 0.05, 100)
+  copyProbe.position.copy(CAMERA_KEYS[3].pos)
+  copyProbe.lookAt(CAMERA_KEYS[3].target)
+  copyProbe.setViewOffset(stage.clientWidth, stage.clientHeight, -stage.clientWidth * 0.15, 0, stage.clientWidth, stage.clientHeight)
+  copyProbe.updateMatrixWorld()
+  copyProbe.updateProjectionMatrix()
+  const probe = new THREE.Vector3()
+  const onCopy = (point) => {
+    probe.copy(point).project(copyProbe)
+    const x = (probe.x * 0.5 + 0.5) * stage.clientWidth
+    const y = (-probe.y * 0.5 + 0.5) * stage.clientHeight
+    return x < stage.clientWidth * 0.68 && y < stage.clientHeight * 0.92
+  }
+
   for (let i = 0; i < COUNT; i++) {
     // The first tablet is the hero: it lands centre-stage for the callouts.
     const hero = i === 0
     let end = hero ? focusPoint.clone() : new THREE.Vector3()
     if (!hero) {
-      let distance = 0.55 + rnd() * 1.15
+      let distance = 0.6 + rnd() * 1.0
       const angle = (rnd() * 2 - 1) * 1.15
-      for (let tries = 0; tries < 8; tries++) {
+      for (let tries = 0; tries < 14; tries++) {
         end.set(0.3 + Math.sin(angle) * distance * 1.1, FLOOR + 0.05, 0.5 + Math.cos(angle) * distance)
-        // Keep a clean patch around the hero disc, or the callouts get buried.
-        if (end.distanceTo(focusPoint) > 0.72) break
-        distance += 0.45
+        end.z = Math.min(end.z, 0.98)
+        // Keep a clean disc around the hero, and keep the copy column empty.
+        if (end.distanceTo(focusPoint) > 1.28 && !onCopy(end)) break
+        distance -= 0.16
+        if (distance < 0.5) distance = 0.6 + rnd() * 1.7
       }
     }
 
@@ -430,15 +490,7 @@ const HOTSPOT_COPY = {
 
 const hotspotButtons = new Map()
 const labelElements = []
-
-function textLabel(value, caption, modifier = '') {
-  const el = document.createElement('div')
-  el.className = `dim${modifier ? ` ${modifier}` : ''}`
-  el.innerHTML = `<strong>${value}</strong><span>${caption}</span>`
-  el.style.opacity = '0'
-  labelElements.push(el)
-  return el
-}
+let dimMarks = null
 
 function buildAnnotations(centre) {
   const root = new THREE.Group()
@@ -449,15 +501,16 @@ function buildAnnotations(centre) {
 
   const radius = 0.115
   const half = 0.05
+  const dimY = half + radius * 0.34 * 0.8
+  const thickAnchorX = radius * 1.14
 
-  const barMaterial = new THREE.MeshBasicMaterial({ color: INK, transparent: true, opacity: 0 })
   const leaderMaterial = new THREE.MeshBasicMaterial({ color: INK, transparent: true, opacity: 0 })
-  root.userData.materials = [barMaterial, leaderMaterial]
+  root.userData.materials = [null, leaderMaterial]
 
   const up = new THREE.Vector3(0, 1, 0)
   const a = new THREE.Vector3()
   const b = new THREE.Vector3()
-  const bar = (x1, y1, z1, x2, y2, z2, thickness = 0.0016, material = barMaterial) => {
+  const bar = (x1, y1, z1, x2, y2, z2, thickness = 0.0008, material = leaderMaterial) => {
     a.set(x1, y1, z1)
     b.set(x2, y2, z2)
     const length = a.distanceTo(b)
@@ -468,36 +521,26 @@ function buildAnnotations(centre) {
     root.add(mesh)
   }
 
-  const gap = radius * 0.34
-  const tick = radius * 0.1
-  const dimY = half + gap * 0.8
-
-  bar(-radius, dimY, 0, radius, dimY, 0)
-  bar(-radius, half, 0, -radius, dimY + tick, 0, 0.0012)
-  bar(radius, half, 0, radius, dimY + tick, 0, 0.0012)
-  bar(-radius, dimY - tick, 0, -radius, dimY + tick, 0)
-  bar(radius, dimY - tick, 0, radius, dimY + tick, 0)
-
-  const thickX = radius + gap
-  bar(thickX, -half, 0, thickX, half, 0)
-  bar(radius, half, 0, thickX + tick, half, 0, 0.0012)
-  bar(radius, -half, 0, thickX + tick, -half, 0, 0.0012)
-  bar(thickX - tick, half, 0, thickX + tick, half, 0)
-  bar(thickX - tick, -half, 0, thickX + tick, -half, 0)
-
-  const attach = (el, x, y, z) => {
-    const object = new CSS2DObject(el)
-    object.position.set(x, y, z)
+  /* Dimension marks are drawn in screen space so the ticks hug the disc at any
+     zoom and stay hairline crisp instead of turning into fat little cylinders. */
+  const mark = (className, html, x, y) => {
+    const element = document.createElement('div')
+    element.className = `dims ${className}`
+    element.innerHTML = html
+    element.style.opacity = '0'
+    labelElements.push(element)
+    const object = new CSS2DObject(element)
+    object.position.set(x, y, 0)
     root.add(object)
-    return object
+    return { element, object }
   }
 
-  attach(textLabel('Ø 25 mm', 'DIAMETER'), 0, dimY + radius * 0.3, 0)
-  attach(textLabel('11 mm', 'THICKNESS'), thickX + radius * 0.5, half * 0.55, 0)
-  attach(textLabel('~15 g', 'NET MASS', 'dim--mass'), -radius * 1.5, half * 0.55, 0)
-  bar(-radius * 1.42, half * 0.42, 0, -radius * 1.02, half * 0.1, 0, 0.0011, leaderMaterial)
+  const widthMark = mark('dims--x', '<span class="rule"></span><b><strong>Ø 25 mm</strong><span>Diameter</span></b>', 0, dimY)
+  const thickMark = mark('dims--y', '<span class="rule"></span><b><strong>11 mm</strong><span>Thickness</span></b>', thickAnchorX, 0)
+  const massMark = mark('dims--mass', '<b><strong>~15 g</strong><span>Net mass</span></b>', radius * 0.52, -radius * 1.5)
+  dimMarks = { widthMark, thickMark, massMark, radius, half, dimY, thickAnchorX }
 
-  for (const [id, x] of [['dissolve', radius * 1.8], ['bridging', -radius * 1.8]]) {
+  for (const [id, x, y] of [['dissolve', radius * 2.15, radius * 1.5], ['bridging', radius * 2.15, -radius * 1.5]]) {
     const copy = HOTSPOT_COPY[id]
     const button = document.createElement('button')
     button.type = 'button'
@@ -509,18 +552,55 @@ function buildAnnotations(centre) {
     button.style.pointerEvents = 'none'
     button.addEventListener('click', () => toggleHotspot(id))
     const object = new CSS2DObject(button)
-    object.position.set(x, radius * 0.9, 0)
+    object.position.set(x, y, 0)
     root.add(object)
     hotspotButtons.set(id, button)
-    bar(x * 0.42, radius * 0.3, 0, x, radius * 0.75, 0, 0.0011, leaderMaterial)
+    const sign = Math.sign(y)
+    bar(radius * 1.0, radius * 0.6 * sign, 0, x - radius * 0.4, y - radius * 0.28 * sign, 0)
   }
 }
 
-const setAnnotationWeight = (v) => {
+const probePoint = new THREE.Vector3()
+const toScreen = (x, y, z) => {
+  probePoint.set(x, y, z).project(camera)
+  return {
+    x: (probePoint.x * 0.5 + 0.5) * stage.clientWidth,
+    y: (-probePoint.y * 0.5 + 0.5) * stage.clientHeight,
+  }
+}
+
+/* Size the hairline rules to the disc's real projection, every frame. */
+const updateDims = () => {
+  if (!dimMarks || !annotationRoot?.visible) return
+  const { widthMark, thickMark, massMark, radius, half, dimY, thickAnchorX } = dimMarks
+  const c = annotationRoot.position
+  const top = half * 0.9
+  const left = toScreen(c.x - radius, c.y + top, c.z)
+  const right = toScreen(c.x + radius, c.y + top, c.z)
+  const up = toScreen(c.x + radius, c.y + half, c.z)
+  const down = toScreen(c.x + radius, c.y - half, c.z)
+  widthMark.element.style.setProperty('--len', `${Math.max(24, Math.abs(right.x - left.x)).toFixed(1)}px`)
+
+  // Extension lines: from the rule down to the disc, and across to the silhouette.
+  const rule = toScreen(c.x, c.y + dimY, c.z)
+  widthMark.element.style.setProperty('--drop', `${Math.max(3, rule.y - left.y).toFixed(1)}px`)
+  const thickRule = toScreen(c.x + thickAnchorX, c.y, c.z)
+  thickMark.element.style.setProperty('--len', `${Math.max(12, Math.abs(down.y - up.y)).toFixed(1)}px`)
+  thickMark.element.style.setProperty('--gap', `${Math.max(3, thickRule.x - right.x).toFixed(1)}px`)
+
+  const chip = massMark.element.firstElementChild
+  const halfChip = (chip?.offsetHeight ?? 30) / 2
+  const massAnchor = toScreen(c.x + radius * 0.52, c.y - radius * 1.5, c.z)
+  massMark.element.style.setProperty('--rise', `${Math.max(2, massAnchor.y - halfChip - down.y).toFixed(1)}px`)
+}
+
+const setAnnotationWeight = (value) => {
   if (!annotationRoot) return
+  // On a phone the callouts would land on top of the copy column.
+  const v = stage.clientWidth < 1080 ? 0 : value
   annotationRoot.visible = v > 0.005
   const [barMaterial, leaderMaterial] = annotationRoot.userData.materials ?? []
-  if (barMaterial) barMaterial.opacity = 0.92 * THREE.MathUtils.clamp(v * 1.3)
+  if (barMaterial) barMaterial.opacity = 0.92 * THREE.MathUtils.clamp(v * 1.3, 0, 1)
   if (leaderMaterial) leaderMaterial.opacity = 0.5 * v
   for (const el of labelElements) el.style.opacity = String(Math.min(1, v * 1.4))
   for (const button of hotspotButtons.values()) {
@@ -621,22 +701,12 @@ let smoothProgress = 0
 let lockedProgress = null
 let panelRects = []
 
-/* Narrow screens put the copy in its own pane under the model window, so the
-   scroll that drives the story lives on .story instead of the document. */
-const storyEl = document.querySelector('.story')
-const narrowQuery = window.matchMedia('(max-width: 1080px)')
-const scrollTopNow = () => (narrowQuery.matches ? storyEl.scrollTop : window.scrollY)
-
 const measurePanels = () => {
-  const inPane = narrowQuery.matches
-  const paneRect = inPane ? storyEl.getBoundingClientRect() : null
-  const scrollTop = inPane ? storyEl.scrollTop : window.scrollY
-  const vh = inPane ? storyEl.clientHeight : window.innerHeight
+  const vh = window.innerHeight
   panelRects = panels.map((panel) => {
     const rect = panel.getBoundingClientRect()
-    // Where the scroll sits when this panel is centred in the visible area.
-    const top = inPane ? rect.top - paneRect.top + scrollTop : rect.top + scrollTop
-    return { anchor: top + rect.height / 2 - vh / 2, height: rect.height }
+    // Where the scroll sits when this panel is centred in the viewport.
+    return { anchor: rect.top + window.scrollY + rect.height / 2 - vh / 2, height: rect.height }
   })
 }
 
@@ -644,7 +714,7 @@ const measurePanels = () => {
 const computeProgress = () => {
   const count = panelRects.length
   if (!count) return 0
-  const y = scrollTopNow()
+  const y = window.scrollY
   if (y <= panelRects[0].anchor) return 0
   if (y >= panelRects[count - 1].anchor) return 1
   for (let i = 0; i < count - 1; i++) {
@@ -663,66 +733,94 @@ const onScroll = () => {
   targetProgress = computeProgress()
 }
 window.addEventListener('scroll', onScroll, { passive: true })
-storyEl?.addEventListener('scroll', onScroll, { passive: true })
-
-/* The layout swaps between a fixed pane and a scrolling document, so the
-   reveals have to be rebuilt if that breakpoint is crossed. */
-let narrowNow = narrowQuery.matches
-window.addEventListener('resize', () => {
-  if (narrowQuery.matches === narrowNow) return
-  narrowNow = narrowQuery.matches
-  window.location.reload()
-})
 
 let story = null
+
+/* Words stay unbroken; every glyph gets its own box so it can rise. */
+function splitLetters(heading) {
+  const text = heading.textContent.trim().replace(/\s+/g, ' ')
+  const letters = []
+  heading.textContent = ''
+  text.split(' ').forEach((word, index, words) => {
+    const wrap = document.createElement('span')
+    wrap.className = 'word'
+    for (const char of word) {
+      const letter = document.createElement('span')
+      letter.className = 'letter'
+      letter.textContent = char
+      wrap.appendChild(letter)
+      letters.push(letter)
+    }
+    heading.appendChild(wrap)
+    if (index < words.length - 1) heading.appendChild(document.createTextNode(' '))
+  })
+  return letters
+}
 
 function buildStory() {
   const timeline = gsap.timeline({ paused: true, defaults: { ease: 'none' } })
   timeline
-    .to(state.bag, { spin: 1, duration: 0.22, ease: 'power1.inOut' }, 0.02)
-    .to(state.cam, { k: 1, duration: 0.16, ease: 'power1.inOut' }, 0.02)
-    .to(state.bag, { open: 1, duration: 0.1, ease: 'power2.out' }, 0.17)
-    .to(state.bag, { tilt: 1, duration: 0.08, ease: 'power2.inOut' }, 0.25)
-    .to(state.cam, { k: 2, duration: 0.11, ease: 'power1.inOut' }, 0.25)
-    .to(state.pour, { u: 1, duration: 0.32, ease: 'none' }, 0.34)
-    .to(state.cam, { k: 3, duration: 0.14, ease: 'power1.inOut' }, 0.54)
-    .to(state.annot, { v: 1, duration: 0.06, ease: 'power1.out' }, 0.62)
-    .to(state.bag, { tilt: 0.12, duration: 0.1, ease: 'power1.inOut' }, 0.64)
-    .to(state.bag, { side: 1, duration: 0.12, ease: 'power1.inOut' }, 0.65)
-    .to(state.bag, { open: 0, duration: 0.1, ease: 'power2.inOut' }, 0.68)
-    .to(state.cam, { k: 4, duration: 0.14, ease: 'power1.inOut' }, 0.86)
-    .to(state.annot, { v: 0, duration: 0.05, ease: 'power1.in' }, 0.93)
+    .to(state.bag, { spin: 1, duration: 0.14, ease: 'power1.inOut' }, 0.02)
+    .to(state.cam, { k: 1, duration: 0.1, ease: 'power1.inOut' }, 0.02)
+    .to(state.bag, { open: 1, duration: 0.08, ease: 'power2.out' }, 0.09)
+    .to(state.bag, { tilt: 1, duration: 0.07, ease: 'power2.inOut' }, 0.15)
+    .to(state.cam, { k: 2, duration: 0.08, ease: 'power1.inOut' }, 0.16)
+    .to(state.pour, { u: 1, duration: 0.19, ease: 'none' }, 0.21)
+    .to(state.bag, { tilt: 0.12, duration: 0.07, ease: 'power1.inOut' }, 0.4)
+    .to(state.cam, { k: 3, duration: 0.07, ease: 'power1.inOut' }, 0.39)
+    .to(state.bag, { side: 1, duration: 0.08, ease: 'power1.inOut' }, 0.42)
+    .to(state.bag, { open: 0, duration: 0.06, ease: 'power2.inOut' }, 0.44)
+    .to(state.annot, { v: 1, duration: 0.06, ease: 'power1.out' }, 0.42)
+    .to(state.annot, { v: 0, duration: 0.05, ease: 'power1.in' }, 0.56)
+    .to(state.cam, { k: 4, duration: 0.14, ease: 'power1.inOut' }, 0.58)
+    // The tweens stop short of 1; a zero-length set at the end makes the
+    // timeline duration exactly 1 so progress() and the scroll agree.
+    .set({}, {}, 1)
 
   story = timeline
 
-  /* Reveal the copy as each panel arrives, and keep the rail in step.
-     In the narrow layout the copy scrolls inside its own pane. */
-  if (narrowQuery.matches) ScrollTrigger.defaults({ scroller: storyEl })
+  /* Display headings set letter by letter; everything else rises into place
+     as its panel takes the screen. */
+  panels.forEach((panel) => {
+    panel.querySelectorAll('[data-letters]').forEach((heading) => {
+      const letters = splitLetters(heading)
+      if (reduceMotion) return
+      gsap.from(letters, {
+        yPercent: 108,
+        opacity: 0,
+        duration: 0.9,
+        ease: 'expo.out',
+        stagger: 0.018,
+        scrollTrigger: {
+          trigger: panel,
+          start: 'top 72%',
+          toggleActions: 'play none none reverse',
+        },
+      })
+    })
 
-  panels.forEach((panel, index) => {
-    gsap.fromTo(
-      panel.querySelectorAll('.reveal'),
-      { y: 26, opacity: 0 },
-      {
-        y: 0,
-        opacity: 1,
-        duration: 0.7,
-        stagger: 0.055,
+    const bits = panel.querySelectorAll('[data-reveal]')
+    if (bits.length) {
+      gsap.from(bits, {
+        y: 24,
+        opacity: 0,
+        duration: 0.75,
+        stagger: 0.07,
         ease: 'power2.out',
         scrollTrigger: {
           trigger: panel,
-          start: 'top 78%',
+          start: 'top 70%',
           toggleActions: 'play none none reverse',
         },
-      },
-    )
+      })
+    }
   })
 
   measurePanels()
   onScroll()
   smoothProgress = targetProgress
   timeline.progress(smoothProgress)
-  setStep(Math.min(panels.length - 1, Math.round(smoothProgress * (panels.length - 1))))
+  setStep(smoothProgress < 0.2 ? 0 : smoothProgress < 0.42 ? 1 : smoothProgress < 0.72 ? 2 : 3)
 }
 
 function setStep(index) {
@@ -736,9 +834,13 @@ function setStep(index) {
   if (stepNow) stepNow.textContent = String(index + 1).padStart(2, '0')
 }
 
+const RAIL_TARGETS = [0, 2, 3, 6]
 railButtons.forEach((button, index) => {
   button.addEventListener('click', () => {
-    panels[index]?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
+    panels[RAIL_TARGETS[index]]?.scrollIntoView({
+      behavior: reduceMotion ? 'auto' : 'smooth',
+      block: 'start',
+    })
   })
 })
 
@@ -779,6 +881,34 @@ window.addEventListener('pointerup', endDrag)
 window.addEventListener('pointercancel', endDrag)
 
 /* -------------------------------------------------------------------------- */
+/*  Pointer dot                                                               */
+/* -------------------------------------------------------------------------- */
+const cursorEl = document.getElementById('cursor')
+if (cursorEl && window.matchMedia('(hover: hover)').matches) {
+  let cx = window.innerWidth / 2
+  let cy = window.innerHeight / 2
+  let tx = cx
+  let ty = cy
+  window.addEventListener(
+    'pointermove',
+    (event) => {
+      tx = event.clientX
+      ty = event.clientY
+      const over = event.target instanceof Element && !!event.target.closest('a, button, .hotspot')
+      cursorEl.classList.toggle('is-over', over)
+    },
+    { passive: true },
+  )
+  const follow = () => {
+    cx += (tx - cx) * 0.22
+    cy += (ty - cy) * 0.22
+    cursorEl.style.transform = `translate(${cx}px, ${cy}px) translate(-50%, -50%)`
+    requestAnimationFrame(follow)
+  }
+  follow()
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Frame loop                                                                */
 /* -------------------------------------------------------------------------- */
 const clock = new THREE.Clock()
@@ -806,8 +936,8 @@ function applyBag(elapsed) {
   const { spin, tilt, side, open } = state.bag
   bagRoot.rotation.y = spin * 0.92 + Math.sin(elapsed * 0.25) * 0.012
   bagRoot.rotation.z = tilt * -0.42
-  bagRoot.position.x = side * 1.8
-  bagRoot.position.z = -side * 1.55
+  bagRoot.position.x = side * 1.5
+  bagRoot.position.z = -side * 0.6
 
   if (!mouth) return
   mouth.group.visible = open > 0.01
@@ -821,6 +951,7 @@ function applyBag(elapsed) {
 function updatePour() {
   if (!pourMesh) return
   const u = state.pour.u
+  heroContact.material.opacity = 0.85 * THREE.MathUtils.smoothstep(u, 0.5, 0.92)
   for (let i = 0; i < tablets.length; i++) {
     const t = pourAt(tablets[i], u, i)
     if (t === null) continue
@@ -840,7 +971,9 @@ function tick() {
       story.progress(smoothProgress)
     }
     if (progressFill) progressFill.style.transform = `scaleX(${Math.max(0.001, smoothProgress)})`
-    const step = Math.min(panels.length - 1, Math.round(smoothProgress * (panels.length - 1)))
+    // The rail keeps the four story beats, while the page has six panels.
+    const step =
+      smoothProgress < 0.2 ? 0 : smoothProgress < 0.42 ? 1 : smoothProgress < 0.72 ? 2 : 3
     if (step !== activeStep) setStep(step)
   }
 
@@ -848,6 +981,7 @@ function tick() {
   updatePour()
   applyCamera()
   setAnnotationWeight(state.annot.v)
+  updateDims()
   // A card whose anchor has faded out would float over nothing.
   if (openHotspotId && state.annot.v < 0.35) closeHotspot()
 
@@ -905,5 +1039,7 @@ if (import.meta.env.DEV) {
     },
     state,
     camera,
+    scene,
+    get annotationRoot() { return annotationRoot },
   }
 }

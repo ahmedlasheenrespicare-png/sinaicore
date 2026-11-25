@@ -1,408 +1,475 @@
 <!doctype html>
-<html lang="en" dir="ltr">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="robots" content="noindex, nofollow" />
-    <title>SinaiCore — Water Treatment Solutions · compressed salt tablet</title>
+    <title>SinaiCore · Water Treatment Solutions</title>
+    <meta
+      name="description"
+      content="Ultra-pure marine sodium chloride tablets, compressed in Egypt for ion-exchange resin regeneration."
+    />
     <style>
       :root {
         --paper: #f4f1e8;
-        --paper-deep: #ece8dc;
+        --paper-2: #fbf8f0;
         --ink: #1b2a29;
-        --body: #4d5a56;
+        --body: #3d4a47;
         --muted: #8a938d;
         --teal: #0d3d41;
         --clay: #c97942;
         --line: rgba(27, 42, 41, 0.14);
+        --accent: var(--clay);
+        --display: "Playfair Display", Georgia, serif;
+        --sans: "IBM Plex Sans Arabic", "Segoe UI", system-ui, sans-serif;
+        --mono: "DM Mono", ui-monospace, SFMono-Regular, monospace;
       }
       * { box-sizing: border-box; }
       html { scroll-behavior: auto; }
       html, body { margin: 0; background: var(--paper); color: var(--ink); }
-      /* The paper wash lives on the page, not on the stage, so the stage can
-         sit in front of the copy without painting over it. */
       body {
-        background:
-          radial-gradient(120% 85% at 68% 12%, #fbf8f0 0%, var(--paper) 48%, #e9e4d4 100%) fixed;
-      }
-      body {
-        font-family: "IBM Plex Sans Arabic", "Segoe UI", system-ui, sans-serif;
+        font-family: var(--sans);
         -webkit-font-smoothing: antialiased;
         overflow-x: hidden;
+        background:
+          radial-gradient(120% 85% at 68% 12%, #fbf8f0 0%, var(--paper) 48%, #e9e4d4 100%) fixed;
       }
       button { font: inherit; color: inherit; }
       ::selection { background: var(--teal); color: #fff; }
 
       /* ------------------------------------------------------------- stage */
-      /* The model floats over the copy: it stays visible all the way down and
-         the text scrolls behind it. Only the labels take pointer events. */
       #stage {
         position: fixed;
         inset: 0;
-        z-index: 4;
+        z-index: 0;
         pointer-events: none;
-        background: transparent;
       }
       #stage canvas { display: block; pointer-events: none; touch-action: pan-y; }
-      /* Wide screens: the model may pass over the copy, so it dissolves into
-         the paper just before it reaches the text column. */
-      @media (min-width: 1081px) {
-        #stage {
-          -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 26%, #000 46%, #000 100%);
-          mask-image: linear-gradient(to right, transparent 0%, transparent 26%, #000 46%, #000 100%);
-        }
-      }
-      .labels {
-        position: absolute;
-        inset: 0;
-        z-index: 2;
-        pointer-events: none;
-        overflow: hidden;
-      }
+      .labels { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
 
-      /* The text sits on paper; the model keeps the right two thirds. */
-      .veil {
-        position: fixed;
-        inset: 0 auto 0 0;
-        width: 64%;
-        z-index: 1;
-        pointer-events: none;
-        background: linear-gradient(to right, rgba(244, 241, 232, 0.97) 0%, rgba(244, 241, 232, 0.94) 46%, rgba(244, 241, 232, 0) 100%);
-      }
-
-      /* --------------------------------------------------------------- bar */
+      /* --------------------------------------------------------- chrome */
       .bar {
         position: fixed;
         inset: 0 0 auto 0;
-        z-index: 6;
+        z-index: 8;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 16px;
-        height: 48px;
-        padding: 0 28px;
-        background: rgba(244, 241, 232, 0.82);
-        border-bottom: 1px solid var(--line);
-        backdrop-filter: blur(6px);
-      }
-      .bar span {
-        font-family: "DM Mono", monospace;
-        font-size: 9px;
-        letter-spacing: 0.2em;
+        gap: 18px;
+        padding: 18px clamp(18px, 3vw, 40px);
+        font-family: var(--mono);
+        font-size: 9.5px;
+        letter-spacing: 0.22em;
         text-transform: uppercase;
-        white-space: nowrap;
+        color: rgba(27, 42, 41, 0.62);
+        pointer-events: none;
       }
       .bar .brand { color: var(--teal); letter-spacing: 0.3em; }
-      .bar .brand i { color: var(--clay); font-style: normal; }
-      .bar .mid { color: var(--muted); }
-      .bar .meta { color: var(--muted); }
-      .bar .meta b { color: var(--clay); font-weight: 400; }
+      .bar .brand i { font-style: normal; color: var(--clay); }
+      .bar .mid { display: none; }
+      .bar .meta b { color: var(--teal); font-weight: 500; }
+      @media (min-width: 900px) { .bar .mid { display: block; } }
 
       .progress {
         position: fixed;
-        inset: 48px 0 auto 0;
-        z-index: 7;
+        inset: 0 0 auto 0;
         height: 2px;
-        background: rgba(27, 42, 41, 0.08);
+        z-index: 9;
+        background: rgba(27, 42, 41, 0.1);
+        pointer-events: none;
       }
       .progress span {
         display: block;
         height: 100%;
-        width: 100%;
-        transform: scaleX(0);
-        transform-origin: 0 50%;
+        width: 0;
         background: var(--clay);
+        transform-origin: left center;
       }
 
-      /* -------------------------------------------------------------- rail */
+      /* the step rail: a thin column of labels on the right */
       .rail {
         position: fixed;
-        inset: 50% 22px auto auto;
-        z-index: 5;
+        z-index: 7;
+        right: clamp(14px, 2.2vw, 30px);
+        top: 50%;
+        transform: translateY(-50%);
         display: flex;
         flex-direction: column;
         gap: 14px;
-        transform: translateY(-50%);
+        margin: 0;
+        padding: 0;
+        font-family: var(--mono);
+        font-size: 9px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
       }
       .rail button {
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        position: relative;
         border: 0;
         background: none;
-        padding: 0;
+        padding: 0 26px 0 0;
+        color: rgba(27, 42, 41, 0.4);
         cursor: pointer;
-        color: var(--muted);
-        font-family: "DM Mono", monospace;
-        font-size: 8.5px;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        opacity: 0.55;
-        transition: opacity 0.3s ease, color 0.3s ease;
+        text-align: right;
+        transition: color 0.3s ease;
       }
       .rail button::after {
         content: "";
-        width: 18px;
+        position: absolute;
+        right: 0;
+        top: 50%;
+        width: 14px;
         height: 1px;
         background: currentColor;
-        transition: width 0.3s ease;
+        opacity: 0.5;
+        transition: width 0.3s ease, opacity 0.3s ease;
       }
-      .rail button:hover { opacity: 1; }
-      .rail button.is-on { opacity: 1; color: var(--teal); }
-      .rail button.is-on::after { width: 34px; background: var(--clay); }
+      .rail button.is-on { color: var(--teal); }
+      .rail button.is-on::after { width: 22px; opacity: 1; background: var(--clay); }
 
-      /* ------------------------------------------------------------ panels */
-      /* The story column floats over the canvas, so only its text takes clicks. */
+      /* ------------------------------------------------------------- story */
       .story { position: relative; z-index: 3; pointer-events: none; }
+      .panel { position: relative; }
+      .panel--hero { height: 300svh; }
+      .panel--pack { height: 210svh; }
+      .panel--pour { height: 210svh; }
+      .panel--tablet { height: 260svh; }
+      .panel--why { height: 200svh; }
+      .panel--where { height: 210svh; }
+      .panel--supply { height: 170svh; }
 
-      .panel {
-        min-height: 100vh;
+      .sticky {
+        position: sticky;
+        top: 0;
+        height: 100svh;
         display: flex;
         align-items: center;
-        padding: 13vh clamp(22px, 4vw, 60px) 12vh clamp(22px, 6vw, 96px);
       }
-      .panel-inner { width: min(560px, 47vw); pointer-events: auto; }
 
-      .eyebrow {
-        margin: 0 0 10px;
-        font-family: "DM Mono", monospace;
-        font-size: 9px;
-        letter-spacing: 0.24em;
+      .panel-inner {
+        position: relative;
+        isolation: isolate;
+        width: min(48vw, 660px);
+        margin-left: 7vw;
+        padding: 1.4rem 0;
+        pointer-events: auto;
+      }
+      .panel--tablet .panel-inner { width: min(48vw, 660px); }
+
+      /* The frosted caption panel: keeps the copy readable while the model
+         stays visible through it. */
+      .panel-inner > .fade {
+        content: "";
+        position: absolute;
+        inset: -3.4rem -4.6rem;
+        z-index: -1;
+        border-radius: 8px;
+        background: rgba(251, 248, 240, 0.42);
+        -webkit-backdrop-filter: blur(18px) saturate(1.04);
+        backdrop-filter: blur(18px) saturate(1.04);
+        -webkit-mask-image:
+          linear-gradient(to right, transparent, #000 15%, #000 85%, transparent),
+          linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+        mask-image:
+          linear-gradient(to right, transparent, #000 15%, #000 85%, transparent),
+          linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+        -webkit-mask-composite: source-in;
+        mask-composite: intersect;
+        pointer-events: none;
+      }
+
+      /* --------------------------------------------------------- type */
+      .kicker {
+        margin: 0 0 18px;
+        font-family: var(--mono);
+        font-size: 9.5px;
+        letter-spacing: 0.26em;
         text-transform: uppercase;
-        color: var(--clay);
+        color: var(--accent);
       }
-      h1 {
+      .display {
         margin: 0;
-        font-family: "Playfair Display", Georgia, serif;
+        font-family: var(--display);
         font-weight: 400;
-        font-size: clamp(30px, 3.4vw, 48px);
-        line-height: 1.04;
-        letter-spacing: -0.01em;
+        font-size: clamp(2.4rem, 5.6vw, 4.9rem);
+        line-height: 0.98;
+        letter-spacing: -0.02em;
         color: var(--teal);
       }
-      .step-h {
-        margin: 0 0 4px;
-        font-family: "Playfair Display", Georgia, serif;
-        font-weight: 400;
-        font-size: clamp(26px, 2.6vw, 38px);
-        line-height: 1.1;
-        color: var(--teal);
+      /* Each word is a mask: letters rise from under the baseline and can
+         never spill over the line below while they animate. */
+      .display .word {
+        display: inline-block;
+        white-space: nowrap;
+        overflow: hidden;
+        vertical-align: bottom;
+        padding-bottom: 0.14em;
+        margin-bottom: -0.14em;
       }
+      .display .letter { display: inline-block; will-change: transform, opacity; }
+      h2.display { font-size: clamp(2rem, 4.6vw, 3.9rem); }
+
+      .lede {
+        margin: 18px 0 0;
+        max-width: 34rem;
+        font-size: clamp(0.95rem, 1.1vw, 1.06rem);
+        line-height: 1.78;
+        color: rgba(27, 42, 41, 0.78);
+      }
+      .micro {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: 9px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: rgba(27, 42, 41, 0.5);
+      }
+
+      /* --------------------------------------------------------- pieces */
+      .mark {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 26px;
+        font-family: var(--mono);
+        font-size: 9px;
+        letter-spacing: 0.26em;
+        text-transform: uppercase;
+        color: rgba(27, 42, 41, 0.55);
+      }
+      .mark b { color: var(--teal); font-weight: 400; letter-spacing: 0.3em; }
+      .mark em { font-style: normal; color: rgba(27, 42, 41, 0.35); }
+
+      .purity {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        margin-top: 26px;
+        padding-top: 22px;
+        border-top: 1px solid var(--line);
+      }
+      .purity strong {
+        font-family: var(--display);
+        font-weight: 400;
+        font-size: clamp(2rem, 3.4vw, 2.9rem);
+        line-height: 1;
+        color: var(--teal);
+        letter-spacing: -0.02em;
+      }
+      .purity strong em { font-style: normal; font-size: 0.42em; color: var(--clay); }
+      .purity span { font-size: 12px; line-height: 1.6; color: rgba(27, 42, 41, 0.6); }
+
+      .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; margin-top: 26px; }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        padding: 13px 22px;
+        border: 0;
+        border-radius: 999px;
+        background: var(--teal);
+        color: #f7f4ea;
+        font-size: 12px;
+        letter-spacing: 0.02em;
+        text-decoration: none;
+        cursor: pointer;
+        transition: transform 0.25s ease, background 0.25s ease, opacity 0.25s ease;
+      }
+      .pill:hover { background: #0a3236; transform: translateY(-1px); }
+      .pill span { transition: transform 0.25s ease; }
+      .pill:hover span { transform: translateX(3px); }
+      .pill--ghost { background: transparent; color: var(--teal); border: 1px solid rgba(13, 61, 65, 0.35); }
+      .pill--ghost:hover { background: rgba(13, 61, 65, 0.06); }
+      .link {
+        font-size: 12px;
+        letter-spacing: 0.02em;
+        color: var(--teal);
+        text-decoration: none;
+        border-bottom: 1px solid rgba(27, 42, 41, 0.28);
+        padding-bottom: 2px;
+        transition: border-color 0.25s ease;
+      }
+      .link:hover { border-color: var(--teal); }
+
+      .chips { display: flex; flex-wrap: wrap; gap: 7px; margin: 20px 0 0; padding: 0; list-style: none; }
+      .chip {
+        border: 1px solid rgba(201, 121, 66, 0.4);
+        border-radius: 999px;
+        padding: 6px 13px;
+        font-size: 11.5px;
+        letter-spacing: 0.01em;
+        color: #a85f31;
+        white-space: nowrap;
+      }
+      .chip b { font-weight: 500; }
+
       .sub-h {
-        margin: 18px 0 8px;
-        font-family: "DM Mono", monospace;
+        margin: 26px 0 8px;
+        font-family: var(--mono);
+        font-size: 9px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: rgba(27, 42, 41, 0.5);
+      }
+      .note { margin: 8px 0 0; font-size: 12px; line-height: 1.7; color: rgba(27, 42, 41, 0.62); }
+
+      .cards { display: grid; gap: 10px; margin-top: 12px; }
+      .cards--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .cards--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .card {
+        border: 1px solid var(--line);
+        padding: 12px 13px;
+        background: rgba(251, 248, 240, 0.55);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 7px;
+        font-family: var(--mono);
         font-size: 8.5px;
         font-weight: 400;
         letter-spacing: 0.18em;
         text-transform: uppercase;
         color: var(--clay);
       }
+      .card strong { display: block; font-size: 12.5px; font-weight: 500; color: var(--teal); }
+      .card p { margin: 5px 0 0; font-size: 11.5px; line-height: 1.6; color: rgba(27, 42, 41, 0.62); }
+      .card svg { width: 19px; height: 19px; fill: none; stroke: var(--teal); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; margin-bottom: 9px; }
 
-      .purity {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        margin: 16px 0 0;
-        padding: 14px 18px;
-        background: var(--teal);
-        color: var(--paper);
-        border-right: 3px solid var(--clay);
-      }
-      .purity small {
-        font-family: "DM Mono", monospace;
-        font-size: 8.5px;
-        letter-spacing: 0.2em;
-        color: rgba(244, 241, 232, 0.62);
-      }
-      .purity strong {
-        font-family: "Playfair Display", Georgia, serif;
-        font-weight: 400;
-        font-size: clamp(30px, 3.1vw, 44px);
-        line-height: 1.05;
-      }
-      .purity strong em { font-style: normal; font-size: 0.45em; color: var(--clay); margin-left: 3px; }
-      .purity span:last-child {
-        font-size: 11.5px;
-        color: rgba(244, 241, 232, 0.76);
-      }
-
-      .lede { margin: 14px 0 0; font-size: 13px; line-height: 1.85; color: var(--body); }
-
-      .facts {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 1px;
-        margin: 16px 0 0;
-        padding: 0;
-        list-style: none;
-        background: var(--line);
-        border: 1px solid var(--line);
-      }
-      .facts li { background: rgba(250, 248, 241, 0.9); padding: 9px 11px; display: flex; flex-direction: column; gap: 3px; }
-      .facts b {
-        font-family: "DM Mono", monospace;
-        font-size: 8px;
-        font-weight: 400;
-        letter-spacing: 0.16em;
-        color: var(--muted);
-      }
-      .facts i { font-style: normal; font-family: "DM Mono", monospace; font-size: 13px; color: var(--teal); }
-
-      /* cards ------------------------------------------------------------ */
-      .cards { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); }
-      .cards--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-      .cards--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .card {
-        background: rgba(250, 248, 241, 0.92);
-        padding: 11px 12px;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        transition: background 0.2s ease;
-      }
-      .card:hover { background: #fffdf7; }
-      .card b {
-        font-family: "DM Mono", monospace;
-        font-size: 8.5px;
-        letter-spacing: 0.12em;
-        color: var(--clay);
-        font-weight: 400;
-      }
-      .card strong { font-size: 12px; font-weight: 500; color: var(--ink); }
-      .card p { margin: 0; font-size: 11px; line-height: 1.6; color: var(--body); }
-      .card svg {
-        width: 19px; height: 19px;
-        fill: none; stroke: var(--teal); stroke-width: 1.3;
-        stroke-linecap: round; stroke-linejoin: round;
-      }
-
-      /* rows ------------------------------------------------------------- */
-      .rows { margin: 0; border-top: 1px solid var(--line); }
-      .rows > div {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 14px;
-        align-items: baseline;
-        padding: 8px 8px;
-        border-bottom: 1px solid var(--line);
-        transition: background 0.18s ease, padding 0.18s ease;
-      }
-      .rows > div:hover { background: rgba(13, 61, 65, 0.05); padding-inline: 12px; }
-      .rows dt { font-size: 12px; color: var(--body); }
-      .rows dd {
-        margin: 0;
-        font-family: "DM Mono", monospace;
-        font-size: 12px;
-        color: var(--ink);
-        white-space: nowrap;
-      }
-      .rows dd.hi { color: var(--clay); }
-      .method {
-        display: inline-flex;
-        margin: 0 0 10px;
-        padding: 5px 9px;
-        border: 1px dashed rgba(201, 121, 66, 0.6);
-        font-family: "DM Mono", monospace;
-        font-size: 9px;
-        letter-spacing: 0.1em;
-        color: var(--clay);
-      }
-
-      .bullet { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
-      .bullet li {
-        display: grid;
-        grid-template-columns: 24px minmax(0, 1fr);
-        gap: 10px;
-        align-items: baseline;
-        padding: 8px 4px;
-        border-bottom: 1px solid var(--line);
-        font-size: 12px;
-        line-height: 1.55;
-        color: var(--body);
-      }
-      .bullet li span:first-child { font-family: "DM Mono", monospace; font-size: 8.5px; color: var(--clay); }
-
-      /* standards -------------------------------------------------------- */
-      .std-badges { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 10px; }
+      /* standards */
+      .std-badges { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; }
       .std-badges button {
-        padding: 9px 8px;
         border: 1px solid var(--line);
-        background: rgba(250, 248, 241, 0.9);
-        cursor: pointer;
-        font-family: "DM Mono", monospace;
+        background: rgba(251, 248, 240, 0.7);
+        padding: 8px 16px;
+        border-radius: 999px;
+        font-family: var(--mono);
         font-size: 10px;
-        letter-spacing: 0.16em;
-        color: var(--body);
-        transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        letter-spacing: 0.14em;
+        color: rgba(27, 42, 41, 0.66);
+        cursor: pointer;
+        transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
       }
-      .std-badges button:hover { border-color: var(--teal); color: var(--teal); }
-      .std-badges button.is-on { background: var(--teal); border-color: var(--teal); color: var(--paper); }
-      .std-note {
-        margin: 9px 0 0;
-        min-height: 32px;
-        font-size: 11px;
-        line-height: 1.7;
-        color: var(--body);
-        border-left: 2px solid var(--clay);
-        padding-left: 10px;
-      }
+      .std-badges button:hover { border-color: rgba(13, 61, 65, 0.5); color: var(--teal); }
+      .std-badges button.is-on { background: var(--teal); border-color: var(--teal); color: #f7f4ea; }
+      .std-note { margin: 12px 0 0; min-height: 2.4em; font-size: 11.5px; line-height: 1.7; color: rgba(27, 42, 41, 0.62); }
       .std-note b { color: var(--teal); font-weight: 500; }
 
-      /* cta -------------------------------------------------------------- */
-      .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-      .btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 12px 16px;
-        border: 1px solid var(--teal);
-        background: var(--teal);
-        color: var(--paper);
-        font-family: "DM Mono", monospace;
-        font-size: 10.5px;
-        letter-spacing: 0.1em;
-        text-decoration: none;
-        cursor: pointer;
-        transition: background 0.22s ease, color 0.22s ease, transform 0.22s ease;
+      /* tables */
+      .table-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2.6rem; }
+      .rows { margin: 0; }
+      .rows > div {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 7px 0;
+        border-bottom: 1px solid rgba(27, 42, 41, 0.09);
       }
-      .btn:hover { background: var(--clay); border-color: var(--clay); transform: translateY(-1px); }
-      .btn--ghost { background: transparent; color: var(--teal); }
-      .btn--ghost:hover { background: var(--teal); color: var(--paper); }
-      .quote { margin-top: 20px; padding: 16px 18px; background: rgba(13, 61, 65, 0.06); border: 1px solid var(--line); }
-      .quote h3 { margin: 0 0 6px; font-family: "Playfair Display", Georgia, serif; font-weight: 400; font-size: 19px; color: var(--teal); }
-      .quote p { margin: 0; font-size: 12px; line-height: 1.75; color: var(--body); }
+      .rows dt { font-size: 12px; color: rgba(27, 42, 41, 0.72); }
+      .rows dd { margin: 0; font-family: var(--mono); font-size: 11px; color: var(--teal); white-space: nowrap; }
+      .rows dd.hi { color: var(--clay); }
+      .method {
+        display: inline-block;
+        margin: 4px 0 18px;
+        padding: 6px 12px;
+        border: 1px dashed rgba(201, 121, 66, 0.55);
+        font-family: var(--mono);
+        font-size: 9px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #a85f31;
+      }
+
+      /* lists */
+      .bullet { margin: 12px 0 0; padding: 0; list-style: none; }
+      .bullet li {
+        display: flex;
+        gap: 14px;
+        padding: 9px 0;
+        border-bottom: 1px solid rgba(27, 42, 41, 0.09);
+        font-size: 12.5px;
+        line-height: 1.6;
+        color: rgba(27, 42, 41, 0.78);
+      }
+      .bullet li span:first-child {
+        font-family: var(--mono);
+        font-size: 9px;
+        letter-spacing: 0.12em;
+        color: var(--clay);
+        padding-top: 3px;
+      }
+
+      .quote {
+        margin-top: 22px;
+        padding: 16px 18px;
+        border: 1px solid rgba(13, 61, 65, 0.18);
+        background: rgba(13, 61, 65, 0.06);
+      }
+      .quote h3 {
+        margin: 0 0 6px;
+        font-family: var(--display);
+        font-weight: 400;
+        font-size: 1.3rem;
+        color: var(--teal);
+      }
+      .quote p { margin: 0; font-size: 12px; line-height: 1.7; color: rgba(27, 42, 41, 0.68); }
 
       .doc-foot {
         display: flex;
         justify-content: space-between;
-        gap: 12px;
-        margin-top: 22px;
+        gap: 16px;
+        margin-top: 20px;
         padding-top: 12px;
         border-top: 1px solid var(--line);
-        font-family: "DM Mono", monospace;
+        font-family: var(--mono);
         font-size: 8.5px;
-        letter-spacing: 0.14em;
+        letter-spacing: 0.16em;
         text-transform: uppercase;
-        color: var(--muted);
+        color: rgba(27, 42, 41, 0.45);
       }
 
-      /* ------------------------------------------------ 3D annotations */
-      .dim {
+      /* the passing line inside the hero */
+      .passing { position: absolute; top: 178svh; width: 100%; }
+      .passing .panel-inner { width: min(40vw, 520px); }
+
+      /* scroll cue */
+      .cue {
+        position: absolute;
+        left: 50%;
+        bottom: 4svh;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 1px;
-        padding: 3px 7px;
-        background: rgba(249, 246, 238, 0.94);
-        border: 1px solid rgba(201, 121, 66, 0.55);
-        white-space: nowrap;
-        filter: drop-shadow(0 6px 12px rgba(27, 42, 41, 0.09));
-        transition: opacity 0.2s linear;
+        gap: 12px;
+        transform: translateX(-50%);
+        font-family: var(--mono);
+        font-size: 9px;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: rgba(27, 42, 41, 0.5);
       }
-      .dim strong { font-family: "DM Mono", monospace; font-size: 10.5px; font-weight: 400; color: var(--teal); }
-      .dim span { font-family: "DM Mono", monospace; font-size: 7px; letter-spacing: 0.16em; color: var(--clay); }
-      .dim--mass strong { color: var(--clay); }
+      .cue span { position: relative; display: block; height: 52px; width: 1px; background: rgba(27, 42, 41, 0.15); overflow: hidden; }
+      .cue span i { position: absolute; inset: 0 0 auto 0; height: 50%; background: rgba(27, 42, 41, 0.65); animation: cue 1.9s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+      @keyframes cue { 0% { transform: translateY(-100%); } 60%, 100% { transform: translateY(200%); } }
 
+      /* custom cursor */
+      .cursor {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 20;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--clay);
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+        mix-blend-mode: multiply;
+        transition: width 0.25s ease, height 0.25s ease, opacity 0.3s ease;
+      }
+      .cursor.is-over { width: 26px; height: 26px; opacity: 0.45; }
+      @media (hover: none) { .cursor { display: none; } }
+
+      /* hotspot labels ---------------------------------------------------- */
       .hotspot {
         display: inline-flex;
         align-items: center;
@@ -411,7 +478,7 @@
         border: 1px solid rgba(13, 61, 65, 0.35);
         border-radius: 999px;
         background: rgba(249, 246, 238, 0.95);
-        font-family: "DM Mono", monospace;
+        font-family: var(--mono);
         font-size: 8.5px;
         letter-spacing: 0.1em;
         text-transform: uppercase;
@@ -428,150 +495,217 @@
       .hotspot .dot::after {
         content: "";
         position: absolute;
-        inset: -5px;
-        border: 1px solid rgba(201, 121, 66, 0.55);
+        inset: -4px;
         border-radius: 50%;
+        border: 1px solid rgba(201, 121, 66, 0.5);
         animation: pulse 2.4s ease-out infinite;
       }
-      @keyframes pulse {
-        0% { transform: scale(0.55); opacity: 0.9; }
-        70%, 100% { transform: scale(1.35); opacity: 0; }
-      }
+      @keyframes pulse { 0% { transform: scale(0.6); opacity: 0.9; } 70%, 100% { transform: scale(1.5); opacity: 0; } }
       .hotspot.is-on { background: var(--teal); border-color: var(--teal); color: var(--paper); }
       .hotspot.is-on .dot { background: var(--paper); }
 
+      /* technical dimension marks ------------------------------------------- */
+      .dims {
+        position: absolute;
+        width: 0;
+        height: 0;
+        color: rgba(169, 100, 56, 0.85);
+        --len: 120px;
+      }
+      .dims .rule {
+        position: absolute;
+        left: 0;
+        top: 0;
+        transform: translate(-50%, -50%);
+        background: currentColor;
+      }
+      .dims--x .rule { width: var(--len); height: 1px; }
+      .dims--x .rule::before,
+      .dims--x .rule::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        width: 1px;
+        height: calc(var(--drop, 8px) + 1px);
+        background: linear-gradient(to bottom, currentColor, rgba(169, 100, 56, 0.35));
+      }
+      .dims--x .rule::before { left: 0; }
+      .dims--x .rule::after { right: 0; }
+      .dims--y .rule { width: 1px; height: var(--len); }
+      .dims--y .rule::before,
+      .dims--y .rule::after {
+        content: "";
+        position: absolute;
+        left: calc(-1 * var(--gap, 8px));
+        width: calc(var(--gap, 8px) + 1px);
+        height: 1px;
+        background: linear-gradient(to left, currentColor, rgba(169, 100, 56, 0.35));
+      }
+      .dims--y .rule::before { top: 0; }
+      .dims--y .rule::after { bottom: 0; }
+
+      .dims b {
+        position: absolute;
+        left: 0;
+        top: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        padding: 4px 9px;
+        border: 1px solid rgba(201, 121, 66, 0.5);
+        background: rgba(251, 248, 240, 0.94);
+        font-family: var(--mono);
+        font-weight: 400;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        line-height: 1.2;
+        box-shadow: 0 10px 22px -18px rgba(27, 42, 41, 0.7);
+      }
+      .dims b strong { font-size: 10.5px; font-weight: 500; letter-spacing: 0.02em; color: #8f4d24; }
+      .dims b span { font-size: 7.5px; color: rgba(168, 95, 49, 0.85); }
+      .dims--x b { transform: translate(-50%, calc(-100% - 10px)); }
+      .dims--y b { transform: translate(14px, -50%); }
+      .dims--mass b { transform: translate(-50%, -50%); }
+      .dims--mass::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: 100%;
+        width: 1px;
+        height: var(--rise, 26px);
+        background: linear-gradient(to top, rgba(169, 100, 56, 0.35), rgba(169, 100, 56, 0.85));
+      }
+
+      /* hotspot card ------------------------------------------------------ */
       .hs-card {
         position: fixed;
-        z-index: 8;
-        inset: auto 26px 86px auto;
-        width: 330px;
-        padding: 14px 16px 13px;
-        background: rgba(250, 247, 240, 0.98);
-        border: 1px solid rgba(27, 42, 41, 0.16);
-        border-left: 3px solid var(--clay);
-        box-shadow: 0 26px 60px -34px rgba(27, 42, 41, 0.7);
-        animation: rise 0.3s ease both;
+        z-index: 12;
+        right: clamp(16px, 4vw, 54px);
+        bottom: clamp(16px, 4vw, 40px);
+        width: min(330px, calc(100vw - 32px));
+        padding: 20px 22px;
+        background: rgba(251, 248, 240, 0.97);
+        border: 1px solid var(--line);
+        box-shadow: 0 30px 60px -40px rgba(27, 42, 41, 0.7);
       }
       .hs-card[hidden] { display: none; }
-      @keyframes rise {
-        from { opacity: 0; transform: translateY(8px); }
-        to { opacity: 1; transform: none; }
-      }
-      .hs-card .kicker {
-        margin: 0 0 5px;
-        font-family: "DM Mono", monospace;
-        font-size: 8px;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-        color: var(--clay);
-      }
+      .hs-card .kicker { margin-bottom: 8px; font-size: 8.5px; }
       .hs-card h3 {
-        margin: 0 0 7px;
-        font-family: "Playfair Display", Georgia, serif;
+        margin: 0 0 10px;
+        font-family: var(--display);
         font-weight: 400;
-        font-size: 21px;
-        line-height: 1.15;
+        font-size: 1.42rem;
         color: var(--teal);
       }
-      .hs-card p.body { margin: 0; font-size: 11.5px; line-height: 1.75; color: var(--body); }
-      .hs-card p.arabic { margin: 7px 0 0; font-family: "IBM Plex Sans Arabic", sans-serif; font-size: 11.5px; line-height: 1.9; color: var(--teal); }
-      .hs-rows { margin: 11px 0 0; border-top: 1px solid var(--line); }
-      .hs-rows div { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--line); }
-      .hs-rows dt { font-size: 10.5px; color: var(--muted); }
-      .hs-rows dd { margin: 0; font-family: "DM Mono", monospace; font-size: 10px; color: var(--ink); }
+      .hs-card .body { margin: 0; font-size: 12px; line-height: 1.75; color: rgba(27, 42, 41, 0.72); }
+      .hs-card .arabic { margin: 9px 0 0; font-size: 12px; line-height: 1.9; color: rgba(27, 42, 41, 0.6); }
+      .hs-rows { margin: 14px 0 0; border-top: 1px solid var(--line); }
+      .hs-rows > div {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 7px 0;
+        border-bottom: 1px solid rgba(27, 42, 41, 0.08);
+      }
+      .hs-rows dt { font-size: 11px; color: rgba(27, 42, 41, 0.6); }
+      .hs-rows dd { margin: 0; font-family: var(--mono); font-size: 10.5px; color: var(--teal); }
       .hs-close {
         position: absolute;
         top: 10px;
         right: 10px;
-        width: 24px;
-        height: 24px;
-        display: grid;
-        place-items: center;
+        width: 22px;
+        height: 22px;
         border: 1px solid var(--line);
-        background: transparent;
-        color: var(--ink);
-        font-size: 11px;
+        background: none;
+        font-size: 10px;
+        line-height: 1;
         cursor: pointer;
-        transition: background 0.2s ease, color 0.2s ease;
+        color: rgba(27, 42, 41, 0.55);
       }
-      .hs-close:hover { background: var(--ink); color: var(--paper); }
+      .hs-close:hover { color: var(--teal); border-color: var(--teal); }
 
       .status {
         position: fixed;
-        inset: 50% 0 auto 0;
-        z-index: 9;
-        text-align: center;
-        font-family: "DM Mono", monospace;
-        font-size: 10px;
+        left: 50%;
+        bottom: 26px;
+        z-index: 10;
+        transform: translateX(-50%);
+        font-family: var(--mono);
+        font-size: 9px;
         letter-spacing: 0.24em;
         text-transform: uppercase;
         color: rgba(27, 42, 41, 0.45);
-        transition: opacity 0.5s ease;
+        transition: opacity 0.6s ease;
       }
       .status[data-state="ready"] { opacity: 0; pointer-events: none; }
       .status[data-state="error"] { color: #a34b2b; }
 
       .drag-hint {
         position: fixed;
-        inset: auto auto 18px 28px;
-        z-index: 5;
-        font-family: "DM Mono", monospace;
+        z-index: 7;
+        left: clamp(18px, 3vw, 40px);
+        bottom: 18px;
+        font-family: var(--mono);
         font-size: 8.5px;
-        letter-spacing: 0.14em;
+        letter-spacing: 0.16em;
         text-transform: uppercase;
-        color: rgba(27, 42, 41, 0.42);
+        color: rgba(27, 42, 41, 0.38);
         pointer-events: none;
       }
 
-      /* ----------------------------------------------------------- mobile */
+      /* --------------------------------------------------------- narrow */
       @media (max-width: 1080px) {
-        /* Narrow screens get a fixed model window on top and their own copy
-           pane below it: the model is never hidden and never covers the text. */
-        #stage { height: 46vh; box-shadow: 0 18px 40px -34px rgba(27, 42, 41, 0.55); }
-        .veil { display: none; }
-        .story {
-          position: fixed;
-          inset: 46vh 0 0 0;
+        .sticky { align-items: flex-end; padding-bottom: 6svh; }
+        .panel-inner,
+        .panel--tablet .panel-inner {
+          width: auto;
+          margin: 0 16px;
+          max-height: 74svh;
+          padding: 18px 18px 22px;
           overflow-y: auto;
-          overflow-x: hidden;
           overscroll-behavior: contain;
-          padding-top: 0;
-          pointer-events: auto;
-          background:
-            linear-gradient(to bottom, rgba(244, 241, 232, 0.99) 0%, rgba(244, 241, 232, 1) 220px),
-            radial-gradient(120% 85% at 68% 12%, #fbf8f0 0%, var(--paper) 48%, #e9e4d4 100%);
-          border-top: 1px solid var(--line);
-          scrollbar-width: thin;
         }
-        /* The step rail only fits beside a wide stage. */
-        .rail { display: none; }
-        /* Hotspots shrink to their dot so the callouts keep their air. */
-        .hotspot { padding: 7px; gap: 0; border-radius: 50%; }
-        .hotspot > span:not(.dot) { display: none; }
-        .panel {
-          min-height: 54vh;
-          align-items: flex-start;
-          padding: 24px 18px 40px;
-          border-top: 1px solid var(--line);
-        }
-        .panel:first-of-type { border-top: 0; }
-        .panel-inner { width: 100%; }
-        .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .panel-inner > .fade { inset: -0.6rem; border-radius: 10px; background: rgba(244, 241, 232, 0.82); }
+        .display { font-size: clamp(2rem, 8.4vw, 3rem); }
+        h2.display { font-size: clamp(1.8rem, 7.4vw, 2.6rem); }
+        .lede { font-size: 13px; line-height: 1.7; margin-top: 14px; }
+        .passing { top: 170svh; }
+        .passing .panel-inner { width: auto; }
         .cards--3, .cards--2 { grid-template-columns: 1fr; }
-        .rail { inset: auto 14px 18px 14px; top: auto; flex-direction: row; transform: none; justify-content: center; gap: 10px; }
-        .rail button::after { display: none; }
-        .drag-hint { display: none; }
+        .table-grid { grid-template-columns: 1fr 1fr; gap: 0 18px; }
+        .rows > div { padding: 6px 0; }
+        .rows dt { font-size: 10.5px; }
+        .rows dd { font-size: 9.5px; white-space: normal; text-align: right; }
+        .sub-h { font-size: 8px; letter-spacing: 0.18em; margin: 12px 0 6px; }
+        /* Callout labels would sit on top of the copy on a phone. */
+        .dims, .hotspot { display: none; }
+        .rail { display: none; }
         .bar .mid { display: none; }
-        .hs-card { inset: auto 12px 60px 12px; width: auto; }
+        .cue { display: none; }
+        .drag-hint { display: none; }
+        .hs-card { right: 12px; left: 12px; bottom: 14px; width: auto; }
+      }
+      /* Short laptop windows: tighten the dense panels a touch. */
+      @media (min-width: 1081px) and (max-height: 820px) {
+        .display { font-size: clamp(2.1rem, 4.4vw, 3.7rem); }
+        h2.display { font-size: clamp(1.8rem, 3.8vw, 3.1rem); }
+        .lede { font-size: 13px; line-height: 1.7; margin-top: 14px; }
+        .rows > div { padding: 5px 0; }
+        .rows dt { font-size: 11.5px; }
+        .card { padding: 10px 11px; }
+        .purity { margin-top: 18px; padding-top: 16px; }
+        .actions { margin-top: 18px; }
       }
       @media (prefers-reduced-motion: reduce) {
-        .hotspot .dot::after { animation: none; }
+        .cue span i, .hotspot .dot::after { animation: none; }
       }
     </style>
   </head>
   <body>
     <div id="stage"></div>
-    <div class="veil" aria-hidden="true"></div>
+    <div class="cursor" id="cursor" aria-hidden="true"></div>
 
     <header class="bar">
       <span class="brand">SINAI<i>CORE</i></span>
@@ -587,194 +721,277 @@
       <button type="button" data-goto="3">04 Supply</button>
     </nav>
 
-    <main class="story" id="story">
-      <!-- 01 · the pack ------------------------------------------------- -->
-      <section class="panel" id="panel-1" data-step="0">
-        <div class="panel-inner">
-          <p class="eyebrow reveal">Product data · water treatment</p>
-          <h1 class="reveal">Water Treatment Solutions</h1>
-
-          <div class="purity reveal">
-            <small>Sodium chloride (NaCl)</small>
-            <strong>≥ 99.5<em>%</em></strong>
-            <span>Precision-compressed for ion-exchange performance</span>
-          </div>
-
-          <p class="lede reveal">
-            Ultra-pure marine sodium chloride tablets engineered for efficient resin regeneration in
-            water softening systems. Produced by qualified manufacturing partners under controlled
-            compression and quality requirements for reliable ion-exchange resin regeneration.
-          </p>
-
-          <ul class="facts reveal">
-            <li><b>DIAMETER</b><i>25 mm</i></li>
-            <li><b>THICKNESS</b><i>11 mm</i></li>
-            <li><b>MASS</b><i>~15 g</i></li>
-            <li><b>PURITY</b><i>≥ 99.5 %</i></li>
-          </ul>
-
-          <h2 class="sub-h reveal">Packaging options</h2>
-          <div class="cards cards--3 reveal">
-            <div class="card">
-              <b>PP 25 / 50 KG</b>
-              <strong>25 kg / 50 kg PP bags</strong>
-              <p>Laminated PP woven bags, UV-resistant printing.</p>
+    <main class="story">
+      <!-- 01 · the sack --------------------------------------------------- -->
+      <section class="panel panel--hero" id="panel-1" data-step="0">
+        <div class="sticky">
+          <div class="panel-inner">
+            <span class="fade" aria-hidden="true"></span>
+            <div class="mark"><b>SINAI<i>CORE</i></b><em>×</em><span>Product data</span></div>
+            <h1 class="display" data-letters>Water Treatment Solutions</h1>
+            <p class="lede" data-reveal>
+              Ultra-pure marine sodium chloride tablets engineered for efficient resin regeneration
+              in water softening systems. Produced by qualified manufacturing partners under
+              controlled compression and quality requirements for reliable ion-exchange resin
+              regeneration.
+            </p>
+            <div class="purity" data-reveal>
+              <strong>≥ 99.5<em>%</em></strong>
+              <span>Sodium chloride (NaCl) — precision-compressed for ion-exchange performance.</span>
             </div>
-            <div class="card">
-              <b>FIBC 1 MT</b>
-              <strong>1 MT jumbo bags</strong>
-              <p>Woven PP with lifting loops.</p>
-            </div>
-            <div class="card">
-              <b>BULK</b>
-              <strong>Bulk shipment</strong>
-              <p>Direct shipment by land or sea.</p>
+            <ul class="chips" data-reveal>
+              <li class="chip">Ø <b>25 mm</b></li>
+              <li class="chip"><b>11 mm</b> thick</li>
+              <li class="chip">≈ <b>15 g</b></li>
+              <li class="chip">≥ <b>99.5 %</b> NaCl</li>
+            </ul>
+            <div class="actions" data-reveal>
+              <a class="pill" href="https://sinaicore.com/en/quote/">Request a quotation <span aria-hidden="true">→</span></a>
+              <a class="link" href="https://sinaicore.com/en/quote/">Certificate of analysis</a>
             </div>
           </div>
-
-          <h2 class="sub-h reveal">Compliance standards</h2>
-          <p class="lede reveal" style="margin-top: 0">
-            Our products comply with British (BS), European (EN), and International (ISO) standards
-            ensuring smooth customs clearance and global acceptance.
-          </p>
-          <div class="std-badges reveal" id="std-badges">
-            <button type="button" data-std="BS" aria-pressed="false">BS</button>
-            <button type="button" data-std="EN" aria-pressed="false">EN</button>
-            <button type="button" data-std="ASTM" aria-pressed="false">ASTM</button>
-            <button type="button" data-std="ISO" aria-pressed="false">ISO</button>
+          <div class="cue" aria-hidden="true">
+            <p style="margin: 0">Scroll</p>
+            <span><i></i></span>
           </div>
-          <p class="std-note reveal" id="std-note" aria-live="polite">
-            Select a standard to see how it applies to this product.
-          </p>
+        </div>
+
+        <div class="passing">
+          <div class="panel-inner" data-reveal>
+            <span class="fade" aria-hidden="true"></span>
+            <p class="lede" style="margin: 0; font-family: var(--display); font-size: clamp(1.2rem, 2vw, 1.7rem); line-height: 1.35; color: var(--teal)">
+              Drawn from the salt of Sinai, pressed on the coast, and shipped inland as a bag of
+              tablets that never cakes.
+            </p>
+          </div>
         </div>
       </section>
 
-      <!-- 02 · the pour --------------------------------------------------- -->
-      <section class="panel" id="panel-2" data-step="1">
-        <div class="panel-inner">
-          <p class="eyebrow reveal">02 · pouring the tablets</p>
-          <h2 class="step-h reveal">Key Advantages</h2>
-          <p class="lede reveal" style="margin-top: 6px">Why this product?</p>
-          <ul class="bullet reveal" style="margin-top: 14px">
-            <li><span>01</span><span>NaCl content of ≥ 99.5% supports efficient ion-exchange resin regeneration.</span></li>
-            <li><span>02</span><span>Slow-dissolving tablet form prevents salt bridging and mushing in brine tanks.</span></li>
-            <li><span>03</span><span>Uniform 25 mm diameter tablets for consistent dosing and predictable consumption.</span></li>
-            <li><span>04</span><span>Specifications can be managed against applicable European Standards (EN) requirements.</span></li>
-          </ul>
+      <!-- 02 · the pack --------------------------------------------------- -->
+      <section class="panel panel--pack" id="panel-2" data-step="0">
+        <div class="sticky">
+          <div class="panel-inner">
+            <span class="fade" aria-hidden="true"></span>
+            <p class="kicker" data-reveal>01 · The pack</p>
+            <h2 class="display" data-letters>Fifty kilos, sealed</h2>
+            <p class="lede" data-reveal>
+              Laminated polypropylene weave with UV-resistant printing: 50 kg of compressed tablets
+              in a sack built to travel. The weave is tight enough to shut out moisture and the
+              print survives the crossing.
+            </p>
+            <div class="cards cards--3" data-reveal>
+              <div class="card">
+                <b>PP 25 / 50 kg</b>
+                <strong>25 kg / 50 kg PP bags</strong>
+                <p>Laminated PP woven bags, UV-resistant printing.</p>
+              </div>
+              <div class="card">
+                <b>FIBC 1 MT</b>
+                <strong>1 MT jumbo bags</strong>
+                <p>Woven PP with lifting loops.</p>
+              </div>
+              <div class="card">
+                <b>Bulk</b>
+                <strong>Bulk shipment</strong>
+                <p>Direct shipment by land or sea.</p>
+              </div>
+            </div>
 
-          <h2 class="sub-h reveal">Usage</h2>
-          <ul class="bullet reveal">
-            <li><span>01</span><span>Industrial water softening systems</span></li>
-            <li><span>02</span><span>Steam and power generation plants</span></li>
-            <li><span>03</span><span>Hotels, hospitals, and large commercial facilities</span></li>
-            <li><span>04</span><span>Ion-exchange resin regeneration units</span></li>
-            <li><span>05</span><span>Residential water softeners and dishwashing systems</span></li>
-            <li><span>06</span><span>Protection of pipelines, boilers, and equipment from scale</span></li>
-          </ul>
+            <p class="sub-h" data-reveal>Compliance standards</p>
+            <p class="note" data-reveal>
+              Our products comply with British (BS), European (EN), and International (ISO)
+              standards ensuring smooth customs clearance and global acceptance.
+            </p>
+            <div class="std-badges" id="std-badges" data-reveal>
+              <button type="button" data-std="BS" aria-pressed="false">BS</button>
+              <button type="button" data-std="EN" aria-pressed="false">EN</button>
+              <button type="button" data-std="ASTM" aria-pressed="false">ASTM</button>
+              <button type="button" data-std="ISO" aria-pressed="false">ISO</button>
+            </div>
+            <p class="std-note" id="std-note" aria-live="polite">
+              Select a standard to see how it applies to this product.
+            </p>
+          </div>
         </div>
       </section>
 
-      <!-- 03 · the tablet ------------------------------------------------- -->
-      <section class="panel" id="panel-3" data-step="2">
-        <div class="panel-inner">
-          <p class="eyebrow reveal">03 · one tablet, dimensioned</p>
-          <h2 class="step-h reveal">Chemical &amp; Physical Properties</h2>
-          <p class="method reveal">METHOD · EN 973 / ASTM E534</p>
-          <dl class="rows reveal">
-            <div><dt>Sodium chloride (NaCl)</dt><dd class="hi">≥ 99.50 %</dd></div>
-            <div><dt>Moisture</dt><dd>≤ 0.20 %</dd></div>
-            <div><dt>Water insoluble matter</dt><dd>≤ 0.03 %</dd></div>
-            <div><dt>Calcium (Ca)</dt><dd>≤ 0.02 %</dd></div>
-            <div><dt>Magnesium (Mg)</dt><dd>≤ 0.01 %</dd></div>
-            <div><dt>Sulfate (SO₄)</dt><dd>≤ 0.10 %</dd></div>
-            <div><dt>Production method</dt><dd>Evaporation &amp; compression</dd></div>
-          </dl>
-
-          <h2 class="sub-h reveal">Physical properties &amp; sieve analysis</h2>
-          <dl class="rows reveal">
-            <div><dt>Tablet diameter</dt><dd class="hi">25 mm</dd></div>
-            <div><dt>Tablet thickness</dt><dd>11 mm</dd></div>
-            <div><dt>Weight per tablet</dt><dd>~15 g</dd></div>
-            <div><dt>Hardness</dt><dd>High (compression)</dd></div>
-          </dl>
-
-          <h2 class="sub-h reveal">General properties</h2>
-          <dl class="rows reveal">
-            <div><dt>Appearance</dt><dd>Compressed tablets</dd></div>
-            <div><dt>Colour</dt><dd>White</dd></div>
-            <div><dt>Bulk density</dt><dd>1.00 – 1.10 g/cm³</dd></div>
-            <div><dt>Solubility</dt><dd class="hi">Slow dissolving</dd></div>
-          </dl>
+      <!-- 03 · the pour --------------------------------------------------- -->
+      <section class="panel panel--pour" id="panel-3" data-step="1">
+        <div class="sticky">
+          <div class="panel-inner">
+            <span class="fade" aria-hidden="true"></span>
+            <p class="kicker" data-reveal>02 · The pour</p>
+            <h2 class="display" data-letters>One continuous arc</h2>
+            <p class="lede" data-reveal>
+              Tip the sack and the tablets leave it one by one, curving as they fall. Every disc is
+              pressed to the same measure, so a brine tank drawn by count is a brine tank drawn by
+              weight.
+            </p>
+            <ul class="chips" data-reveal>
+              <li class="chip">Ø <b>25 mm</b> diameter</li>
+              <li class="chip"><b>11 mm</b> thickness</li>
+              <li class="chip">≈ <b>15 g</b> per tablet</li>
+              <li class="chip"><b>Slow</b> dissolving</li>
+            </ul>
+            <p class="note" data-reveal>
+              The motion is tied to the scroll: stop, and the tablets hang; scroll back, and they
+              return to the sack.
+            </p>
+            <p class="sub-h" data-reveal>Key advantages</p>
+            <ul class="bullet" data-reveal>
+              <li><span>01</span><span>NaCl content of ≥ 99.5% supports efficient ion-exchange resin regeneration.</span></li>
+              <li><span>02</span><span>Slow-dissolving tablet form prevents salt bridging and mushing in brine tanks.</span></li>
+              <li><span>03</span><span>Uniform 25 mm diameter tablets for consistent dosing and predictable consumption.</span></li>
+              <li><span>04</span><span>Specifications can be managed against applicable European Standards (EN) requirements.</span></li>
+            </ul>
+          </div>
         </div>
       </section>
 
-      <!-- 04 · supply ----------------------------------------------------- -->
-      <section class="panel" id="panel-4" data-step="3">
-        <div class="panel-inner">
-          <p class="eyebrow reveal">04 · industry use cases</p>
-          <h2 class="step-h reveal">Where it works</h2>
-          <div class="cards cards--2 reveal" style="margin-top: 14px">
-            <div class="card">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2c3.1 3.8 4.9 6.5 4.9 8.9a4.9 4.9 0 0 1-9.8 0c0-2.4 1.8-5.1 4.9-8.9z"/><path d="M9.6 13.4c.8.7 1.6.7 2.4 0s1.6-.7 2.4 0"/></svg>
-              <strong>Water softening</strong>
-              <p>Primary application in ion-exchange resin regeneration for residential and commercial water softeners.</p>
+      <!-- 04 · the tablet -------------------------------------------------- -->
+      <section class="panel panel--tablet" id="panel-4" data-step="2">
+        <div class="sticky">
+          <div class="panel-inner">
+            <span class="fade" aria-hidden="true"></span>
+            <p class="kicker" data-reveal>03 · One tablet, dimensioned</p>
+            <h2 class="display" data-letters>To the millimetre</h2>
+            <span class="method" data-reveal>Method · EN 973 / ASTM E534</span>
+            <div class="table-grid" data-reveal>
+              <div>
+                <p class="sub-h" style="margin-top: 0">Chemical</p>
+                <dl class="rows">
+                  <div><dt>Sodium chloride (NaCl)</dt><dd class="hi">≥ 99.50 %</dd></div>
+                  <div><dt>Moisture</dt><dd>≤ 0.20 %</dd></div>
+                  <div><dt>Water insoluble matter</dt><dd>≤ 0.03 %</dd></div>
+                  <div><dt>Calcium (Ca)</dt><dd>≤ 0.02 %</dd></div>
+                  <div><dt>Magnesium (Mg)</dt><dd>≤ 0.01 %</dd></div>
+                  <div><dt>Sulfate (SO₄)</dt><dd>≤ 0.10 %</dd></div>
+                  <div><dt>Production method</dt><dd>Evaporation &amp; compression</dd></div>
+                </dl>
+              </div>
+              <div>
+                <p class="sub-h" style="margin-top: 0">Physical</p>
+                <dl class="rows">
+                  <div><dt>Tablet diameter</dt><dd class="hi">25 mm</dd></div>
+                  <div><dt>Tablet thickness</dt><dd>11 mm</dd></div>
+                  <div><dt>Weight per tablet</dt><dd>~15 g</dd></div>
+                  <div><dt>Hardness</dt><dd>High (compression)</dd></div>
+                </dl>
+                <p class="sub-h">General</p>
+                <dl class="rows">
+                  <div><dt>Appearance</dt><dd>Compressed tablets</dd></div>
+                  <div><dt>Colour</dt><dd>White</dd></div>
+                  <div><dt>Bulk density</dt><dd>1.00 – 1.10 g/cm³</dd></div>
+                  <div><dt>Solubility</dt><dd class="hi">Slow dissolving</dd></div>
+                </dl>
+              </div>
             </div>
-            <div class="card">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.4 2.8 5.8 13.6h4.9L10 21.2l7.9-11.2h-5z"/></svg>
-              <strong>Power generation</strong>
-              <p>Boiler feed water treatment in steam and power plants to prevent scale build-up.</p>
-            </div>
-            <div class="card">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.6 4h4.8v5.6H20v4.8h-5.6V20H9.6v-5.6H4V9.6h5.6z"/></svg>
-              <strong>Hotels &amp; hospitals</strong>
-              <p>Large-scale water conditioning for hospitality and healthcare facilities.</p>
-            </div>
-            <div class="card">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V11.6l5 2.6v-2.6l5 2.6V8.6l5 2.6V21z"/><path d="M3 21h18M6.5 6.5V3.5h2v3"/></svg>
-              <strong>Industrial plants</strong>
-              <p>Process water softening for manufacturing plants requiring scale-free water.</p>
-            </div>
-            <div class="card">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4.2 20 11v9.2H4z"/><path d="M10 20.2v-4.6h4v4.6"/></svg>
-              <strong>Residential systems</strong>
-              <p>Home water softeners and dishwashing systems for limescale prevention.</p>
-            </div>
-            <div class="card">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2 5.2 6v5.8c0 4.1 2.8 7.3 6.8 8.9 4-1.6 6.8-4.8 6.8-8.9V6z"/><path d="M9 12.2l2.1 2.1 4-4.1"/></svg>
-              <strong>Equipment protection</strong>
-              <p>Prevents mineral scale in pipelines, heat exchangers, and boiler systems.</p>
-            </div>
-          </div>
-
-          <h2 class="sub-h reveal">Quality assurance &amp; official analysis</h2>
-          <p class="lede reveal" style="margin-top: 0">
-            Typical specifications shown are based on routine laboratory analysis. Batch-specific
-            Certificate of Analysis (COA) is available upon request to ensure complete compliance.
-          </p>
-          <div class="actions reveal">
-            <a class="btn btn--ghost" href="https://sinaicore.com/en/quote/">Request COA <span aria-hidden="true">↗</span></a>
-          </div>
-
-          <h2 class="sub-h reveal">Technical support</h2>
-          <p class="lede reveal" style="margin-top: 0">
-            Need specific grain size customization or private labeling? Our engineers are ready to assist.
-          </p>
-          <div class="actions reveal">
-            <a class="btn" href="https://sinaicore.com/en/quote/">Contact Sales Engineering <span aria-hidden="true">↗</span></a>
-          </div>
-
-          <div class="quote reveal">
-            <h3>Ready to secure your supply?</h3>
-            <p>Get a competitive quote tailored to your logistical requirements. Volume discounts available for bulk orders.</p>
-            <div class="actions">
-              <a class="btn" href="https://sinaicore.com/en/quote/">Request Quotation <span aria-hidden="true">↗</span></a>
+            <p class="note" data-reveal>
+              Typical specifications shown are based on routine laboratory analysis. Batch-specific
+              Certificate of Analysis (COA) is available upon request to ensure complete compliance.
+            </p>
+            <div class="actions" data-reveal>
+              <a class="pill pill--ghost" href="https://sinaicore.com/en/quote/">Request COA <span aria-hidden="true">↗</span></a>
             </div>
           </div>
+        </div>
+      </section>
 
-          <footer class="doc-foot reveal">
-            <span>SinaiCore © 2026 · Product of Egypt</span>
-            <span id="artwork-rev">—</span>
-          </footer>
+      <!-- 05 · why --------------------------------------------------------- -->
+      <section class="panel panel--why" id="panel-5" data-step="3">
+        <div class="sticky">
+          <div class="panel-inner">
+            <span class="fade" aria-hidden="true"></span>
+            <p class="kicker" data-reveal>04 · Why it works</p>
+            <h2 class="display" data-letters>Slow by design</h2>
+            <p class="lede" data-reveal>
+              A tablet is a decision about surface area. Press it dense and it gives the brine a
+              small, steady face — dissolving over weeks instead of hours, so saturation holds
+              between refills.
+            </p>
+            <p class="sub-h" data-reveal>Where it goes</p>
+            <ul class="bullet" data-reveal>
+              <li><span>01</span><span>Industrial water softening systems</span></li>
+              <li><span>02</span><span>Steam and power generation plants</span></li>
+              <li><span>03</span><span>Hotels, hospitals, and large commercial facilities</span></li>
+              <li><span>04</span><span>Ion-exchange resin regeneration units</span></li>
+              <li><span>05</span><span>Residential water softeners and dishwashing systems</span></li>
+              <li><span>06</span><span>Protection of pipelines, boilers, and equipment from scale</span></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 06 · where ------------------------------------------------------- -->
+      <section class="panel panel--where" id="panel-6" data-step="3">
+        <div class="sticky">
+          <div class="panel-inner">
+            <span class="fade" aria-hidden="true"></span>
+            <p class="kicker" data-reveal>05 · Where it works</p>
+            <h2 class="display" data-letters>From boiler to tap</h2>
+            <div class="cards cards--2" data-reveal>
+              <div class="card">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2c3.1 3.8 4.9 6.5 4.9 8.9a4.9 4.9 0 0 1-9.8 0c0-2.4 1.8-5.1 4.9-8.9z" /><path d="M9.6 13.4c.8.7 1.6.7 2.4 0s1.6-.7 2.4 0" /></svg>
+                <strong>Water softening</strong>
+                <p>Primary application in ion-exchange resin regeneration for residential and commercial water softeners.</p>
+              </div>
+              <div class="card">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.4 2.8 5.8 13.6h4.9L10 21.2l7.9-11.2h-5z" /></svg>
+                <strong>Power generation</strong>
+                <p>Boiler feed water treatment in steam and power plants to prevent scale build-up.</p>
+              </div>
+              <div class="card">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.6 4h4.8v5.6H20v4.8h-5.6V20H9.6v-5.6H4V9.6h5.6z" /></svg>
+                <strong>Hotels &amp; hospitals</strong>
+                <p>Large-scale water conditioning for hospitality and healthcare facilities.</p>
+              </div>
+              <div class="card">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V11.6l5 2.6v-2.6l5 2.6V8.6l5 2.6V21z" /><path d="M3 21h18M6.5 6.5V3.5h2v3" /></svg>
+                <strong>Industrial plants</strong>
+                <p>Process water softening for manufacturing plants requiring scale-free water.</p>
+              </div>
+              <div class="card">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4.2 20 11v9.2H4z" /><path d="M10 20.2v-4.6h4v4.6" /></svg>
+                <strong>Residential systems</strong>
+                <p>Home water softeners and dishwashing systems for limescale prevention.</p>
+              </div>
+              <div class="card">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2 5.2 6v5.8c0 4.1 2.8 7.3 6.8 8.9 4-1.6 6.8-4.8 6.8-8.9V6z" /><path d="M9 12.2l2.1 2.1 4-4.1" /></svg>
+                <strong>Equipment protection</strong>
+                <p>Prevents mineral scale in pipelines, heat exchangers, and boiler systems.</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- 07 · supply ------------------------------------------------------ -->
+      <section class="panel panel--supply" id="panel-7" data-step="3">
+        <div class="sticky">
+          <div class="panel-inner">
+            <span class="fade" aria-hidden="true"></span>
+            <p class="kicker" data-reveal>06 · Supply</p>
+            <h2 class="display" data-letters>Ready when you are</h2>
+            <p class="lede" data-reveal>
+              Need specific grain size customization or private labeling? Our engineers are ready to
+              assist — and every batch ships with its own analysis.
+            </p>
+
+            <div class="quote" data-reveal>
+              <h3>Ready to secure your supply?</h3>
+              <p>Get a competitive quote tailored to your logistical requirements. Volume discounts available for bulk orders.</p>
+              <div class="actions">
+                <a class="pill" href="https://sinaicore.com/en/quote/">Request quotation <span aria-hidden="true">→</span></a>
+                <a class="link" href="https://sinaicore.com/en/quote/">Contact sales engineering</a>
+              </div>
+            </div>
+
+            <footer class="doc-foot" data-reveal>
+              <span>SinaiCore © 2026 · Product of Egypt</span>
+              <span id="artwork-rev">—</span>
+            </footer>
+          </div>
         </div>
       </section>
     </main>
