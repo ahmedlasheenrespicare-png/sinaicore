@@ -58,6 +58,21 @@
       .brand { font-family: var(--display); font-size: 15px; letter-spacing: 0.34em; color: var(--teal); }
       .brand i { font-style: normal; color: var(--clay); }
       .bar .meta b { color: var(--teal); font-weight: 500; }
+      .bar-end { display: flex; align-items: center; gap: 16px; }
+      .lang {
+        border: 1px solid rgba(27, 42, 41, 0.2);
+        background: none;
+        padding: 5px 9px;
+        border-radius: 999px;
+        font-family: var(--mono);
+        font-size: 9px;
+        letter-spacing: 0.18em;
+        color: rgba(27, 42, 41, 0.6);
+        cursor: pointer;
+        transition: color 0.25s ease, border-color 0.25s ease;
+      }
+      .lang:hover { color: var(--teal); border-color: var(--teal); }
+      .lang:focus-visible { outline: 2px solid var(--clay); outline-offset: 3px; }
 
       .progress {
         position: fixed;
@@ -79,7 +94,7 @@
       .rail {
         position: fixed;
         z-index: 8;
-        right: clamp(14px, 2.4vw, 30px);
+        inset-inline-end: clamp(14px, 2.4vw, 30px);
         top: 50%;
         transform: translateY(-50%);
         display: flex;
@@ -170,10 +185,12 @@
       }
       .ov > * { pointer-events: auto; }
 
-      .ov--bl { left: clamp(18px, 4vw, 64px); bottom: clamp(56px, 12svh, 130px); max-width: 34ch; }
-      .ov--tr { right: clamp(18px, 4vw, 64px); top: clamp(74px, 15svh, 150px); text-align: right; }
-      .ov--br { right: clamp(18px, 4vw, 64px); bottom: clamp(56px, 12svh, 130px); text-align: right; }
-      .ov--tl { left: clamp(18px, 4vw, 64px); top: clamp(74px, 15svh, 150px); }
+      /* Logical corners: the copy swaps sides on its own when the page turns
+         right-to-left. */
+      .ov--bl { inset-inline-start: clamp(18px, 4vw, 64px); bottom: clamp(56px, 12svh, 130px); max-width: 34ch; }
+      .ov--tr { inset-inline-end: clamp(18px, 4vw, 64px); top: clamp(74px, 15svh, 150px); text-align: end; }
+      .ov--br { inset-inline-end: clamp(18px, 4vw, 64px); bottom: clamp(56px, 12svh, 130px); text-align: end; }
+      .ov--tl { inset-inline-start: clamp(18px, 4vw, 64px); top: clamp(74px, 15svh, 150px); }
 
       .eyebrow {
         margin: 0 0 2.2svh;
@@ -231,7 +248,7 @@
         font-style: normal;
         font-size: 0.4em;
         letter-spacing: 0.04em;
-        margin-left: 0.18em;
+        margin-inline-start: 0.18em;
         color: rgba(27, 42, 41, 0.4);
       }
       .stat--clay b .unit { color: rgba(201, 121, 66, 0.55); }
@@ -290,8 +307,10 @@
         transition: transform 0.25s ease, background 0.25s ease;
       }
       .pill:hover { background: #0a3236; transform: translateY(-1px); }
-      .pill span { transition: transform 0.25s ease; }
-      .pill:hover span { transform: translateX(3px); }
+      .pill .pill-arrow { transition: transform 0.25s ease; }
+      .pill:hover .pill-arrow { transform: translateX(3px); }
+      html[dir="rtl"] .pill .pill-arrow { display: inline-block; transform: scaleX(-1); }
+      html[dir="rtl"] .pill:hover .pill-arrow { transform: scaleX(-1) translateX(3px); }
       .pill--ghost { background: transparent; color: var(--teal); border: 1px solid rgba(13, 61, 65, 0.35); }
       .pill--ghost:hover { background: rgba(13, 61, 65, 0.06); }
 
@@ -398,7 +417,7 @@
       .hs-card {
         position: fixed;
         z-index: 12;
-        right: clamp(16px, 4vw, 54px);
+        inset-inline-end: clamp(16px, 4vw, 54px);
         bottom: clamp(16px, 4vw, 40px);
         width: min(330px, calc(100vw - 32px));
         padding: 18px 20px 20px;
@@ -425,7 +444,7 @@
       .hs-close {
         position: absolute;
         top: 10px;
-        right: 10px;
+        inset-inline-end: 10px;
         width: 22px;
         height: 22px;
         border: 1px solid var(--line);
@@ -439,9 +458,9 @@
 
       /* ----------------------------------------------------------- narrow */
       @media (max-width: 1080px) {
-        .ov--bl { left: 18px; right: 18px; bottom: 46px; max-width: none; }
+        .ov--bl { inset-inline-start: 18px; inset-inline-end: 18px; bottom: 46px; max-width: none; }
         .ov--tr, .ov--br {
-          right: 14px;
+          inset-inline-end: 14px;
           bottom: auto;
           top: 84px;
           padding: 8px 12px;
@@ -455,10 +474,49 @@
         .stat b { font-size: clamp(2.2rem, 12vw, 3.4rem); }
         .rail { display: none; }
         .drag-hint { display: none; }
-        .hs-card { right: 12px; left: 12px; bottom: 14px; width: auto; }
+        .hs-card { inset-inline-end: 12px; inset-inline-start: 12px; bottom: 14px; width: auto; }
         .dims, .hotspot { display: none; }
         .places li { font-size: 12px; }
       }
+      /* ------------------------------------------------------------- arabic */
+      /* The 3D callouts are anchored in screen space: pin them to the left
+         edge, or an RTL page shoves them off the canvas. */
+      html[dir="rtl"] .dims,
+      html[dir="rtl"] .hotspot { left: 0; top: 0; }
+      /* Arabic has no monospace cut here; the mono stack falls back badly. */
+      html[dir="rtl"] .eyebrow,
+      html[dir="rtl"] .stat span,
+      html[dir="rtl"] .tags li,
+      html[dir="rtl"] .rail button,
+      html[dir="rtl"] .status,
+      html[dir="rtl"] .drag-hint,
+      html[dir="rtl"] .hs-card .kicker,
+      html[dir="rtl"] .pill { font-family: var(--sans); }
+      /* Step counts read left-to-right in both languages. */
+      html[dir="rtl"] .meta { direction: ltr; unicode-bidi: isolate; }
+      html[dir="rtl"] .display {
+        font-family: var(--sans);
+        font-weight: 500;
+        font-size: clamp(1.85rem, 4.1vw, 3.2rem);
+        line-height: 1.28;
+        letter-spacing: 0;
+      }
+      html[dir="rtl"] .line { font-size: 14px; line-height: 1.85; max-width: 32ch; }
+      html[dir="rtl"] .eyebrow,
+      html[dir="rtl"] .stat span,
+      html[dir="rtl"] .tags li,
+      html[dir="rtl"] .rail button,
+      html[dir="rtl"] .status,
+      html[dir="rtl"] .drag-hint,
+      html[dir="rtl"] .hs-card .kicker { letter-spacing: 0.06em; }
+      html[dir="rtl"] .tags li { text-transform: none; font-size: 10px; }
+      html[dir="rtl"] .stat span { text-transform: none; font-size: 10px; }
+      html[dir="rtl"] .rail button { text-transform: none; font-size: 10px; }
+      html[dir="rtl"] .progress span { transform-origin: right; }
+      html[dir="rtl"] .places li i { letter-spacing: 0.06em; }
+      .hs-card.is-ar .arabic { display: none; }
+      .hs-card.is-ar h3 { font-family: var(--sans); font-weight: 500; font-size: 1.3rem; }
+
       @media (prefers-reduced-motion: reduce) {
         .hotspot .dot::after { animation: none; }
       }
@@ -470,15 +528,18 @@
 
     <header class="bar">
       <span class="brand">SINAI<i>CORE</i></span>
-      <span class="meta"><b id="step-now">01</b> / 04</span>
+      <div class="bar-end">
+        <span class="meta"><b id="step-now">01</b> / 04</span>
+        <button class="lang" id="lang-toggle" type="button" aria-label="العربية">AR</button>
+      </div>
     </header>
     <div class="progress" aria-hidden="true"><span id="progress-fill"></span></div>
 
     <nav class="rail" aria-label="Story steps">
-      <button type="button" data-goto="0" class="is-on" aria-current="true">01 Sack</button>
-      <button type="button" data-goto="1">02 Pour</button>
-      <button type="button" data-goto="2">03 Tablet</button>
-      <button type="button" data-goto="3">04 Supply</button>
+      <button type="button" data-goto="0" class="is-on" aria-current="true" data-ar="الشيكارة">01 Sack</button>
+      <button type="button" data-goto="1" data-ar="الصب">02 Pour</button>
+      <button type="button" data-goto="2" data-ar="القرص">03 Tablet</button>
+      <button type="button" data-goto="3" data-ar="التوريد">04 Supply</button>
     </nav>
 
     <main class="story">
@@ -486,12 +547,12 @@
       <section class="panel panel--hero" id="panel-1" data-step="0">
         <div class="sticky">
           <div class="ov ov--bl" id="ov-hero">
-            <p class="eyebrow">Sinai · water treatment salt</p>
-            <h1 class="display" data-letters>Salt, pressed.</h1>
-            <p class="line">Fifty kilos of compressed tablets, sealed in a laminated sack.</p>
+            <p class="eyebrow" data-ar="سيناء · ملح معالجة المياه">Sinai · water treatment salt</p>
+            <h1 class="display" data-letters data-ar="ملح، مضغوط.">Salt, pressed.</h1>
+            <p class="line" data-ar="خمسون كيلو من الأقراص المضغوطة، محكمة في شيكارة مبطّنة.">Fifty kilos of compressed tablets, sealed in a laminated sack.</p>
           </div>
           <div class="ov ov--tr" id="ov-purity">
-            <div class="stat"><b>≥ 99.5 %</b><span>sodium chloride</span></div>
+            <div class="stat"><b>≥ 99.5 %</b><span data-ar="كلوريد الصوديوم">sodium chloride</span></div>
           </div>
         </div>
       </section>
@@ -500,12 +561,12 @@
       <section class="panel panel--pack" id="panel-2" data-step="0">
         <div class="sticky">
           <div class="ov ov--bl" id="ov-pack">
-            <p class="eyebrow">01 · the pack</p>
-            <h2 class="display" data-letters>Fifty kilos</h2>
+            <p class="eyebrow" data-ar="01 · العبوة">01 · the pack</p>
+            <h2 class="display" data-letters data-ar="خمسون كيلو">Fifty kilos</h2>
             <ul class="tags">
-              <li>Vacuum refined</li>
-              <li>Food grade</li>
-              <li>UV print</li>
+              <li data-ar="مكرّر بالتفريغ">Vacuum refined</li>
+              <li data-ar="درجة غذائية">Food grade</li>
+              <li data-ar="طباعة UV">UV print</li>
             </ul>
           </div>
         </div>
@@ -515,12 +576,12 @@
       <section class="panel panel--pour" id="panel-3" data-step="1">
         <div class="sticky">
           <div class="ov ov--bl" id="ov-pour">
-            <p class="eyebrow">02 · the pour</p>
-            <h2 class="display" data-letters>One arc</h2>
-            <p class="line">Tip the sack and the tablets leave it one by one.</p>
+            <p class="eyebrow" data-ar="02 · الصب">02 · the pour</p>
+            <h2 class="display" data-letters data-ar="قوس واحد">One arc</h2>
+            <p class="line" data-ar="أمِل الشيكارة، فتخرج الأقراص واحدة واحدة.">Tip the sack and the tablets leave it one by one.</p>
           </div>
           <div class="ov ov--tr" id="ov-count">
-            <div class="stat stat--clay"><b id="hud-count">00</b><span>tablets poured</span></div>
+            <div class="stat stat--clay"><b id="hud-count">00</b><span data-ar="قرص مصبوب">tablets poured</span></div>
           </div>
         </div>
       </section>
@@ -529,9 +590,9 @@
       <section class="panel panel--tablet" id="panel-4" data-step="2">
         <div class="sticky">
           <div class="ov ov--bl" id="ov-tablet">
-            <p class="eyebrow">03 · one tablet</p>
-            <h2 class="display" data-letters>25 · 11 · 15</h2>
-            <p class="line">Millimetres across, millimetres deep, grams of salt.</p>
+            <p class="eyebrow" data-ar="03 · قرص واحد">03 · one tablet</p>
+            <h2 class="display" data-letters data-ar="25 · 11 · 15">25 · 11 · 15</h2>
+            <p class="line" data-ar="مليمترات عرضًا، ومليمترات عمقًا، وجرامات ملح.">Millimetres across, millimetres deep, grams of salt.</p>
           </div>
           <div class="ov ov--br" id="ov-standard">
             <div class="stat"><b>EN 973</b><span>ASTM E534</span></div>
@@ -543,14 +604,14 @@
       <section class="panel panel--why" id="panel-5" data-step="3">
         <div class="sticky">
           <div class="ov ov--bl" id="ov-why">
-            <p class="eyebrow">04 · why it works</p>
-            <h2 class="display" data-letters>Slow by design</h2>
-            <p class="line">Pressed dense, it gives the brine a steady face — weeks, not hours.</p>
+            <p class="eyebrow" data-ar="04 · لماذا يعمل">04 · why it works</p>
+            <h2 class="display" data-letters data-ar="البطء مقصود">Slow by design</h2>
+            <p class="line" data-ar="مضغوط بكثافة، يمنح المحلول سطحًا ثابتًا — أسابيع، لا ساعات.">Pressed dense, it gives the brine a steady face — weeks, not hours.</p>
           </div>
           <div class="ov ov--tr" id="ov-dissolve">
             <div class="stat stat--clay">
-              <b><span id="hud-diameter">25</span><i class="unit">mm</i></b>
-              <span>left after six weeks</span>
+              <b><span id="hud-diameter">25</span><i class="unit" data-ar="مم">mm</i></b>
+              <span data-ar="المتبقي بعد ستة أسابيع">left after six weeks</span>
             </div>
           </div>
         </div>
@@ -560,13 +621,13 @@
       <section class="panel panel--where" id="panel-6" data-step="3">
         <div class="sticky">
           <div class="ov ov--bl" id="ov-where">
-            <p class="eyebrow">05 · where it goes</p>
-            <h2 class="display" data-letters>Every brine tank</h2>
+            <p class="eyebrow" data-ar="05 · أين يعمل">05 · where it goes</p>
+            <h2 class="display" data-letters data-ar="في كل خزان محلول">Every brine tank</h2>
             <ul class="places" id="places">
-              <li data-place="0"><i>01</i>Water softening</li>
-              <li data-place="1"><i>02</i>Steam and power</li>
-              <li data-place="2"><i>03</i>Hotels and hospitals</li>
-              <li data-place="3"><i>04</i>Industrial resin beds</li>
+              <li data-place="0"><i>01</i><span data-ar="تنعيم المياه">Water softening</span></li>
+              <li data-place="1"><i>02</i><span data-ar="البخار والطاقة">Steam and power</span></li>
+              <li data-place="2"><i>03</i><span data-ar="فنادق ومستشفيات">Hotels and hospitals</span></li>
+              <li data-place="3"><i>04</i><span data-ar="أسرّة راتنج صناعية">Industrial resin beds</span></li>
             </ul>
           </div>
         </div>
@@ -576,11 +637,11 @@
       <section class="panel panel--supply" id="panel-7" data-step="4">
         <div class="sticky">
           <div class="ov ov--bl" id="ov-supply">
-            <p class="eyebrow">06 · supply</p>
-            <h2 class="display" data-letters>Ready when you are</h2>
+            <p class="eyebrow" data-ar="06 · التوريد">06 · supply</p>
+            <h2 class="display" data-letters data-ar="جاهزون وقت ما تحتاج">Ready when you are</h2>
             <div class="actions">
-              <a class="pill" href="https://sinaicore.com/en/quote/">Request a quotation <span aria-hidden="true">→</span></a>
-              <a class="pill pill--ghost" href="https://sinaicore.com/en/contact/">Talk to engineering</a>
+              <a class="pill" href="https://sinaicore.com/en/quote/"><span data-ar="اطلب عرض سعر">Request a quotation</span> <span class="pill-arrow" aria-hidden="true">→</span></a>
+              <a class="pill pill--ghost" href="https://sinaicore.com/en/contact/" data-ar="تحدّث مع مهندسينا">Talk to engineering</a>
             </div>
           </div>
         </div>
@@ -596,8 +657,8 @@
       <dl class="hs-rows" id="hs-rows"></dl>
     </div>
 
-    <div class="status" id="status" data-state="loading">Loading the sack…</div>
-    <div class="drag-hint">Scroll to move · drag to look</div>
+    <div class="status" id="status" data-state="loading" data-ar="جارٍ تحميل الشيكارة…">Loading the sack…</div>
+    <div class="drag-hint" data-ar="اسحب للنظر · مرّر للتنقّل">Scroll to move · drag to look</div>
 
     <script type="module" src="/main.js"></script>
   </body>

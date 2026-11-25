@@ -25,6 +25,63 @@ const status = document.getElementById('status')
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 /* -------------------------------------------------------------------------- */
+/*  Language — English by default; the toggle turns the page right-to-left    */
+/* -------------------------------------------------------------------------- */
+const LANG_KEY = 'sinaicore:lang'
+const languageEls = [...document.querySelectorAll('[data-ar]')]
+  .filter((el) => !el.hasAttribute('data-letters'))
+  .map((el) => ({ el, en: el.textContent, ar: el.getAttribute('data-ar') }))
+const headingEls = [...document.querySelectorAll('[data-letters]')].map((el) => ({
+  el,
+  en: el.textContent.trim().replace(/\s+/g, ' '),
+  ar: el.getAttribute('data-ar') || el.textContent.trim(),
+}))
+const langToggle = document.getElementById('lang-toggle')
+let lang = 'en'
+
+const t = (en, ar) => (lang === 'ar' ? ar : en)
+
+/* Arabic is joined script: it can never be split into per-letter boxes, so the
+   headings swap as whole words and the word-rise animation is skipped. */
+function setLanguage(next, { store = true } = {}) {
+  lang = next === 'ar' ? 'ar' : 'en'
+  const arabic = lang === 'ar'
+  document.documentElement.lang = lang
+  document.documentElement.dir = arabic ? 'rtl' : 'ltr'
+
+  languageEls.forEach(({ el, en, ar }) => {
+    el.textContent = arabic ? ar : en
+  })
+
+  headingEls.forEach(({ el, en, ar }) => {
+    el.classList.toggle('is-ar', arabic)
+    if (arabic) {
+      el.textContent = ar
+      return
+    }
+    el.textContent = ''
+    const letters = splitLetters(el, en)
+    if (letters.length) gsap.set(letters, { yPercent: 0, opacity: 1 })
+  })
+
+  langToggle.textContent = arabic ? 'EN' : 'AR'
+  langToggle.setAttribute('aria-label', arabic ? 'English' : 'العربية')
+  document.title = arabic ? 'SinaiCore · ملح، مضغوط.' : 'SinaiCore · Salt, pressed.'
+  applyAnnotationCopy()
+  if (openHotspotId) renderHotspotCopy(openHotspotId)
+
+  if (store) {
+    try {
+      localStorage.setItem(LANG_KEY, lang)
+    } catch {
+      // Private mode: the choice simply doesn't outlive the visit.
+    }
+  }
+}
+
+langToggle?.addEventListener('click', () => setLanguage(lang === 'ar' ? 'en' : 'ar'))
+
+/* -------------------------------------------------------------------------- */
 /*  Renderer, camera, light                                                   */
 /* -------------------------------------------------------------------------- */
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
@@ -269,6 +326,8 @@ loader
 
     buildPour(tabletSource, tabletMaterial)
     buildAnnotations(focusPoint)
+    // The callouts are built after the reader may already have switched language.
+    applyAnnotationCopy()
 
     /* The hero disc gets its own copy so it can erode: an instanced mesh can
        only be scaled, and the dissolve needs a wetter material and a halo. */
@@ -320,7 +379,10 @@ loader
   .catch((error) => {
     console.error(error)
     status.dataset.state = 'error'
-    status.textContent = 'Could not load public/models/sack.glb — run npm run models'
+    status.textContent = t(
+      'Could not load public/models/sack.glb — run npm run models',
+      'تعذّر تحميل الشيكارة — شغّل npm run models',
+    )
   })
 
 /* -------------------------------------------------------------------------- */
@@ -526,6 +588,16 @@ const HOTSPOT_COPY = {
       ['Hardness', 'High (compression)'],
       ['Dosing', 'Uniform 25 mm'],
     ],
+    kickerAr: 'الذوبان · خزان المحلول',
+    titleAr: 'ذوبان بطيء',
+    shortAr: 'ذوبان<br />بطيء',
+    bodyAr:
+      'كبس عالي الكثافة يقدّم للمحلول مساحة سطح صغيرة، فيذوب على مدى أسابيع لا ساعات، ويبقى التشبّع ثابتًا بين تعبئة وأخرى.',
+    rowsAr: [
+      ['الذوبان', 'بطيء'],
+      ['الصلابة', 'عالية (كبس)'],
+      ['الجرعة', '25 مم ثابتة'],
+    ],
   },
   bridging: {
     kicker: 'Handling · salt bed',
@@ -537,6 +609,16 @@ const HOTSPOT_COPY = {
       ['Appearance', 'Compressed tablets'],
       ['Form', 'Self-supporting disc'],
       ['Result', 'No caking'],
+    ],
+    kickerAr: 'التداول · سرير الملح',
+    titleAr: 'يمنع تعليق الملح',
+    shortAr: 'يمنع تعليق<br />الملح',
+    bodyAr:
+      'القرص يحافظ على شكله بدل أن يلتحم في قشرة صلبة، فلا تتكوّن جسور ملح فوق مخرج الخزان، ويظل المحلول يجري بلا تدخّل.',
+    rowsAr: [
+      ['المظهر', 'أقراص مضغوطة'],
+      ['الشكل', 'قرص متماسك'],
+      ['النتيجة', 'بلا تكتّل'],
     ],
   },
 }
@@ -600,7 +682,7 @@ function buildAnnotations(centre) {
     button.className = 'hotspot'
     button.setAttribute('aria-expanded', 'false')
     button.setAttribute('aria-label', `${copy.title} — open the specification`)
-    button.innerHTML = `<span class="dot" aria-hidden="true"></span><span>${copy.short}</span>`
+    button.innerHTML = `<span class="dot" aria-hidden="true"></span><span class="hs-label">${copy.short}</span>`
     button.style.opacity = '0'
     button.style.pointerEvents = 'none'
     button.addEventListener('click', () => toggleHotspot(id))
@@ -662,6 +744,31 @@ const setAnnotationWeight = (value) => {
   }
 }
 
+/* The 3D callouts are drawn in the scene, so they carry their own copy. */
+function applyAnnotationCopy() {
+  if (!dimMarks) return
+  const arabic = lang === 'ar'
+  dimMarks.widthMark.element.innerHTML = arabic
+    ? '<span class="rule"></span><b><strong>Ø 25 مم</strong><span>القطر</span></b>'
+    : '<span class="rule"></span><b><strong>Ø 25 mm</strong><span>Diameter</span></b>'
+  dimMarks.thickMark.element.innerHTML = arabic
+    ? '<span class="rule"></span><b><strong>11 مم</strong><span>السماكة</span></b>'
+    : '<span class="rule"></span><b><strong>11 mm</strong><span>Thickness</span></b>'
+  dimMarks.massMark.element.innerHTML = arabic
+    ? '<b><strong>≈ 15 جم</strong><span>الوزن الصافي</span></b>'
+    : '<b><strong>~15 g</strong><span>Net mass</span></b>'
+
+  hotspotButtons.forEach((button, id) => {
+    const copy = HOTSPOT_COPY[id]
+    const label = button.querySelector('.hs-label')
+    if (label) label.innerHTML = arabic ? copy.shortAr : copy.short
+    button.setAttribute(
+      'aria-label',
+      arabic ? `${copy.titleAr} — فتح المواصفة` : `${copy.title} — open the specification`,
+    )
+  })
+}
+
 /* -------------------------------------------------------------------------- */
 /*  Hotspot card                                                              */
 /* -------------------------------------------------------------------------- */
@@ -686,19 +793,26 @@ function closeHotspot() {
   card.hidden = true
 }
 
+function renderHotspotCopy(id) {
+  const copy = HOTSPOT_COPY[id]
+  if (!copy) return
+  const arabic = lang === 'ar'
+  card.classList.toggle('is-ar', arabic)
+  cardParts.kicker.textContent = arabic ? copy.kickerAr : copy.kicker
+  cardParts.title.textContent = arabic ? copy.titleAr : copy.title
+  cardParts.body.textContent = arabic ? copy.bodyAr : copy.body
+  cardParts.arabic.textContent = copy.arabic
+  cardParts.rows.innerHTML = (arabic ? copy.rowsAr : copy.rows)
+    .map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`)
+    .join('')
+}
+
 function toggleHotspot(id) {
   const wasOpen = openHotspotId === id
   closeHotspot()
   if (wasOpen) return
-  const copy = HOTSPOT_COPY[id]
-  if (!copy) return
-  cardParts.kicker.textContent = copy.kicker
-  cardParts.title.textContent = copy.title
-  cardParts.body.textContent = copy.body
-  cardParts.arabic.textContent = copy.arabic
-  cardParts.rows.innerHTML = copy.rows
-    .map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`)
-    .join('')
+  if (!HOTSPOT_COPY[id]) return
+  renderHotspotCopy(id)
   card.hidden = false
   const button = hotspotButtons.get(id)
   button?.classList.add('is-on')
@@ -790,8 +904,8 @@ window.addEventListener('scroll', onScroll, { passive: true })
 let story = null
 
 /* Words stay unbroken; every glyph gets its own box so it can rise. */
-function splitLetters(heading) {
-  const text = heading.textContent.trim().replace(/\s+/g, ' ')
+function splitLetters(heading, source = heading.textContent) {
+  const text = source.trim().replace(/\s+/g, ' ')
   const letters = []
   heading.textContent = ''
   text.split(' ').forEach((word, index, words) => {
@@ -837,6 +951,11 @@ function buildStory() {
      as its panel takes the screen. */
   panels.forEach((panel) => {
     panel.querySelectorAll('[data-letters]').forEach((heading) => {
+      // Arabic headings keep their glyphs joined; they fade rather than rise.
+      if (lang === 'ar') {
+        heading.classList.add('is-ar')
+        return
+      }
       const letters = splitLetters(heading)
       if (reduceMotion) return
       gsap.from(letters, {
@@ -1223,3 +1342,12 @@ if (import.meta.env.DEV) {
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) clock.getDelta()
 })
+
+/* The reader's last choice wins on the next visit. */
+let savedLang = null
+try {
+  savedLang = localStorage.getItem(LANG_KEY)
+} catch {
+  savedLang = null
+}
+setLanguage(savedLang === 'ar' ? 'ar' : 'en', { store: false })
