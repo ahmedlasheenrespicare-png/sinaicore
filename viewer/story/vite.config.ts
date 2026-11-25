@@ -9,6 +9,8 @@ import path from 'node:path'
  */
 export default defineConfig({
   root: __dirname,
+  // Local dev serves from '/', the published copy from '/sinaicore/'.
+  base: process.env.PAGES_BASE ?? '/',
   publicDir: path.resolve(__dirname, '..', '..', 'public'),
   server: {
     host: '0.0.0.0',

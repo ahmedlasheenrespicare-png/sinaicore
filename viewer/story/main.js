@@ -14,6 +14,9 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 gsap.registerPlugin(ScrollTrigger)
 
+/* Vite serves from '/' in dev and from '/sinaicore/' on GitHub Pages. */
+const BASE = import.meta.env.BASE_URL || '/'
+
 const stage = document.getElementById('stage')
 const status = document.getElementById('status')
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -143,7 +146,7 @@ const targetPath = new THREE.CatmullRomCurve3(CAMERA_KEYS.map((k) => k.target), 
 /*  Assets                                                                    */
 /* -------------------------------------------------------------------------- */
 const stamp = `v=${Date.now()}`
-const draco = new DRACOLoader().setDecoderPath('/draco/')
+const draco = new DRACOLoader().setDecoderPath(`${BASE}draco/`)
 const loader = new GLTFLoader().setDRACOLoader(draco)
 
 const bagRoot = new THREE.Group()
@@ -171,18 +174,18 @@ scene.add(heroContact)
 const tablets = []
 
 loader
-  .loadAsync(`/models/sack.glb?${stamp}`)
+  .loadAsync(`${BASE}models/sack.glb?${stamp}`)
   .then(async (gltf) => {
-    const texture = await new THREE.TextureLoader().loadAsync(`/artwork/sack-50kg-texture.png?${stamp}`)
+    const texture = await new THREE.TextureLoader().loadAsync(`${BASE}artwork/sack-50kg-texture.png?${stamp}`)
     texture.colorSpace = THREE.SRGBColorSpace
     texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy())
 
-    const weave = await new THREE.TextureLoader().loadAsync(`/textures/sack-weave.png?${stamp}`)
+    const weave = await new THREE.TextureLoader().loadAsync(`${BASE}textures/sack-weave.png?${stamp}`)
     weave.wrapS = weave.wrapT = THREE.RepeatWrapping
     weave.repeat.set(4, 9)
     weave.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy())
 
-    const crumple = await new THREE.TextureLoader().loadAsync(`/textures/sack-crumple.png?${stamp}`)
+    const crumple = await new THREE.TextureLoader().loadAsync(`${BASE}textures/sack-crumple.png?${stamp}`)
     crumple.wrapS = crumple.wrapT = THREE.RepeatWrapping
     crumple.repeat.set(2, 2)
     crumple.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy())
@@ -240,9 +243,9 @@ loader
     sack.add(mouth.group)
 
     /* ---- the tablets that pour out of it -------------------------------- */
-    const tabletGltf = await loader.loadAsync(`/models/tablet.glb?${stamp}`)
+    const tabletGltf = await loader.loadAsync(`${BASE}models/tablet.glb?${stamp}`)
     const tabletSource = tabletGltf.scene.getObjectByProperty('isMesh', true)
-    const grain = await new THREE.TextureLoader().loadAsync(`/textures/salt-detail.png?${stamp}`)
+    const grain = await new THREE.TextureLoader().loadAsync(`${BASE}textures/salt-detail.png?${stamp}`)
     grain.wrapS = grain.wrapT = THREE.RepeatWrapping
     grain.repeat.set(3, 3)
 
@@ -1009,7 +1012,7 @@ const resize = () => {
 new ResizeObserver(resize).observe(stage)
 window.addEventListener('resize', resize)
 
-fetch(`/artwork/sack-50kg-texture.png?${stamp}`, { method: 'HEAD' })
+fetch(`${BASE}artwork/sack-50kg-texture.png?${stamp}`, { method: 'HEAD' })
   .then((response) => response.headers.get('last-modified'))
   .then((lastModified) => {
     if (!lastModified) return
