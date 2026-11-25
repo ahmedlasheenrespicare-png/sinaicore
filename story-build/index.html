@@ -226,6 +226,15 @@
         color: rgba(27, 42, 41, 0.45);
       }
       .stat--clay b { color: var(--clay); }
+      .stat b span { display: inline; margin: 0; font-size: inherit; letter-spacing: inherit; color: inherit; text-transform: none; }
+      .stat b .unit {
+        font-style: normal;
+        font-size: 0.4em;
+        letter-spacing: 0.04em;
+        margin-left: 0.18em;
+        color: rgba(27, 42, 41, 0.4);
+      }
+      .stat--clay b .unit { color: rgba(201, 121, 66, 0.55); }
       /* Corner readouts stay small: the model owns the middle of the screen. */
       .ov--tr .stat b,
       .ov--br .stat b { font-size: clamp(1.5rem, 3vw, 2.6rem); }
@@ -454,7 +463,7 @@
         .hotspot .dot::after { animation: none; }
       }
     </style>
-    <script type="module" crossorigin src="./assets/index-BuRbNu28.js"></script>
+    <script type="module" crossorigin src="./assets/index-CwqGhq6F.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index-DFGHZsfU.css">
   </head>
   <body>
@@ -532,13 +541,19 @@
         </div>
       </section>
 
-      <!-- 05 · why --------------------------------------------------------- -->
+      <!-- 05 · why it works ------------------------------------------------ -->
       <section class="panel panel--why" id="panel-5" data-step="3">
         <div class="sticky">
           <div class="ov ov--bl" id="ov-why">
             <p class="eyebrow">04 · why it works</p>
             <h2 class="display" data-letters>Slow by design</h2>
-            <p class="line">Pressed dense, it dissolves over weeks — not hours.</p>
+            <p class="line">Pressed dense, it gives the brine a steady face — weeks, not hours.</p>
+          </div>
+          <div class="ov ov--tr" id="ov-dissolve">
+            <div class="stat stat--clay">
+              <b><span id="hud-diameter">25</span><i class="unit">mm</i></b>
+              <span>left after six weeks</span>
+            </div>
           </div>
         </div>
       </section>
