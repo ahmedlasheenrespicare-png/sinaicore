@@ -1,0 +1,17 @@
+Rock scans — Poly Haven (https://polyhaven.com), released under CC0 1.0.
+
+Source mirrors: github.com/zuujis-cc0/polyhaven-models-nature
+Assets used (1k texture set each):
+
+  boulder_01            -> rock-boulder.glb
+  coast_rocks_01        -> rock-coast.glb
+  coast_land_rocks_02   -> rock-land.glb
+  coast_line_01         -> rock-shore.glb
+
+Processed by scripts/build-real-models.mjs: weld, dedup, meshopt simplify,
+prune, and 1024px JPEG re-encode, then embedded as GLB. Original scans are
+66k–1291k triangles; the shipped files are 43k–103k, 1.6–3.2 MB each.
+
+CC0 places these in the public domain: no attribution is required. It is
+given here anyway, because which rock a product stands on is part of how the
+page reads.
