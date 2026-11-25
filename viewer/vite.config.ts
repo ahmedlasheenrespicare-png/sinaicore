@@ -15,6 +15,10 @@ export default defineConfig({
     port: 5174,
     strictPort: true,
     allowedHosts: true,
+    headers: {
+      // The study page must always show the freshly exported texture.
+      'Cache-Control': 'no-store',
+    },
   },
   preview: {
     host: '0.0.0.0',
