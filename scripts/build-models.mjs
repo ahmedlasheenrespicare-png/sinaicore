@@ -346,7 +346,10 @@ function buildContainer() {
 /* -------------------------------------------------------------------------- */
 /*  3 — The 50 kg sack: a filled, stitched PP bag, not a box                   */
 /* -------------------------------------------------------------------------- */
-const SACK = { width: 1.62, height: 2.05, depth: 0.86, rings: 26, segments: 48 }
+/* A real 50 kg PP sack is roughly 55 × 95 cm standing, about 25 cm thick — a
+   flattened pillow, not a cube. The print panel is 55 × 90, so the mesh keeps
+   that 0.61 aspect and the artwork never looks stretched. */
+const SACK = { width: 1.3, height: 2.15, depth: 0.6, rings: 28, segments: 48 }
 const SACK_PROFILE = [
   [0, 0.78, 0.4],
   [0.12, 0.805, 0.432],
@@ -367,29 +370,67 @@ function sackProfile(t) {
     const [t1, w1, d1] = SACK_PROFILE[i + 1]
     if (clamped <= t1 || i === SACK_PROFILE.length - 2) {
       const k = smooth((clamped - t0) / (t1 - t0))
-      return { w: THREE.MathUtils.lerp(w0, w1, k), d: THREE.MathUtils.lerp(d0, d1, k) }
+      return {
+        w: THREE.MathUtils.lerp(w0, w1, k) * 0.8,
+        d: THREE.MathUtils.lerp(d0, d1, k) * 0.69,
+      }
     }
   }
   return { w: 0.78, d: 0.4 }
 }
 
+/** How close a point is to one of the four gusset folds that separate the flat
+ *  front/back panels from the two side panels. 1 on the fold, 0 in the panel. */
+function creaseAt(theta) {
+  const quarter = Math.PI / 2
+  const local = ((theta % quarter) + quarter) % quarter
+  const distance = Math.abs(local - quarter / 2) / (quarter / 2)
+  return Math.exp(-Math.pow(distance / 0.24, 2))
+}
+
 /** Point on the bag's skin. `theta` runs around the bag, `t` bottom → top. */
 function sackSurface(theta, t) {
-  const { w, d } = sackProfile(t)
-  const n = 3.1
+  const base = sackProfile(t)
+  const n = 3.4
   const cos = Math.cos(theta)
   const sin = Math.sin(theta)
-  const x = w * Math.sign(cos) * Math.pow(Math.abs(cos), 2 / n)
-  const z = d * Math.sign(sin) * Math.pow(Math.abs(sin), 2 / n)
+
+  // The load settles: the base spreads and flattens a little.
+  const settle = Math.exp(-Math.pow(t / 0.12, 2))
+  // A soft horizontal fold where the shoulders take the weight.
+  const shoulder = Math.exp(-Math.pow((t - 0.86) / 0.075, 2))
+  const w = base.w * (1 + 0.04 * settle) * (1 - 0.012 * shoulder)
+  const d = base.d * (1 + 0.02 * settle) * (1 - 0.03 * shoulder)
+
+  // The fabric tucks under itself where the bag sits, so the base is rounder
+  // than the widest cross-section.
+  const toe = 0.94 + 0.06 * smooth(THREE.MathUtils.clamp(t / 0.09, 0, 1))
+  // Gusset folds fade out at the base and under the shoulder, where the fabric
+  // is gathered instead.
+  const creaseWindow =
+    THREE.MathUtils.smoothstep(t, 0.03, 0.14) * (1 - THREE.MathUtils.smoothstep(t, 0.86, 0.96))
+  const fold = toe * (1 - 0.034 * creaseAt(theta) * (0.35 + 0.65 * creaseWindow))
+  const x = w * Math.sign(cos) * Math.pow(Math.abs(cos), 2 / n) * fold
+  const z = d * Math.sign(sin) * Math.pow(Math.abs(sin), 2 / n) * fold
+
   // Woven PP never hangs perfectly; two low-frequency ripples fake the folds
   // that a 50 kg load puts into the fabric.
-  const wrinkle = 1 + 0.009 * Math.sin(6 * theta + 9 * t) + 0.005 * Math.sin(11 * theta - 5.5 * t)
-  return { x: x * wrinkle, z: z * wrinkle, w, d, n }
+  const wrinkle =
+    1 + 0.018 * Math.sin(6 * theta + 9 * t) + 0.009 * Math.sin(11 * theta - 5.5 * t) +
+    0.005 * Math.sin(19 * theta + 2 * t) + 0.004 * Math.sin(27 * theta - 13 * t)
+  // A filled bag never stands plumb: the fabric leans off its base.
+  const lean = 0.035 * Math.sin(t * Math.PI * 1.15) - 0.012
+  // Two dents where the bottom corners take the brunt of the load.
+  const dents =
+    -0.012 * Math.exp(-Math.pow((t - 0.06) / 0.05, 2)) *
+    Math.exp(-Math.pow(Math.abs(Math.sin(theta)) / 0.25, 2))
+  return { x: x * wrinkle + lean, z: (z + dents) * wrinkle, w, d, n }
 }
 
 function sackNormal(theta, t) {
-  const { w, d, n } = sackProfile(t) && { ...sackProfile(t), n: 3.1 }
-  const { x, z } = sackSurface(theta, t)
+  const surface = sackSurface(theta, t)
+  const { w, d, n } = surface
+  const { x, z } = surface
   const gx = (Math.pow(Math.abs(x) / w, n - 1) * Math.sign(x)) / w
   const gz = (Math.pow(Math.abs(z) / d, n - 1) * Math.sign(z)) / d
   const length = Math.hypot(gx, gz) || 1
@@ -435,21 +476,25 @@ function buildSack() {
 
   // Sealed mouth: the bag is pinched flat and stitched, so the top two rings
   // collapse into a thin slab.
+  // The sewn mouth is narrower than the shoulder and drifts with the lean, so
+  // it reads as a stitched flap rather than a shelf on top of the bag.
+  const leant = 0.035 * Math.sin(Math.PI * 1.15) - 0.012
   const mouth = [
-    [height / 2 + 0.005, 0.702, 0.086],
-    [height / 2 + 0.05, 0.698, 0.062],
-    [height / 2 + 0.105, 0.69, 0.05],
+    [height / 2 + 0.004, 0.563, 0.059, 0],
+    [height / 2 + 0.05, 0.538, 0.041, 0.35],
+    [height / 2 + 0.1, 0.524, 0.033, 0.7],
+    [height / 2 + 0.135, 0.504, 0.028, 1],
   ]
   const mouthPoint = (j, band, offset = 0) => {
     const theta = (j / segments) * Math.PI * 2
-    const [, w, d] = mouth[band]
+    const [, w, d, drift] = mouth[band]
     const n = 3.1
     const cos = Math.cos(theta)
     const sin = Math.sin(theta)
     return V(
-      w * Math.sign(cos) * Math.pow(Math.abs(cos), 2 / n) + offset * Math.sign(cos),
+      w * Math.sign(cos) * Math.pow(Math.abs(cos), 2 / n) + offset * Math.sign(cos) + leant * drift,
       mouth[band][0],
-      d * Math.sign(sin) * Math.pow(Math.abs(sin), 2 / n) + offset * Math.sign(sin),
+      d * Math.sign(sin) * Math.pow(Math.abs(sin), 2 / n) + offset * Math.sign(sin) - 0.01 * drift,
     )
   }
   for (let band = 0; band < mouth.length - 1; band++) {
@@ -467,7 +512,7 @@ function buildSack() {
   // Stitch dashes: two rows of short ribs along the sealed flap.
   for (const side of [-1, 1]) {
     for (let k = -9; k <= 9; k++) {
-      addBox(body, [0.038, 0.009, 0.012], [k * 0.072, height / 2 + 0.075, side * 0.055])
+      addBox(body, [0.03, 0.007, 0.009], [k * 0.05 + leant, height / 2 + 0.085, side * 0.036])
     }
   }
 
@@ -501,10 +546,40 @@ function buildSack() {
     }
   }
 
+  // Cheap baked occlusion: real sacks are dirty and shadowed in every fold, and
+  // a vertex tint sells that far better than a uniform base colour.
+  const bodyGeometry = body.geometry()
+  const panelGeometry = panel.geometry()
+  bakeOcclusion(bodyGeometry, bottom, height, 1)
+  bakeOcclusion(panelGeometry, bottom, height, 0.62)
+
   return [
-    { name: 'sack-body', geometry: body.geometry(), material: 'SackBody' },
-    { name: 'sack-panel', geometry: panel.geometry(), material: 'SackPrint' },
+    { name: 'sack-body', geometry: bodyGeometry, material: 'SackBody' },
+    { name: 'sack-panel', geometry: panelGeometry, material: 'SackPrint' },
   ]
+}
+
+function bakeOcclusion(geometry, bottom, height, strength) {
+  const position = geometry.attributes.position
+  const colors = []
+  for (let i = 0; i < position.count; i++) {
+    const x = position.getX(i)
+    const y = position.getY(i)
+    const z = position.getZ(i)
+    const t = THREE.MathUtils.clamp((y - bottom) / height, 0, 1)
+    const { w, d } = sackProfile(t)
+    const crease = creaseAt(Math.atan2(z / d, x / w))
+
+    let shade = 0
+    shade += 0.14 * crease * (1 - Math.abs(t - 0.5) * 0.5)
+    shade += 0.3 * Math.exp(-Math.pow(t / 0.07, 2))
+    shade += 0.16 * Math.exp(-Math.pow((t - 0.9) / 0.06, 2))
+    shade += 0.3 * THREE.MathUtils.clamp((t - 0.955) / 0.045, 0, 1)
+    shade += 0.05 * (0.5 + 0.5 * Math.sin(9 * Math.atan2(z, x) + 11 * t))
+    const ao = THREE.MathUtils.clamp(1 - shade * strength, 0.5, 1)
+    colors.push(ao, ao, ao)
+  }
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
 }
 
 /* -------------------------------------------------------------------------- */
@@ -569,6 +644,13 @@ async function writeGlb(nodes, file, label) {
       .setType('SCALAR')
       .setArray(new Uint32Array(geometry.index.array))
       .setBuffer(buffer)
+    const color = geometry.attributes.color
+      ? document
+          .createAccessor()
+          .setType('VEC3')
+          .setArray(new Float32Array(geometry.attributes.color.array))
+          .setBuffer(buffer)
+      : null
 
     const primitive = document
       .createPrimitive()
@@ -577,6 +659,7 @@ async function writeGlb(nodes, file, label) {
       .setAttribute('TEXCOORD_0', uv)
       .setIndices(indices)
       .setMaterial(material)
+    if (color) primitive.setAttribute('COLOR_0', color)
 
     const mesh = document.createMesh(node.name).addPrimitive(primitive)
     const object = document.createNode(node.name).setMesh(mesh)

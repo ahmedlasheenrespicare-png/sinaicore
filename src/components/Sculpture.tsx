@@ -622,16 +622,18 @@ function SackAsset({ scale = 1, position = [0, 0, 0], texture }: SackProps) {
        the print is pulled back with a tint and a low env contribution. */
     const printed = new THREE.MeshStandardMaterial({
       map: texture,
-      color: '#ece7db',
+      color: '#ded7c6',
+      vertexColors: true,
       bumpMap: maps.weave,
-      bumpScale: 0.018,
+      bumpScale: 0.024,
       roughnessMap: maps.weave,
-      roughness: 0.9,
+      roughness: 0.92,
       metalness: 0,
-      envMapIntensity: 0.42,
+      envMapIntensity: 0.3,
     })
     const fabric = new THREE.MeshStandardMaterial({
       color: '#cfc7b1',
+      vertexColors: true,
       envMapIntensity: 0.38,
       bumpMap: maps.weave,
       bumpScale: 0.028,
@@ -649,8 +651,24 @@ function SackAsset({ scale = 1, position = [0, 0, 0], texture }: SackProps) {
     return clone
   }, [gltf, maps, texture])
 
+  /* No two bags drop the same way: a deterministic hash of the position gives
+     each instance its own lean and squeeze without keeping state. */
+  const jitter = useMemo(() => {
+    const seed = Math.abs(Math.sin(position[0] * 12.9898 + position[1] * 78.233 + position[2] * 37.719) * 43758.5453)
+    const r = seed - Math.floor(seed)
+    return {
+      rotationY: (r - 0.5) * 0.42,
+      rotationZ: (r - 0.5) * 0.055,
+      scale: 0.965 + r * 0.07,
+    }
+  }, [position])
+
   return (
-    <group position={position} scale={scale}>
+    <group
+      position={position}
+      scale={scale * jitter.scale}
+      rotation={[0, jitter.rotationY, jitter.rotationZ]}
+    >
       <primitive object={object} />
     </group>
   )
