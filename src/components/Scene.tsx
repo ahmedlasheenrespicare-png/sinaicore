@@ -235,7 +235,7 @@ function Effects() {
     <>
       <FocusRig target={focus} />
       <EffectComposer multisampling={0} enableNormalPass={false}>
-  <DepthOfField target={focus} focusRange={0.14} bokehScale={1.15} resolutionScale={0.85} />
+  <DepthOfField target={focus} focusRange={0.3} bokehScale={0.9} resolutionScale={0.9} />
         <Bloom luminanceThreshold={0.94} luminanceSmoothing={0.18} intensity={0.16} mipmapBlur />
       </EffectComposer>
     </>

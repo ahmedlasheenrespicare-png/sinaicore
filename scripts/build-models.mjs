@@ -349,7 +349,9 @@ function buildContainer() {
 /* A real 50 kg PP sack is roughly 55 × 95 cm standing, about 25 cm thick — a
    flattened pillow, not a cube. The print panel is 55 × 90, so the mesh keeps
    that 0.61 aspect and the artwork never looks stretched. */
-const SACK = { width: 1.3, height: 2.15, depth: 0.6, rings: 28, segments: 48 }
+/* Filled proportions, not the flat panel: 55 × 95 cm of fabric holds 50 kg of
+   salt and swells to about 61 × 86 cm standing — the silhouette in the photo. */
+const SACK = { width: 1.44, height: 2.06, depth: 0.64, rings: 30, segments: 56 }
 const SACK_PROFILE = [
   [0, 0.802, 0.404],
   [0.1, 0.812, 0.436],
@@ -371,8 +373,8 @@ function sackProfile(t) {
     if (clamped <= t1 || i === SACK_PROFILE.length - 2) {
       const k = smooth((clamped - t0) / (t1 - t0))
       return {
-        w: THREE.MathUtils.lerp(w0, w1, k) * 0.8,
-        d: THREE.MathUtils.lerp(d0, d1, k) * 0.69,
+        w: THREE.MathUtils.lerp(w0, w1, k) * 0.885,
+        d: THREE.MathUtils.lerp(d0, d1, k) * 0.735,
       }
     }
   }
@@ -425,13 +427,32 @@ function sackSurface(theta, t) {
   const puckers =
     0.006 * Math.sin(34 * t + 2.4 * Math.sin(3 * theta)) * Math.exp(-Math.pow((t - 0.93) / 0.05, 2)) +
     0.005 * Math.sin(46 * t - 1.7 * Math.sin(4 * theta)) * Math.exp(-Math.pow((t - 0.1) / 0.06, 2))
+  // One long soft fold runs down the printed face where the fabric was folded
+  // flat before filling; it fades out towards the base.
+  const frontFold =
+    -0.014 *
+    Math.exp(-Math.pow((theta - (Math.PI / 2 + 0.62)) / 0.085, 2)) *
+    THREE.MathUtils.smoothstep(t, 0.18, 0.42)
+  // The side gussets bulge in slow, uneven lobes; this is what makes the
+  // silhouette of a filled sack wobble instead of running dead straight.
+  const sideLobe =
+    0.012 *
+    Math.sin(4.4 * t * Math.PI + 0.6) *
+    Math.exp(-Math.pow(Math.abs(Math.sin(theta)) / 0.5, 2)) *
+    (1 - THREE.MathUtils.smoothstep(t, 0.9, 1))
   // A filled bag never stands plumb: the fabric leans off its base.
   const lean = 0.035 * Math.sin(t * Math.PI * 1.15) - 0.012
   // Two dents where the bottom corners take the brunt of the load.
   const dents =
     -0.012 * Math.exp(-Math.pow((t - 0.06) / 0.05, 2)) *
     Math.exp(-Math.pow(Math.abs(Math.sin(theta)) / 0.25, 2))
-  return { x: x * wrinkle + lean + puckers, z: (z + dents) * wrinkle + puckers * 0.7, w, d, n }
+  return {
+    x: (x + sideLobe) * wrinkle + lean + puckers + frontFold,
+    z: (z + dents) * wrinkle + puckers * 0.7 + frontFold,
+    w,
+    d,
+    n,
+  }
 }
 
 function sackNormal(theta, t) {
@@ -487,7 +508,7 @@ function buildSack() {
   // it into a flat welt — a straight band that sits a little wider than the
   // shoulders, with the two top corners poking out as small ears.
   const leant = 0.035 * Math.sin(Math.PI * 1.15) - 0.012
-  const shoulderW = SACK_PROFILE[SACK_PROFILE.length - 1][1] * 0.8
+  const shoulderW = SACK_PROFILE[SACK_PROFILE.length - 1][1] * 0.885
   const mouth = [
     [height / 2 + 0.002, shoulderW * 1.0, 0.060, 0, 2.15],
     [height / 2 + 0.02, shoulderW * 1.022, 0.058, 0.3, 3.2],
@@ -532,7 +553,7 @@ function buildSack() {
   const rows = 22
   const t0 = 0.05
   const t1 = 0.955
-  const spread = 1.12
+  const spread = 0.98
   const panelPoint = (c, r) => {
     const s = (c / cols) * 2 - 1
     const t = t0 + (r / rows) * (t1 - t0)

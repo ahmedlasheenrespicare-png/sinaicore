@@ -11,7 +11,7 @@ const status = document.getElementById('status')
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 renderer.setSize(window.innerWidth, window.innerHeight)
-renderer.toneMapping = THREE.ACESFilmicToneMapping
+renderer.toneMapping = THREE.NeutralToneMapping
 renderer.toneMappingExposure = 0.88
 renderer.shadowMap.enabled = true
 renderer.shadowMap.type = THREE.PCFSoftShadowMap
@@ -21,7 +21,7 @@ const scene = new THREE.Scene()
 scene.background = null
 
 const camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 100)
-camera.position.set(1.9, 0.4, 5.7)
+camera.position.set(1.62, 0.2, 5.15)
 
 /* A studio box gives the PP sheen something to reflect without shipping an HDRI. */
 const pmrem = new THREE.PMREMGenerator(renderer)
@@ -98,25 +98,33 @@ loader
     weave.wrapS = weave.wrapT = THREE.RepeatWrapping
     weave.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy())
 
-    const printed = new THREE.MeshStandardMaterial({
+    const printed = new THREE.MeshPhysicalMaterial({
       map: texture,
-      color: '#f5f3ec',
+      color: '#f3f4f5',
       vertexColors: true,
       bumpMap: weave,
-      bumpScale: 0.022,
+      bumpScale: 0.03,
       roughnessMap: weave,
       roughness: 0.95,
       metalness: 0,
+      // Woven PP has a dry, cloth-like sheen at grazing angles; without it the
+      // white bag reads as painted plastic.
+      sheen: 0.22,
+      sheenRoughness: 0.9,
+      sheenColor: new THREE.Color('#ffffff'),
       envMapIntensity: 0.24,
     })
-    const fabric = new THREE.MeshStandardMaterial({
-      color: '#f5f3ec',
+    const fabric = new THREE.MeshPhysicalMaterial({
+      color: '#f3f4f5',
       vertexColors: true,
       bumpMap: weave,
-      bumpScale: 0.022,
+      bumpScale: 0.03,
       roughnessMap: weave,
       roughness: 0.96,
       metalness: 0,
+      sheen: 0.22,
+      sheenRoughness: 0.9,
+      sheenColor: new THREE.Color('#ffffff'),
       envMapIntensity: 0.26,
     })
 
