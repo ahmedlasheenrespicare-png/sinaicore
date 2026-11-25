@@ -19,6 +19,12 @@
       * { box-sizing: border-box; }
       html { scroll-behavior: auto; }
       html, body { margin: 0; background: var(--paper); color: var(--ink); }
+      /* The paper wash lives on the page, not on the stage, so the stage can
+         sit in front of the copy without painting over it. */
+      body {
+        background:
+          radial-gradient(120% 85% at 68% 12%, #fbf8f0 0%, var(--paper) 48%, #e9e4d4 100%) fixed;
+      }
       body {
         font-family: "IBM Plex Sans Arabic", "Segoe UI", system-ui, sans-serif;
         -webkit-font-smoothing: antialiased;
@@ -28,14 +34,24 @@
       ::selection { background: var(--teal); color: #fff; }
 
       /* ------------------------------------------------------------- stage */
+      /* The model floats over the copy: it stays visible all the way down and
+         the text scrolls behind it. Only the labels take pointer events. */
       #stage {
         position: fixed;
         inset: 0;
-        z-index: 0;
-        background:
-          radial-gradient(120% 85% at 68% 12%, #fbf8f0 0%, var(--paper) 48%, #e9e4d4 100%);
+        z-index: 4;
+        pointer-events: none;
+        background: transparent;
       }
-      #stage canvas { display: block; touch-action: pan-y; }
+      #stage canvas { display: block; pointer-events: none; touch-action: pan-y; }
+      /* Wide screens: the model may pass over the copy, so it dissolves into
+         the paper just before it reaches the text column. */
+      @media (min-width: 1081px) {
+        #stage {
+          -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 26%, #000 46%, #000 100%);
+          mask-image: linear-gradient(to right, transparent 0%, transparent 26%, #000 46%, #000 100%);
+        }
+      }
       .labels {
         position: absolute;
         inset: 0;
@@ -509,8 +525,24 @@
 
       /* ----------------------------------------------------------- mobile */
       @media (max-width: 1080px) {
-        #stage { height: 46vh; }
+        /* Narrow screens get a fixed model window on top and their own copy
+           pane below it: the model is never hidden and never covers the text. */
+        #stage { height: 46vh; box-shadow: 0 18px 40px -34px rgba(27, 42, 41, 0.55); }
         .veil { display: none; }
+        .story {
+          position: fixed;
+          inset: 46vh 0 0 0;
+          overflow-y: auto;
+          overflow-x: hidden;
+          overscroll-behavior: contain;
+          padding-top: 0;
+          pointer-events: auto;
+          background:
+            linear-gradient(to bottom, rgba(244, 241, 232, 0.99) 0%, rgba(244, 241, 232, 1) 220px),
+            radial-gradient(120% 85% at 68% 12%, #fbf8f0 0%, var(--paper) 48%, #e9e4d4 100%);
+          border-top: 1px solid var(--line);
+          scrollbar-width: thin;
+        }
         /* The step rail only fits beside a wide stage. */
         .rail { display: none; }
         /* Hotspots shrink to their dot so the callouts keep their air. */
@@ -520,10 +552,9 @@
           min-height: 54vh;
           align-items: flex-start;
           padding: 24px 18px 40px;
-          background: linear-gradient(to bottom, rgba(244, 241, 232, 0.96), rgba(244, 241, 232, 0.99));
           border-top: 1px solid var(--line);
         }
-        .story { padding-top: 46vh; }
+        .panel:first-of-type { border-top: 0; }
         .panel-inner { width: 100%; }
         .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .cards--3, .cards--2 { grid-template-columns: 1fr; }

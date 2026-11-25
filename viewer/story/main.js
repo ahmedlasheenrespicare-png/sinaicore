@@ -621,12 +621,22 @@ let smoothProgress = 0
 let lockedProgress = null
 let panelRects = []
 
+/* Narrow screens put the copy in its own pane under the model window, so the
+   scroll that drives the story lives on .story instead of the document. */
+const storyEl = document.querySelector('.story')
+const narrowQuery = window.matchMedia('(max-width: 1080px)')
+const scrollTopNow = () => (narrowQuery.matches ? storyEl.scrollTop : window.scrollY)
+
 const measurePanels = () => {
-  const vh = window.innerHeight
+  const inPane = narrowQuery.matches
+  const paneRect = inPane ? storyEl.getBoundingClientRect() : null
+  const scrollTop = inPane ? storyEl.scrollTop : window.scrollY
+  const vh = inPane ? storyEl.clientHeight : window.innerHeight
   panelRects = panels.map((panel) => {
     const rect = panel.getBoundingClientRect()
-    // Where the scroll sits when this panel is centred in the viewport.
-    return { anchor: rect.top + window.scrollY + rect.height / 2 - vh / 2, height: rect.height }
+    // Where the scroll sits when this panel is centred in the visible area.
+    const top = inPane ? rect.top - paneRect.top + scrollTop : rect.top + scrollTop
+    return { anchor: top + rect.height / 2 - vh / 2, height: rect.height }
   })
 }
 
@@ -634,7 +644,7 @@ const measurePanels = () => {
 const computeProgress = () => {
   const count = panelRects.length
   if (!count) return 0
-  const y = window.scrollY
+  const y = scrollTopNow()
   if (y <= panelRects[0].anchor) return 0
   if (y >= panelRects[count - 1].anchor) return 1
   for (let i = 0; i < count - 1; i++) {
@@ -653,6 +663,16 @@ const onScroll = () => {
   targetProgress = computeProgress()
 }
 window.addEventListener('scroll', onScroll, { passive: true })
+storyEl?.addEventListener('scroll', onScroll, { passive: true })
+
+/* The layout swaps between a fixed pane and a scrolling document, so the
+   reveals have to be rebuilt if that breakpoint is crossed. */
+let narrowNow = narrowQuery.matches
+window.addEventListener('resize', () => {
+  if (narrowQuery.matches === narrowNow) return
+  narrowNow = narrowQuery.matches
+  window.location.reload()
+})
 
 let story = null
 
@@ -675,7 +695,10 @@ function buildStory() {
 
   story = timeline
 
-  /* Reveal the copy as each panel arrives, and keep the rail in step. */
+  /* Reveal the copy as each panel arrives, and keep the rail in step.
+     In the narrow layout the copy scrolls inside its own pane. */
+  if (narrowQuery.matches) ScrollTrigger.defaults({ scroller: storyEl })
+
   panels.forEach((panel, index) => {
     gsap.fromTo(
       panel.querySelectorAll('.reveal'),
@@ -728,13 +751,19 @@ let dragging = false
 let lastX = 0
 let lastY = 0
 
-renderer.domElement.addEventListener('pointerdown', (event) => {
+/* The canvas sits above the copy and ignores the pointer, so the drag is
+   heard on the window — but never when it starts on something you can use. */
+const interactiveTarget = (target) =>
+  target instanceof Element &&
+  !!target.closest('a, button, input, textarea, select, .panel-inner, .story, .rail, .bar, .hs-card')
+
+window.addEventListener('pointerdown', (event) => {
+  if (interactiveTarget(event.target)) return
   dragging = true
   lastX = event.clientX
   lastY = event.clientY
-  renderer.domElement.setPointerCapture(event.pointerId)
 })
-renderer.domElement.addEventListener('pointermove', (event) => {
+window.addEventListener('pointermove', (event) => {
   if (!dragging) return
   yaw -= (event.clientX - lastX) * 0.005
   pitch -= (event.clientY - lastY) * 0.003
@@ -746,8 +775,8 @@ renderer.domElement.addEventListener('pointermove', (event) => {
 const endDrag = () => {
   dragging = false
 }
-renderer.domElement.addEventListener('pointerup', endDrag)
-renderer.domElement.addEventListener('pointercancel', endDrag)
+window.addEventListener('pointerup', endDrag)
+window.addEventListener('pointercancel', endDrag)
 
 /* -------------------------------------------------------------------------- */
 /*  Frame loop                                                                */
