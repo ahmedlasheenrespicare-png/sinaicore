@@ -1,4 +1,7 @@
-import '@fontsource/amiri/arabic-400.css'
+import '@fontsource/playfair-display/400.css'
+import '@fontsource/playfair-display/500.css'
+import '@fontsource/ibm-plex-sans-arabic/400.css'
+import '@fontsource/ibm-plex-sans-arabic/500.css'
 import '@fontsource/dm-mono/400.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
@@ -7,20 +10,21 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 
 const status = document.getElementById('status')
+const stage = document.getElementById('stage-canvas')
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-renderer.setSize(window.innerWidth, window.innerHeight)
+renderer.setSize(stage.clientWidth, stage.clientHeight)
 renderer.toneMapping = THREE.NeutralToneMapping
 renderer.toneMappingExposure = 0.82
 renderer.shadowMap.enabled = true
 renderer.shadowMap.type = THREE.PCFSoftShadowMap
-document.body.appendChild(renderer.domElement)
+stage.appendChild(renderer.domElement)
 
 const scene = new THREE.Scene()
 scene.background = null
 
-const camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 100)
+const camera = new THREE.PerspectiveCamera(30, stage.clientWidth / stage.clientHeight, 0.05, 100)
 camera.position.set(0.8, 1.06, 6.45)
 
 /* A studio box gives the PP sheen something to reflect without shipping an HDRI. */
@@ -249,6 +253,108 @@ fetch(`/artwork/sack-50kg-texture.png?${stamp}`, { method: 'HEAD' })
   })
   .catch(() => {})
 
+
+/* --------------------------------------------------------------------------
+ * Camera presets — the two products the sheet talks about: the 50 kg bag and
+ * the pressed tablet itself.
+ * -------------------------------------------------------------------------- */
+const VIEWS = {
+  bag: {
+    pos: new THREE.Vector3(0.8, 1.06, 6.45),
+    target: new THREE.Vector3(0, -0.24, 0.18),
+    min: 3.2,
+  },
+  tablet: {
+    pos: new THREE.Vector3(0.62, -0.12, 4.32),
+    target: new THREE.Vector3(-0.34, -0.86, 1.9),
+    min: 0.55,
+  },
+}
+let goal = null
+
+const viewButtons = [...document.querySelectorAll('.views button')]
+const flyTo = (name) => {
+  const view = VIEWS[name]
+  if (!view) return
+  goal = view
+  controls.minDistance = view.min
+  controls.autoRotate = false
+  viewButtons.forEach((button) => {
+    const on = button.dataset.view === name
+    button.classList.toggle('is-on', on)
+    button.setAttribute('aria-pressed', String(on))
+  })
+}
+viewButtons.forEach((button) => button.addEventListener('click', () => flyTo(button.dataset.view)))
+
+/* --------------------------------------------------------------------------
+ * The data explorer: eight linked panels, keyboard nav like a real tablist.
+ * -------------------------------------------------------------------------- */
+const tabs = [...document.querySelectorAll('[role="tab"]')]
+const panels = tabs.map((tab) => document.getElementById(tab.getAttribute('aria-controls')))
+
+const selectTab = (index, focus = true) => {
+  tabs.forEach((tab, i) => {
+    const on = i === index
+    tab.setAttribute('aria-selected', String(on))
+    tab.tabIndex = on ? 0 : -1
+    panels[i].hidden = !on
+    if (on) {
+      // Re-trigger the entrance animation every time a panel is opened.
+      panels[i].style.animation = 'none'
+      void panels[i].offsetWidth
+      panels[i].style.animation = ''
+    }
+  })
+  if (focus) tabs[index].focus()
+  // The physical panel is about the tablet, so bring the disc into frame.
+  if (tabs[index].dataset.panel === 'physical') flyTo('tablet')
+}
+
+tabs.forEach((tab, index) => {
+  tab.addEventListener('click', () => selectTab(index, false))
+  tab.addEventListener('keydown', (event) => {
+    const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0
+    if (step) {
+      event.preventDefault()
+      selectTab((index + step + tabs.length) % tabs.length)
+    } else if (event.key === 'Home') {
+      event.preventDefault()
+      selectTab(0)
+    } else if (event.key === 'End') {
+      event.preventDefault()
+      selectTab(tabs.length - 1)
+    }
+  })
+})
+selectTab(0, false)
+
+/* Standards: one badge at a time, each with the sentence that applies. */
+const STD_NOTES = {
+  BS: '<b>British Standards (BS)</b> — the product is checked against British specifications for salt used in water treatment, and compliance is declared on the batch certificate of analysis.',
+  EN: '<b>European Standards (EN)</b> — analysed to <b>EN 973</b>, the European specification for sodium chloride used in water treatment, which keeps the product acceptable across EU markets.',
+  ASTM: '<b>ASTM Standards</b> — <b>ASTM E534</b> is the reference test method behind the chemical analysis table, so results are comparable with international laboratories.',
+  ISO: '<b>ISO Standards</b> — checked against international requirements, which supports smooth customs clearance and global acceptance of every shipment.',
+}
+const stdButtons = [...document.querySelectorAll('#std-badges button')]
+const stdNote = document.getElementById('std-note')
+stdButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    const on = button.classList.contains('is-on')
+    stdButtons.forEach((other) => {
+      other.classList.remove('is-on')
+      other.setAttribute('aria-pressed', 'false')
+    })
+    if (on) {
+      stdNote.textContent = 'Select a standard to see how it applies to this product.'
+      return
+    }
+    button.classList.add('is-on')
+    button.setAttribute('aria-pressed', 'true')
+    stdNote.innerHTML = STD_NOTES[button.dataset.std]
+  })
+})
+
 /* Idle breathing: a filled sack settles rather than sitting perfectly still. */
 const clock = new THREE.Clock()
 function tick() {
@@ -257,6 +363,11 @@ function tick() {
     const breathe = 1 + Math.sin(t * 0.9) * 0.004
     model.scale.set(breathe, 1 / breathe, breathe)
     model.rotation.z = Math.sin(t * 0.45) * 0.012
+  }
+  if (goal) {
+    camera.position.lerp(goal.pos, 0.08)
+    controls.target.lerp(goal.target, 0.08)
+    if (camera.position.distanceTo(goal.pos) < 0.01) goal = null
   }
   controls.update()
   renderer.render(scene, camera)
@@ -268,8 +379,13 @@ tick()
 renderer.domElement.addEventListener('pointerdown', () => (controls.autoRotate = false))
 renderer.domElement.addEventListener('dblclick', () => (controls.autoRotate = true))
 
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight
+const resize = () => {
+  const width = stage.clientWidth
+  const height = stage.clientHeight
+  if (!width || !height) return
+  camera.aspect = width / height
   camera.updateProjectionMatrix()
-  renderer.setSize(window.innerWidth, window.innerHeight)
-})
+  renderer.setSize(width, height)
+}
+new ResizeObserver(resize).observe(stage)
+window.addEventListener('resize', resize)
