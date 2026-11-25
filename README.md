@@ -23,7 +23,8 @@ npm run textures # خرائط السطح فقط
 | الملف | الحجم | المحتوى |
 | --- | --- | --- |
 | `public/models/salt-crystal.glb` | 2.9 kB | بلورة هاليت بنمو «hopper» (أوجه متدرّجة) وحواف مشطوفة وبذرتين صغيرتين |
-| `public/models/container.glb` | 15.3 kB | حاوية 20 قدم: تضليع شبه منحرف حقيقي، زوايا مصبوبة، قضبان إغلاق، وبابان كعقدتين `door-left` / `door-right` |
+| `public/models/container.glb` | 15.1 kB | حاوية 20 قدم: تضليع شبه منحرف حقيقي، زوايا مصبوبة، قضبان إغلاق، وبابان كعقدتين `door-left` / `door-right` |
+| `public/models/sack.glb` | 18.7 kB | شيكارة 50 كجم مجسّمة: جسم منتفخ بخصر علوي مضغوط وخياطة، ووجه مطبوع كسطح منفصل بـUV مستقيمة |
 
 كلاهما مضغوط بـ Draco (`KHR_draco_mesh_compression`) ويُعاد توليده بالأمر:
 
@@ -36,6 +37,11 @@ npm run models
 `ContainerPaint`, `ContainerFrame`, `ContainerDoor`, `ContainerFloor`,
 `ContainerCastings`, `Crystal` — والمشهد يضبط `envMapIntensity` والظلال عليها.
 
+عناصر الشيكارة (`sack-body` / `sack-panel`) حاملة خامتين: الوجه المطبوع
+(`SackPrint`) يستقبل `map` من `public/artwork/sack-50kg-texture.png` داخل
+`Sculpture.tsx`، وباقي القماش (`SackBody`) لونه ورق وخرزة النسيج فقط — فالطبعة
+تلتف على البروز ولا تُسطَّح على شكل صندوق.
+
 **استبدالها بمجسم جاهز** (Sketchfab / Poly Haven): نزّل الـGLB (يفضّل CC0)،
 ضع الملف بنفس الاسم في `public/models/`، واحتفظ بنقطتين:
 
@@ -44,9 +50,9 @@ npm run models
 2. مرّر الملف على `npx gltf-transform optimize in.glb out.glb --compress draco`
    ليظل الحجم في حدود بضع عشرات الكيلوبايتات.
 
-الحاويات في المشهد تقبل العرض الافتراضي: لو فشل تحميل أي ملف يعود المكوّن
-تلقائياً إلى نسخة إجرائية (`ShippingContainer` / `FallbackCrystal`) فلا تظهر
-شاشة فارغة.
+كل مجسم في المشهد يفشل بأمان: لو تعذّر تحميل الملف يعود المكوّن تلقائياً إلى
+نسخة إجرائية (`ProceduralSack` / `ShippingContainer` / `FallbackCrystal`) فلا
+تظهر شاشة فارغة.
 
 ## تصميم الشيكارة (Bag artwork)
 

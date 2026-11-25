@@ -603,11 +603,61 @@ function useSackTexture() {
   return texture
 }
 
-function Sack({ scale = 1, position = [0, 0, 0] as [number, number, number], texture }: {
+type SackProps = {
   scale?: number
   position?: [number, number, number]
   texture: THREE.Texture
-}) {
+}
+
+/** The authored bag: a filled, pinched, stitched PP sack whose printed face is
+ *  a separate shell with upright UVs, so the artwork wraps the panel instead of
+ *  being box-mapped over the folds. */
+function SackAsset({ scale = 1, position = [0, 0, 0], texture }: SackProps) {
+  const maps = useSurfaceMaps()
+  const gltf = useGLTF('/models/sack.glb', '/draco/')
+
+  const object = useMemo(() => {
+    const clone = gltf.scene.clone(true)
+    /* The baked environment is bright enough to clip cream paper to white, so
+       the print is pulled back with a tint and a low env contribution. */
+    const printed = new THREE.MeshStandardMaterial({
+      map: texture,
+      color: '#ece7db',
+      bumpMap: maps.weave,
+      bumpScale: 0.018,
+      roughnessMap: maps.weave,
+      roughness: 0.9,
+      metalness: 0,
+      envMapIntensity: 0.42,
+    })
+    const fabric = new THREE.MeshStandardMaterial({
+      color: '#cfc7b1',
+      envMapIntensity: 0.38,
+      bumpMap: maps.weave,
+      bumpScale: 0.028,
+      roughnessMap: maps.weave,
+      roughness: 0.95,
+      metalness: 0,
+    })
+    clone.traverse((node) => {
+      const mesh = node as THREE.Mesh
+      if (!mesh.isMesh) return
+      mesh.material = mesh.name === 'sack-panel' ? printed : fabric
+      mesh.castShadow = true
+      mesh.receiveShadow = true
+    })
+    return clone
+  }, [gltf, maps, texture])
+
+  return (
+    <group position={position} scale={scale}>
+      <primitive object={object} />
+    </group>
+  )
+}
+
+/** Procedural stand-in used only if the GLB cannot be fetched or decoded. */
+function ProceduralSack({ scale = 1, position = [0, 0, 0] as [number, number, number], texture }: SackProps) {
   const maps = useSurfaceMaps()
   return (
     <group position={position} scale={scale}>
@@ -626,6 +676,16 @@ function Sack({ scale = 1, position = [0, 0, 0] as [number, number, number], tex
         <meshStandardMaterial color="#d6d0c0" roughness={1} />
       </mesh>
     </group>
+  )
+}
+
+function Sack(props: SackProps) {
+  return (
+    <AssetBoundary fallback={<ProceduralSack {...props} />}>
+      <Suspense fallback={<ProceduralSack {...props} />}>
+        <SackAsset {...props} />
+      </Suspense>
+    </AssetBoundary>
   )
 }
 

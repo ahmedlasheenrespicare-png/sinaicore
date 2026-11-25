@@ -342,6 +342,171 @@ function buildContainer() {
   ]
 }
 
+
+/* -------------------------------------------------------------------------- */
+/*  3 — The 50 kg sack: a filled, stitched PP bag, not a box                   */
+/* -------------------------------------------------------------------------- */
+const SACK = { width: 1.62, height: 2.05, depth: 0.86, rings: 26, segments: 48 }
+const SACK_PROFILE = [
+  [0, 0.78, 0.4],
+  [0.12, 0.805, 0.432],
+  [0.34, 0.815, 0.437],
+  [0.55, 0.8, 0.42],
+  [0.72, 0.772, 0.368],
+  [0.86, 0.744, 0.268],
+  [0.95, 0.718, 0.152],
+  [1, 0.702, 0.086],
+]
+
+const smooth = (a) => a * a * (3 - 2 * a)
+
+function sackProfile(t) {
+  const clamped = THREE.MathUtils.clamp(t, 0, 1)
+  for (let i = 0; i < SACK_PROFILE.length - 1; i++) {
+    const [t0, w0, d0] = SACK_PROFILE[i]
+    const [t1, w1, d1] = SACK_PROFILE[i + 1]
+    if (clamped <= t1 || i === SACK_PROFILE.length - 2) {
+      const k = smooth((clamped - t0) / (t1 - t0))
+      return { w: THREE.MathUtils.lerp(w0, w1, k), d: THREE.MathUtils.lerp(d0, d1, k) }
+    }
+  }
+  return { w: 0.78, d: 0.4 }
+}
+
+/** Point on the bag's skin. `theta` runs around the bag, `t` bottom → top. */
+function sackSurface(theta, t) {
+  const { w, d } = sackProfile(t)
+  const n = 3.1
+  const cos = Math.cos(theta)
+  const sin = Math.sin(theta)
+  const x = w * Math.sign(cos) * Math.pow(Math.abs(cos), 2 / n)
+  const z = d * Math.sign(sin) * Math.pow(Math.abs(sin), 2 / n)
+  // Woven PP never hangs perfectly; two low-frequency ripples fake the folds
+  // that a 50 kg load puts into the fabric.
+  const wrinkle = 1 + 0.009 * Math.sin(6 * theta + 9 * t) + 0.005 * Math.sin(11 * theta - 5.5 * t)
+  return { x: x * wrinkle, z: z * wrinkle, w, d, n }
+}
+
+function sackNormal(theta, t) {
+  const { w, d, n } = sackProfile(t) && { ...sackProfile(t), n: 3.1 }
+  const { x, z } = sackSurface(theta, t)
+  const gx = (Math.pow(Math.abs(x) / w, n - 1) * Math.sign(x)) / w
+  const gz = (Math.pow(Math.abs(z) / d, n - 1) * Math.sign(z)) / d
+  const length = Math.hypot(gx, gz) || 1
+  return { x: gx / length, z: gz / length }
+}
+
+function buildSack() {
+  const body = new Soup()
+  const panel = new Soup()
+  const { rings, segments, height } = SACK
+  const bottom = -height / 2
+  const pointAt = (j, i, offset = 0) => {
+    const theta = (j / segments) * Math.PI * 2
+    const t = i / (rings - 1)
+    const surface = sackSurface(theta, t)
+    const normal = sackNormal(theta, t)
+    return V(
+      surface.x + normal.x * offset,
+      bottom + t * height,
+      surface.z + normal.z * offset,
+    )
+  }
+
+  for (let i = 0; i < rings - 1; i++) {
+    for (let j = 0; j < segments; j++) {
+      const uv = (jj, ii) => [(jj / segments) * 3, ii / (rings - 1)]
+      body.quad(
+        pointAt(j, i),
+        pointAt(j, i + 1),
+        pointAt(j + 1, i + 1),
+        pointAt(j + 1, i),
+        false,
+        [uv(j, i), uv(j, i + 1), uv(j + 1, i + 1), uv(j + 1, i)],
+      )
+    }
+  }
+
+  // Bottom: a flat gusset with the fabric folded under.
+  const centre = V(0, bottom - 0.012, 0)
+  for (let j = 0; j < segments; j++) {
+    body.tri(centre, pointAt(j, 0), pointAt(j + 1, 0))
+  }
+
+  // Sealed mouth: the bag is pinched flat and stitched, so the top two rings
+  // collapse into a thin slab.
+  const mouth = [
+    [height / 2 + 0.005, 0.702, 0.086],
+    [height / 2 + 0.05, 0.698, 0.062],
+    [height / 2 + 0.105, 0.69, 0.05],
+  ]
+  const mouthPoint = (j, band, offset = 0) => {
+    const theta = (j / segments) * Math.PI * 2
+    const [, w, d] = mouth[band]
+    const n = 3.1
+    const cos = Math.cos(theta)
+    const sin = Math.sin(theta)
+    return V(
+      w * Math.sign(cos) * Math.pow(Math.abs(cos), 2 / n) + offset * Math.sign(cos),
+      mouth[band][0],
+      d * Math.sign(sin) * Math.pow(Math.abs(sin), 2 / n) + offset * Math.sign(sin),
+    )
+  }
+  for (let band = 0; band < mouth.length - 1; band++) {
+    for (let j = 0; j < segments; j++) {
+      body.quad(mouthPoint(j, band), mouthPoint(j, band + 1), mouthPoint(j + 1, band + 1), mouthPoint(j + 1, band))
+    }
+  }
+  // Cap the slab so the stitch line has a surface to sit on.
+  const topRing = Array.from({ length: segments }, (_, j) => mouthPoint(j, mouth.length - 1))
+  const topCentre = V(0, mouth[mouth.length - 1][0], 0)
+  for (let j = 0; j < segments; j++) {
+    body.tri(topCentre, topRing[(j + 1) % segments], topRing[j])
+  }
+
+  // Stitch dashes: two rows of short ribs along the sealed flap.
+  for (const side of [-1, 1]) {
+    for (let k = -9; k <= 9; k++) {
+      addBox(body, [0.038, 0.009, 0.012], [k * 0.072, height / 2 + 0.075, side * 0.055])
+    }
+  }
+
+  // Printed face: its own shell floating 5 mm proud of the body, with upright
+  // UVs so the artwork wraps the front panel without seaming the sides.
+  const cols = 24
+  const rows = 22
+  const t0 = 0.05
+  const t1 = 0.955
+  const spread = 1.12
+  const panelPoint = (c, r) => {
+    const s = (c / cols) * 2 - 1
+    const t = t0 + (r / rows) * (t1 - t0)
+    const theta = Math.PI / 2 + s * spread
+    const surface = sackSurface(theta, t)
+    const normal = sackNormal(theta, t)
+    return {
+      point: V(surface.x + normal.x * 0.006, bottom + t * height, surface.z + normal.z * 0.006),
+      // u runs against +x: the panel faces +z, so an upright viewer reads the
+      // artwork left-to-right only if u is mirrored relative to the surface.
+      uv: [1 - c / cols, r / rows],
+    }
+  }
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const a = panelPoint(c, r)
+      const b = panelPoint(c, r + 1)
+      const d = panelPoint(c + 1, r + 1)
+      const e = panelPoint(c + 1, r)
+      panel.quad(a.point, b.point, d.point, e.point, false, [a.uv, b.uv, d.uv, e.uv])
+    }
+  }
+
+  return [
+    { name: 'sack-body', geometry: body.geometry(), material: 'SackBody' },
+    { name: 'sack-panel', geometry: panel.geometry(), material: 'SackPrint' },
+  ]
+}
+
 /* -------------------------------------------------------------------------- */
 /*  Export                                                                    */
 /* -------------------------------------------------------------------------- */
@@ -359,11 +524,14 @@ const MATERIALS = {
   ContainerDoor: { color: linear('#1b565b'), metallic: 0.58, roughness: 0.5 },
   ContainerFloor: { color: linear('#6b5a44'), metallic: 0.05, roughness: 0.94 },
   ContainerCastings: { color: linear('#3f4a4a'), metallic: 0.72, roughness: 0.52 },
+  SackBody: { color: linear('#e0d9c6'), metallic: 0, roughness: 0.92 },
+  SackPrint: { color: linear('#ffffff'), metallic: 0, roughness: 0.86 },
 }
 
 async function writeGlb(nodes, file, label) {
   const document = new Document()
   const buffer = document.createBuffer()
+  const scene = document.createScene('Scene')
   const materials = new Map()
 
   for (const node of nodes) {
@@ -413,7 +581,7 @@ async function writeGlb(nodes, file, label) {
     const mesh = document.createMesh(node.name).addPrimitive(primitive)
     const object = document.createNode(node.name).setMesh(mesh)
     if (node.translation) object.setTranslation(node.translation)
-    document.createScene('Scene').addChild(object)
+    scene.addChild(object)
   }
 
   document
@@ -436,4 +604,5 @@ async function writeGlb(nodes, file, label) {
 
 await writeGlb(buildCrystal(), 'salt-crystal.glb', 'salt-crystal')
 await writeGlb(buildContainer(), 'container.glb', 'container')
+await writeGlb(buildSack(), 'sack.glb', 'sack')
 console.log('Draco decoder copied to public/draco')
