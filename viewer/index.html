@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>SinaiCore — مجسم الشيكارة / sack model study</title>
+    <style>
+      :root {
+        --teal-900: #0d3d41;
+        --teal-700: #1d5f63;
+        --clay: #c97942;
+        --paper: #f4f1e8;
+        --ink: #1b2a29;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; background: var(--paper); }
+      body {
+        font-family: "DM Mono", ui-monospace, "SF Mono", Menlo, monospace;
+        color: var(--ink);
+        overflow: hidden;
+      }
+      canvas { display: block; touch-action: none; }
+
+      .frame {
+        position: fixed;
+        inset: 18px;
+        border: 1px solid rgba(13, 61, 65, 0.16);
+        pointer-events: none;
+      }
+      .top {
+        position: fixed;
+        inset: 34px 40px auto auto;
+        text-align: right;
+        pointer-events: none;
+      }
+      .top h1 {
+        margin: 0;
+        font-family: "Amiri", "Times New Roman", serif;
+        font-size: 30px;
+        font-weight: 400;
+        color: var(--teal-900);
+      }
+      .top p {
+        direction: ltr;
+        margin: 6px 0 0;
+        font-size: 10.5px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: rgba(27, 42, 41, 0.55);
+      }
+      .tag {
+        direction: ltr;
+        position: fixed;
+        inset: 34px auto auto 40px;
+        font-size: 10.5px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: rgba(27, 42, 41, 0.5);
+      }
+      .tag b { color: var(--clay); font-weight: 400; }
+      .foot {
+        direction: ltr;
+        position: fixed;
+        inset: auto 40px 34px 40px;
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        font-size: 10.5px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: rgba(27, 42, 41, 0.5);
+        pointer-events: none;
+      }
+      .specs {
+        direction: ltr;
+        display: flex;
+        gap: 22px;
+        flex-wrap: wrap;
+      }
+      .specs span b {
+        display: block;
+        margin-bottom: 3px;
+        font-weight: 400;
+        color: rgba(27, 42, 41, 0.38);
+      }
+      .specs span i {
+        font-style: normal;
+        font-size: 15px;
+        letter-spacing: 0.04em;
+        color: var(--teal-900);
+      }
+      .status {
+        position: fixed;
+        inset: 50% 0 auto 0;
+        text-align: center;
+        font-size: 11px;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: rgba(27, 42, 41, 0.45);
+        transition: opacity 0.4s ease;
+      }
+      .status[data-state='ready'] { opacity: 0; }
+      .status[data-state='error'] { color: #a34b2b; }
+      @media (max-width: 720px) {
+        .top h1 { font-size: 22px; }
+        .foot { flex-direction: column; gap: 10px; }
+        .specs { gap: 14px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame"></div>
+    <div class="tag">SINAICORE <b>·</b> MODEL STUDY <b>·</b> PRIVATE</div>
+    <div class="top">
+      <h1>شيكارة ٥٠ كجم — مجسم</h1>
+      <p>50 kg sack · printed wrap · draco glb</p>
+    </div>
+
+    <div class="status" id="status" data-state="loading">Loading the model…</div>
+
+    <div class="foot">
+      <div class="specs">
+        <span><b>WEIGHT</b><i>50 KG</i></span>
+        <span><b>SIZE</b><i>55 × 95 × 25 cm</i></span>
+        <span><b>PACK</b><i>PP 3-LAYER</i></span>
+        <span><b>PAYLOAD</b><i>25.1 kB</i></span>
+      </div>
+      <div>Drag to orbit · scroll to zoom</div>
+    </div>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

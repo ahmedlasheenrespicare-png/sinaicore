@@ -1,0 +1,145 @@
+import '@fontsource/amiri/arabic-400.css'
+import '@fontsource/dm-mono/400.css'
+import * as THREE from 'three'
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
+
+const status = document.getElementById('status')
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+renderer.setSize(window.innerWidth, window.innerHeight)
+renderer.toneMapping = THREE.ACESFilmicToneMapping
+renderer.toneMappingExposure = 1.02
+renderer.shadowMap.enabled = true
+renderer.shadowMap.type = THREE.PCFSoftShadowMap
+document.body.appendChild(renderer.domElement)
+
+const scene = new THREE.Scene()
+scene.background = null
+
+const camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 100)
+camera.position.set(1.9, 0.4, 5.7)
+
+/* A studio box gives the PP sheen something to reflect without shipping an HDRI. */
+const pmrem = new THREE.PMREMGenerator(renderer)
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
+scene.environmentIntensity = 0.55
+
+const key = new THREE.DirectionalLight('#fff4e2', 3.1)
+key.position.set(2.9, 6.4, 4.2)
+key.castShadow = true
+key.shadow.mapSize.set(2048, 2048)
+key.shadow.camera.near = 1
+key.shadow.camera.far = 20
+key.shadow.camera.left = -3
+key.shadow.camera.right = 3
+key.shadow.camera.top = 4
+key.shadow.camera.bottom = -3
+key.shadow.bias = -0.0006
+key.shadow.radius = 3
+scene.add(key)
+
+const rim = new THREE.DirectionalLight('#bfe3dd', 1.15)
+rim.position.set(-4.4, 2.4, -3.2)
+scene.add(rim)
+
+const fill = new THREE.HemisphereLight('#fffaf0', '#b7ae99', 0.9)
+scene.add(fill)
+
+/* Soft contact shadow under the bag, cooled towards the paper of the site. */
+const floor = new THREE.Mesh(
+  new THREE.CircleGeometry(6, 64),
+  new THREE.ShadowMaterial({ color: '#16302d', opacity: 0.22 }),
+)
+floor.rotation.x = -Math.PI / 2
+floor.position.y = -1.075
+floor.receiveShadow = true
+scene.add(floor)
+
+const controls = new OrbitControls(camera, renderer.domElement)
+controls.target.set(0, 0.02, 0)
+controls.enableDamping = true
+controls.dampingFactor = 0.07
+controls.enablePan = false
+controls.minDistance = 3.2
+controls.maxDistance = 11
+controls.minPolarAngle = 0.55
+controls.maxPolarAngle = Math.PI / 2 + 0.12
+controls.autoRotate = true
+controls.autoRotateSpeed = 0.55
+controls.update()
+
+const draco = new DRACOLoader().setDecoderPath('/draco/')
+const loader = new GLTFLoader().setDRACOLoader(draco)
+
+const sack = new THREE.Group()
+scene.add(sack)
+
+let model = null
+
+loader
+  .loadAsync('/models/sack.glb')
+  .then(async (gltf) => {
+    const texture = await new THREE.TextureLoader().loadAsync('/artwork/sack-50kg-texture.png')
+    texture.colorSpace = THREE.SRGBColorSpace
+    texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy())
+
+    const printed = new THREE.MeshStandardMaterial({
+      map: texture,
+      color: '#ded7c6',
+      vertexColors: true,
+      roughness: 0.92,
+      metalness: 0,
+      envMapIntensity: 0.3,
+    })
+    const fabric = new THREE.MeshStandardMaterial({
+      color: '#cfc7b1',
+      vertexColors: true,
+      roughness: 0.96,
+      metalness: 0,
+      envMapIntensity: 0.28,
+    })
+
+    model = gltf.scene
+    model.traverse((node) => {
+      if (!node.isMesh) return
+      node.material = node.name === 'sack-panel' ? printed : fabric
+      node.castShadow = true
+      node.receiveShadow = false
+    })
+    sack.add(model)
+    status.dataset.state = 'ready'
+  })
+  .catch((error) => {
+    console.error(error)
+    status.dataset.state = 'error'
+    status.textContent = 'Could not load public/models/sack.glb — run npm run models'
+  })
+
+/* Idle breathing: a filled sack settles rather than sitting perfectly still. */
+const clock = new THREE.Clock()
+function tick() {
+  const t = clock.getElapsedTime()
+  if (model) {
+    const breathe = 1 + Math.sin(t * 0.9) * 0.004
+    model.scale.set(breathe, 1 / breathe, breathe)
+    model.rotation.z = Math.sin(t * 0.45) * 0.012
+  }
+  controls.update()
+  renderer.render(scene, camera)
+  requestAnimationFrame(tick)
+}
+tick()
+
+/* Pause the turntable while the visitor is handling the bag. */
+renderer.domElement.addEventListener('pointerdown', () => (controls.autoRotate = false))
+renderer.domElement.addEventListener('dblclick', () => (controls.autoRotate = true))
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight
+  camera.updateProjectionMatrix()
+  renderer.setSize(window.innerWidth, window.innerHeight)
+})

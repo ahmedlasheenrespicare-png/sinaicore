@@ -14,7 +14,13 @@ npm run build
 npm run assets   # بلورة GLB/Draco + خرائط KTX2
 npm run models   # البلورة + حاوية الشحن
 npm run textures # خرائط السطح فقط
+npm run viewer   # معاينة خاصة للمجسم على بورت 5174
 ```
+
+`npm run viewer` يشغّل سيرفر Vite مستقل جذره `viewer/` (بورت 5174) ويعرض
+**مجسم الشيكارة وحده** على خلفية استوديو: تحكم بالدوران والتقريب، ظل ناعم،
+بلا أي محتوى من الموقع — صفحة `noindex` غير عامة، تقرأ نفس
+`public/models/sack.glb` و`public/artwork/sack-50kg-texture.png`.
 
 ## المجسمات (3D assets)
 

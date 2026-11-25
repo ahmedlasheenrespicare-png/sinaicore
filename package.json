@@ -11,7 +11,8 @@
     "models": "node scripts/build-models.mjs",
     "textures": "node scripts/build-textures.mjs",
     "assets": "npm run models && npm run textures",
-    "artwork": "node scripts/build-artwork.mjs"
+    "artwork": "node scripts/build-artwork.mjs",
+    "viewer": "vite --config viewer/vite.config.ts"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
