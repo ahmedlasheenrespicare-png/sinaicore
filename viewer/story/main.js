@@ -13,6 +13,9 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 gsap.registerPlugin(ScrollTrigger)
+// Never stretch timelines to cover a slow frame: real time wins, so a stall
+// jumps the story forward instead of crawling through it.
+gsap.ticker.lagSmoothing(0)
 
 /* Vite serves from '/' in dev and from '/sinaicore/' on GitHub Pages. */
 const BASE = import.meta.env.BASE_URL || '/'
@@ -25,7 +28,7 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').match
 /*  Renderer, camera, light                                                   */
 /* -------------------------------------------------------------------------- */
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, stage.clientWidth < 1080 ? 1.6 : 2))
 renderer.setSize(stage.clientWidth, stage.clientHeight)
 renderer.toneMapping = THREE.NeutralToneMapping
 renderer.toneMappingExposure = 0.82
@@ -130,6 +133,7 @@ const state = {
   pour: { u: 0 },
   cam: { k: 0 },
   annot: { v: 0 },
+  dissolve: { v: 0 },
 }
 
 const CAMERA_KEYS = [
@@ -165,6 +169,8 @@ let mouthAnchor = null
 let pourMesh = null
 let pourCount = 0
 let annotationRoot = null
+let dissolveMesh = null
+let dissolveHalo = null
 let focusPoint = new THREE.Vector3(0.35, FLOOR + 0.05, 1.62)
 
 const heroContact = contactShadow(0.66, 0.66, 0)
@@ -264,8 +270,52 @@ loader
     buildPour(tabletSource, tabletMaterial)
     buildAnnotations(focusPoint)
 
+    /* The hero disc gets its own copy so it can erode: an instanced mesh can
+       only be scaled, and the dissolve needs a wetter material and a halo. */
+    const dissolveMaterial = tabletMaterial.clone()
+    dissolveMaterial.roughness = 0.48
+    dissolveMaterial.clearcoat = 0.6
+    dissolveMaterial.clearcoatRoughness = 0.35
+    dissolveMesh = new THREE.Mesh(tabletSource.geometry.clone(), dissolveMaterial)
+    dissolveMesh.castShadow = true
+    dissolveMesh.receiveShadow = true
+    dissolveMesh.visible = false
+    scene.add(dissolveMesh)
+
+    /* The pool the tablet leaves behind as it goes. */
+    const halo = new THREE.Mesh(
+      new THREE.CircleGeometry(1, 64),
+      new THREE.MeshBasicMaterial({
+        map: contactTexture,
+        color: '#3d5a55',
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+      }),
+    )
+    halo.rotation.x = -Math.PI / 2
+    halo.position.set(focusPoint.x, FLOOR + 0.004, focusPoint.z)
+    halo.visible = false
+    scene.add(halo)
+    dissolveHalo = halo
+
     status.dataset.state = 'ready'
     buildStory()
+
+    /* The sack arrives: it drops onto the floor and settles. */
+    if (!reduceMotion) {
+      gsap.fromTo(
+        bagRoot.position,
+        { y: FLOOR + 1.3 },
+        { y: FLOOR, duration: 1.55, ease: 'expo.out', delay: 0.15 },
+      )
+      gsap.fromTo(sack.rotation, { z: 0.14 }, { z: 0, duration: 1.55, ease: 'expo.out', delay: 0.15 })
+      gsap.fromTo(
+        heroContact.material,
+        { opacity: 0 },
+        { opacity: 0.85, duration: 0.9, ease: 'power2.out', delay: 0.9 },
+      )
+    }
   })
   .catch((error) => {
     console.error(error)
@@ -775,7 +825,8 @@ function buildStory() {
     .to(state.bag, { open: 0, duration: 0.06, ease: 'power2.inOut' }, 0.44)
     .to(state.annot, { v: 1, duration: 0.06, ease: 'power1.out' }, 0.42)
     .to(state.annot, { v: 0, duration: 0.05, ease: 'power1.in' }, 0.56)
-    .to(state.cam, { k: 4, duration: 0.14, ease: 'power1.inOut' }, 0.58)
+    .to(state.dissolve, { v: 1, duration: 0.155, ease: 'power1.inOut' }, 0.575)
+    .to(state.cam, { k: 4, duration: 0.13, ease: 'power1.inOut' }, 0.7)
     // The tweens stop short of 1; a zero-length set at the end makes the
     // timeline duration exactly 1 so progress() and the scroll agree.
     .set({}, {}, 1)
@@ -931,7 +982,14 @@ function applyCamera() {
   spherical.phi = THREE.MathUtils.clamp(spherical.phi + pitch, 0.35, 2.35)
   offset.setFromSpherical(spherical)
 
-  camera.position.copy(camTarget).add(offset)
+  // A portrait screen shows far less width than the camera was framed for.
+  // Hold the hero framing, then back off through the tablet and wide shots.
+  const portrait =
+    camera.aspect < 1 ? Math.min(1.45, Math.pow(1 / camera.aspect, 0.35)) : 1
+  const back =
+    1 + (portrait - 1) * THREE.MathUtils.smoothstep(state.cam.k, 1.6, 2.6)
+
+  camera.position.copy(camTarget).addScaledVector(offset, back)
   camera.lookAt(camTarget)
 }
 
@@ -939,7 +997,9 @@ function applyBag(elapsed) {
   const { spin, tilt, side, open } = state.bag
   bagRoot.rotation.y = spin * 0.92 + Math.sin(elapsed * 0.25) * 0.012
   bagRoot.rotation.z = tilt * -0.42
-  bagRoot.position.x = side * 1.1
+  // Portrait crops the frame's width, so the sack steps in to stay in shot.
+  const tight = camera.aspect < 1 ? 0.5 : 1
+  bagRoot.position.x = side * 1.1 * tight
   bagRoot.position.z = -side * 0.7
 
   if (!mouth) return
@@ -949,6 +1009,37 @@ function applyBag(elapsed) {
   mouth.lips.forEach((pivot) => {
     pivot.rotation.x = (pivot.userData.flip ? 1 : -1) * open * 1.05
   })
+}
+
+/* The tablet erodes from its rim inwards while the halo spreads. */
+function updateDissolve() {
+  if (!dissolveMesh) return
+  const v = state.dissolve.v
+  const hero = tablets[0]
+  const on = v > 0.002
+  dissolveMesh.visible = on
+  // The hero's own contact shadow must shrink with it, or the speck floats.
+  heroContact.scale.setScalar(on ? Math.max(0.4, 1 - v * 0.55) : 1)
+  if (dissolveHalo) {
+    dissolveHalo.visible = on
+    dissolveHalo.scale.setScalar(0.16 + v * 0.62)
+    dissolveHalo.material.opacity = on
+      ? 0.5 * Math.min(1, v * 1.6) * (1 - 0.45 * THREE.MathUtils.smoothstep(v, 0.78, 1))
+      : 0
+  }
+  if (!on || !hero) return
+
+  const base = hero.scale
+  const shrink = 1 - v * 0.55
+  dissolveMesh.position.copy(hero.end)
+  dissolveMesh.position.y += v * 0.006
+  dissolveMesh.rotation.set(0, hero.restYaw + v * 0.9, 0)
+  dissolveMesh.scale.set(base * shrink, base * 0.88 * (1 - v * 0.34), base * shrink)
+  heroContact.material.opacity *= 0.35 + 0.65 * shrink
+
+  // One instance is the same disc: hide it while the stand-in is on stage.
+  pourMesh.setMatrixAt(0, dummy.matrix.makeScale(0.0001, 0.0001, 0.0001))
+  pourMesh.instanceMatrix.needsUpdate = true
 }
 
 function updatePour() {
@@ -976,8 +1067,10 @@ const hudEls = {
   standard: document.getElementById('ov-standard'),
   why: document.getElementById('ov-why'),
   where: document.getElementById('ov-where'),
+  dissolve: document.getElementById('ov-dissolve'),
   supply: document.getElementById('ov-supply'),
   countValue: document.getElementById('hud-count'),
+  diameter: document.getElementById('hud-diameter'),
   places: [...document.querySelectorAll('#places li')],
 }
 
@@ -1005,8 +1098,19 @@ const syncHud = (p) => {
   fadeHud(hudEls.count, ramp(p, 0.25, 0.3, 0.38, 0.43))
   fadeHud(hudEls.tablet, ramp(p, 0.44, 0.48, 0.56, 0.61))
   fadeHud(hudEls.standard, ramp(p, 0.49, 0.54, 0.56, 0.61))
-  fadeHud(hudEls.why, ramp(p, 0.64, 0.68, 0.73, 0.77))
-  fadeHud(hudEls.where, ramp(p, 0.79, 0.83, 0.88, 0.92))
+  fadeHud(hudEls.why, ramp(p, 0.58, 0.62, 0.76, 0.8))
+  fadeHud(hudEls.dissolve, ramp(p, 0.6, 0.645, 0.76, 0.8))
+
+  /* The diameter counts down as the disc actually shrinks. */
+  if (hudEls.diameter) {
+    const mm = Math.max(6, 25 - state.dissolve.v * 17)
+    const label = `${Math.round(mm)}`
+    if (hudEls.diameter.dataset.mm !== label) {
+      hudEls.diameter.dataset.mm = label
+      hudEls.diameter.textContent = label
+    }
+  }
+  fadeHud(hudEls.where, ramp(p, 0.8, 0.85, 0.9, 0.94))
   fadeHud(hudEls.supply, ramp(p, 0.93, 0.97, 2, 3))
 
   /* The counter is the model talking: it only counts tablets that landed. */
@@ -1023,7 +1127,7 @@ const syncHud = (p) => {
   }
 
   /* The four places tick on as the sack arrives in the left-hand field. */
-  const local = clamp01((p - 0.795) / 0.055)
+  const local = clamp01((p - 0.815) / 0.05)
   hudEls.places.forEach((li, index) => {
     li.classList.toggle('is-on', local > index / 4.4)
   })
@@ -1048,6 +1152,7 @@ function tick() {
 
   applyBag(elapsed)
   updatePour()
+  updateDissolve()
   applyCamera()
   setAnnotationWeight(state.annot.v)
   updateDims()
@@ -1113,3 +1218,8 @@ if (import.meta.env.DEV) {
     get annotationRoot() { return annotationRoot },
   }
 }
+
+/* Don't burn a phone battery while the tab sits in the background. */
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) clock.getDelta()
+})
