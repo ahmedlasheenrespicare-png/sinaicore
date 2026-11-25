@@ -14,6 +14,7 @@
     "artwork": "node scripts/build-artwork.mjs",
     "viewer": "vite --config viewer/vite.config.ts",
     "story": "vite --config viewer/story/vite.config.ts",
+    "story:build": "vite build --config viewer/story/vite.config.ts",
     "brand": "node scripts/build-brand.mjs"
   },
   "dependencies": {

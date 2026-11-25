@@ -8,3 +8,4 @@ dist/
 *.log
 .vite/
 dist-viewer/
+dist-story/
