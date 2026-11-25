@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<title>SinaiCore — 50 kg sack / back panel</title>
+<link rel="stylesheet" href="./tokens.css" />
+<style>
+  @page { size: 570mm 920mm; margin: 0; }
+  @media print { html, body { background: #fff; } }
+  .sheet { width: 570mm; height: 920mm; }
+  .art { left: 10mm; top: 10mm; width: 550mm; height: 900mm; display: flex; flex-direction: column; }
+
+  .head {
+    height: 96mm;
+    flex: none;
+    background: var(--teal-900);
+    color: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 26mm;
+  }
+  .head .wordmark {
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 15mm;
+    letter-spacing: 0.18em;
+    display: flex;
+    align-items: center;
+    gap: 5mm;
+  }
+  .head .diamond { width: 7mm; height: 7mm; background: var(--clay); transform: rotate(45deg); }
+  .head .tag { font-family: var(--mono); font-size: 4.4mm; letter-spacing: 0.26em; color: #9fc3bd; }
+
+  .body { padding: 22mm 26mm 0; display: flex; flex-direction: column; gap: 16mm; flex: 1; }
+
+  h2 {
+    margin: 0 0 6mm;
+    font-family: var(--mono);
+    font-size: 5.4mm;
+    letter-spacing: 0.24em;
+    color: var(--clay-deep);
+    font-weight: 500;
+  }
+  .copy { font-size: 7.2mm; line-height: 1.85; color: #2f3a36; margin: 0; }
+  .copy b { color: var(--ink); font-weight: 600; }
+
+  table.spec { width: 100%; border-collapse: collapse; font-size: 6.6mm; }
+  table.spec th,
+  table.spec td { padding: 5.4mm 3mm; border-bottom: 0.3mm solid var(--hair); text-align: right; }
+  table.spec thead th {
+    border-bottom: 0.6mm solid var(--teal-900);
+    font-family: var(--mono);
+    font-size: 4.6mm;
+    letter-spacing: 0.16em;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  table.spec td.val {
+    font-family: var(--mono);
+    font-size: 7.4mm;
+    direction: ltr;
+    text-align: left;
+    width: 70mm;
+  }
+  table.spec tr.total td { border-bottom: 0.6mm solid var(--teal-900); font-weight: 600; }
+
+  .cols { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 18mm; }
+
+  .notes { display: flex; flex-direction: column; gap: 7mm; font-size: 6.6mm; line-height: 1.7; }
+  .note { display: flex; gap: 6mm; align-items: flex-start; }
+  .note i {
+    flex: none;
+    width: 9mm;
+    height: 9mm;
+    border: 0.5mm solid var(--teal-600);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-family: var(--mono);
+    font-size: 4mm;
+    color: var(--teal-700);
+    font-style: normal;
+    margin-top: 1mm;
+  }
+
+  .maker {
+    border: 0.4mm solid var(--hair);
+    padding: 10mm;
+    display: flex;
+    flex-direction: column;
+    gap: 3.4mm;
+    font-size: 6mm;
+    line-height: 1.6;
+  }
+  .maker strong { font-family: var(--mono); font-size: 5mm; letter-spacing: 0.16em; color: var(--teal-700); }
+  .maker .lot {
+    margin-top: 6mm;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6mm;
+    font-family: var(--mono);
+    font-size: 5.4mm;
+    color: var(--ink);
+    direction: ltr;
+    text-align: right;
+  }
+  .maker .lot div { border-top: 0.3mm solid var(--hair); padding-top: 4mm; }
+  .maker .lot span { display: block; color: var(--muted); font-size: 3.8mm; letter-spacing: 0.14em; margin-bottom: 2mm; }
+
+  /* warehouse strip */
+  .store {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6mm;
+  }
+  .store > div {
+    border: 0.4mm solid var(--hair);
+    padding: 9mm;
+    display: flex;
+    flex-direction: column;
+    gap: 5mm;
+    align-items: flex-start;
+  }
+  .store .glyph {
+    width: 26mm;
+    height: 18mm;
+    border: 0.7mm solid var(--teal-700);
+    position: relative;
+  }
+  .store .glyph::after {
+    content: '';
+    position: absolute;
+    left: 2.5mm;
+    right: 2.5mm;
+    top: 50%;
+    height: 0.7mm;
+    background: var(--clay);
+  }
+  .store .glyph.up::after { top: auto; bottom: 3mm; }
+  .store .glyph.cross::after { transform: rotate(-24deg); }
+  .store b { font-family: var(--mono); font-size: 4.2mm; letter-spacing: 0.16em; color: var(--clay-deep); }
+  .store span { font-size: 6.2mm; line-height: 1.55; }
+
+  .quote { margin: 14mm 0 0; }
+  .uses { margin-top: 24mm; }
+  .uses h2 { margin-bottom: 8mm; }
+  .uses ul {
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6mm 16mm;
+  }
+  .uses li {
+    list-style: none;
+    display: flex;
+    gap: 5mm;
+    align-items: baseline;
+    font-size: 8mm;
+    color: var(--teal-800);
+    border-top: 0.35mm solid var(--rule);
+    padding-top: 4mm;
+  }
+  .uses li b {
+    font-family: var(--mono);
+    font-size: 4.6mm;
+    color: var(--clay);
+    font-weight: 400;
+  }
+  .quote .mark {
+    padding: 10mm 10mm;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 9mm;
+  }
+  .quote .mark::before {
+    content: '';
+    width: 34mm;
+    height: 2mm;
+    background: var(--clay);
+  }
+  .quote p {
+    margin: 0;
+    font-family: var(--amiri);
+    font-size: 23mm;
+    line-height: 1.4;
+    color: var(--teal-900);
+    max-width: 400mm;
+  }
+  .quote span {
+    font-family: var(--mono);
+    font-size: 4.4mm;
+    letter-spacing: 0.22em;
+    color: var(--muted);
+  }
+
+  .foot {
+    margin-top: auto;
+    flex: none;
+    height: 46mm;
+    border-top: 0.6mm solid var(--teal-900);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 26mm;
+  }
+  .foot .mono { font-size: 4.6mm; letter-spacing: 0.2em; color: var(--muted); }
+  .recycle {
+    width: 16mm;
+    height: 16mm;
+    border: 0.6mm solid var(--teal-700);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-family: var(--mono);
+    font-size: 4.4mm;
+    color: var(--teal-700);
+    flex: none;
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="art">
+    <div class="head">
+      <div class="wordmark"><span class="diamond"></span>SINAICORE</div>
+      <div class="tag">PACKAGING / SPECIFICATION · LOT SC-08</div>
+    </div>
+
+    <div class="body">
+      <section>
+        <h2>01 · DESCRIPTION / الوصف</h2>
+        <p class="copy">
+          ملح طعام بحري مُكرَّر، يُستخرج من أحواض التبخير الشمسي على الساحل الشمالي لسيناء،
+          ويُغسل ويُجفَّف ويُصنَّف على ثلاث غرابيل. <b>بلورات مكعبة شفافة</b>، بلا إضافات،
+          وبلا مواد مانعة للتكتل. يُعبَّأ في شيكارة منسوجة ثلاثية الطبقات بوزن صافٍ 50 كجم.
+        </p>
+      </section>
+
+      <div class="cols">
+        <section>
+          <h2>02 · CERTIFICATE OF ANALYSIS</h2>
+          <table class="spec">
+            <thead>
+              <tr><th>المكوّن</th><th>الحد</th><th>النتيجة</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>كلوريد الصوديوم NaCl</td><td>99.30 %</td><td class="val">99.50 %</td></tr>
+              <tr><td>الرطوبة H₂O</td><td>0.25 %</td><td class="val">0.18 %</td></tr>
+              <tr><td>كبريتات الكالسيوم CaSO₄</td><td>0.10 %</td><td class="val">0.05 %</td></tr>
+              <tr><td>كلوريد المغنيسيوم MgCl₂</td><td>0.05 %</td><td class="val">0.02 %</td></tr>
+              <tr><td>المواد غير الذائبة</td><td>0.08 %</td><td class="val">0.04 %</td></tr>
+              <tr class="total"><td>حجم الحبيبة</td><td>0.3 – 0.8 mm</td><td class="val">MEDIUM</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="notes">
+          <h2>03 · HANDLING / التداول</h2>
+          <div class="note"><i>1</i><span>تُرفع الشيكارة من الأركان لا من الخيط، وتُرتَّب على منصات خشبية بعيداً عن الأرض.</span></div>
+          <div class="note"><i>2</i><span>تخزين جاف بين 5 و30° مئوية، ورطوبة نسبية أقل من 60%، بعيداً عن الشمس المباشرة.</span></div>
+          <div class="note"><i>3</i><span>لا تُكدَّس أكثر من 12 شيكارة، ولا تُستخدم أداة حادة لفتح الشيكارة.</span></div>
+          <div class="note"><i>4</i><span>يُستهلك خلال 24 شهراً من تاريخ الإنتاج المطبوع على الشيكارة.</span></div>
+        </section>
+      </div>
+
+      <section class="maker">
+        <strong>PRODUCED &amp; PACKED BY</strong>
+        <div>SinaiCore Salt Works · Industrial Zone, North Sinai, Egypt</div>
+        <div class="mono" style="font-size:4.6mm;color:var(--muted)">FOOD SAFETY: ISO 22000 · HACCP · HALAL CERTIFIED</div>
+        <div class="lot">
+          <div><span>LOT</span>SC-08</div>
+          <div><span>NET</span>50.00 KG</div>
+          <div><span>PACKED</span>2026 / 03 / 14</div>
+          <div><span>BEST BEFORE</span>2028 / 03 / 14</div>
+        </div>
+      </section>
+    </div>
+
+    <section class="uses">
+      <h2>04 · APPLICATIONS / الاستخدامات</h2>
+      <ul>
+        <li><b>01</b> تملّح وتخليل الخضروات والأجبان</li>
+        <li><b>02</b> معالجة المياه وأنظمة التبادل الأيوني</li>
+        <li><b>03</b> إذابة الجليد على الطرق والمنشآت</li>
+        <li><b>04</b> صناعة الصابون والمنظفات</li>
+        <li><b>05</b> مادة حافظة في المطاحن والمخابز</li>
+        <li><b>06</b> رياضي: حمامات الملح والعناية</li>
+      </ul>
+    </section>
+
+    <section class="quote">
+      <div class="mark">
+        <p>الملح ليس مادةً تُصنع، بقدر ما هي مادةٌ تُستخرج من توقيت الشمس والريح.</p>
+        <span>SINAI, 29°N / 32°E · EVAPORATION SEASON 2026</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>05 · STORAGE / التخزين</h2>
+      <div class="store">
+        <div><i class="glyph"></i><b>PALLET</b><span>على منصة خشبية<br />لا تلامس الأرض</span></div>
+        <div><i class="glyph up"></i><b>MAX 12</b><span>اثنتا عشرة شيكارة<br />في الكومة الواحدة</span></div>
+        <div><i class="glyph"></i><b>DRY · 60%</b><span>رطوبة نسبية أقل<br />من 60 بالمئة</span></div>
+        <div><i class="glyph cross"></i><b>NO HOOK</b><span>لا خطّاف ولا أداة<br />حادة عند الفتح</span></div>
+      </div>
+    </section>
+
+    <div class="foot">
+      <span class="mono">SINAICORE · PRODUCT OF EGYPT · 50 KG NET</span>
+      <span class="recycle mono">PP 5</span>
+      <span class="mono">REV 08 / SC-08</span>
+    </div>
+  </div>
+
+  <div class="marks" aria-hidden="true">
+    <i class="v" style="left:8mm;top:0"></i><i class="v" style="left:8mm;bottom:0"></i>
+    <i class="v" style="right:8mm;top:0"></i><i class="v" style="right:8mm;bottom:0"></i>
+    <i class="h" style="top:8mm;left:0"></i><i class="h" style="top:8mm;right:0"></i>
+    <i class="h" style="bottom:8mm;left:0"></i><i class="h" style="bottom:8mm;right:0"></i>
+  </div>
+  <div class="slug">
+    <span><b>SINAICORE</b> · 50 KG WOVEN PP SACK — BACK PANEL</span>
+    <span>TRIM 550 × 900 mm · BLEED 10 mm · CMYK</span>
+    <span>REV 08 / SC-08</span>
+  </div>
+</div>
+</body>
+</html>

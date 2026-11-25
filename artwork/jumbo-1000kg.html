@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<title>SinaiCore — 1000 kg jumbo bag / side panel</title>
+<link rel="stylesheet" href="./tokens.css" />
+<style>
+  @page { size: 920mm 1120mm; margin: 0; }
+  @media print { html, body { background: #fff; } }
+  /* 920 × 1120 mm sheet, trim 900 × 1100 mm — one of the four FIBC sides */
+  .sheet { width: 920mm; height: 1120mm; }
+  .art { left: 10mm; top: 10mm; width: 900mm; height: 1100mm; display: flex; flex-direction: column; }
+
+  .band {
+    height: 170mm;
+    flex: none;
+    background: var(--teal-900);
+    color: var(--paper);
+    padding: 0 44mm;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+  }
+  .wordmark {
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 34mm;
+    letter-spacing: 0.16em;
+    display: flex;
+    align-items: center;
+    gap: 9mm;
+  }
+  .diamond { width: 14mm; height: 14mm; background: var(--clay); transform: rotate(45deg); }
+  .band .side {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 5.6mm;
+    letter-spacing: 0.26em;
+    color: #9fc3bd;
+    line-height: 2;
+  }
+  .band .stripe { position: absolute; left: 0; right: 0; bottom: 0; height: 4mm; background: var(--clay); }
+
+  .hero { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; padding: 34mm 44mm 0; }
+  .hero .arabic {
+    font-family: var(--amiri);
+    font-weight: 700;
+    font-size: 104mm;
+    line-height: 1;
+    margin: 0;
+    padding-bottom: 34mm;
+  }
+  .hero .sub {
+    font-family: var(--mono);
+    font-size: 7mm;
+    letter-spacing: 0.3em;
+    color: var(--muted);
+    margin-bottom: 26mm;
+  }
+
+  .weight {
+    display: flex;
+    align-items: flex-end;
+    gap: 14mm;
+    background: var(--clay);
+    color: #fff8ee;
+    padding: 20mm 26mm;
+    margin-bottom: 26mm;
+  }
+  .weight .num {
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 112mm;
+    line-height: 0.8;
+    letter-spacing: -0.04em;
+    flex: none;
+  }
+  .weight .unit { display: flex; flex-direction: column; gap: 5mm; padding-bottom: 6mm; }
+  .weight .unit b { font-family: var(--mono); font-size: 26mm; letter-spacing: 0.1em; font-weight: 500; }
+  .weight .unit span { font-size: 9mm; color: #ffe6d2; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-top: 0.8mm solid var(--teal-900);
+    border-bottom: 0.8mm solid var(--teal-900);
+  }
+  .grid > div {
+    padding: 12mm 10mm;
+    display: flex;
+    flex-direction: column;
+    gap: 4mm;
+    border-left: 0.3mm solid var(--hair);
+  }
+  .grid > div:last-child { border-left: 0; }
+  .grid b { font-family: var(--mono); font-size: 15mm; direction: ltr; font-weight: 500; }
+  .grid span { font-size: 7mm; color: var(--muted); }
+
+  .pictos {
+    margin-top: 26mm;
+    display: flex;
+    gap: 12mm;
+    align-items: stretch;
+  }
+  .picto {
+    flex: 1;
+    border: 0.5mm solid var(--teal-700);
+    padding: 12mm;
+    display: flex;
+    flex-direction: column;
+    gap: 6mm;
+    align-items: center;
+    text-align: center;
+  }
+  .picto .glyph {
+    width: 34mm;
+    height: 34mm;
+    border: 1.2mm solid var(--teal-900);
+    position: relative;
+  }
+  .picto .glyph::after {
+    content: '';
+    position: absolute;
+    inset: 7mm;
+    background: var(--clay);
+  }
+  .picto .glyph.loops::after {
+    inset: 3mm;
+    background:
+      linear-gradient(var(--clay) 0 0) top left / 8mm 8mm no-repeat,
+      linear-gradient(var(--clay) 0 0) top right / 8mm 8mm no-repeat,
+      linear-gradient(var(--clay) 0 0) bottom left / 8mm 8mm no-repeat,
+      linear-gradient(var(--clay) 0 0) bottom right / 8mm 8mm no-repeat;
+  }
+  .picto .glyph.spout::after {
+    inset: auto 8mm 4mm 8mm;
+    height: 10mm;
+    clip-path: polygon(18% 0, 82% 0, 100% 100%, 0 100%);
+  }
+  .picto .glyph.cloth::after {
+    inset: 4mm;
+    background:
+      repeating-linear-gradient(90deg, rgba(201,121,66,.85) 0 1.6mm, transparent 1.6mm 4mm),
+      repeating-linear-gradient(0deg, rgba(13,61,65,.5) 0 1.6mm, transparent 1.6mm 4mm);
+  }
+  .picto span { font-size: 6.6mm; line-height: 1.5; color: #2f3a36; }
+
+  /* certification + data strip fills the lower third of the panel */
+  .data {
+    margin: 26mm 44mm 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 0.8mm solid var(--teal-900);
+    border-bottom: 0.8mm solid var(--teal-900);
+  }
+  .data > div { padding: 12mm 9mm; border-left: 0.3mm solid var(--hair); }
+  .data > div:last-child { border-left: 0; }
+  .data span { display: block; font-family: var(--mono); font-size: 4.2mm; letter-spacing: 0.18em; color: var(--muted); }
+  .data b { display: block; font-size: 8.4mm; font-weight: 600; margin-top: 4mm; color: var(--teal-900); }
+  .data em {
+    display: block;
+    font-family: var(--mono);
+    font-style: normal;
+    font-size: 4.4mm;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-top: 2.5mm;
+  }
+
+  .cert {
+    margin: auto 44mm 26mm;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16mm;
+    padding: 14mm 18mm;
+    background: var(--sand);
+    border-top: 0.3mm solid var(--hair);
+    border-bottom: 0.3mm solid var(--hair);
+  }
+  .cert .seal {
+    width: 22mm;
+    height: 22mm;
+    border: 0.8mm solid var(--teal-900);
+    transform: rotate(45deg);
+    flex: none;
+  }
+  .cert p { margin: 0; font-family: var(--mono); font-size: 5mm; letter-spacing: 0.2em; color: var(--muted); }
+  .cert b { font-family: var(--mono); font-size: 6.4mm; letter-spacing: 0.16em; color: var(--teal-900); }
+
+  .foot {
+    flex: none;
+    height: 96mm;
+    background: var(--teal-900);
+    color: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 44mm;
+  }
+  .foot p { margin: 0; font-family: var(--amiri); font-size: 30mm; }
+  .foot .mono { font-size: 5.4mm; letter-spacing: 0.24em; color: #9fc3bd; text-align: left; line-height: 2; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="art">
+    <div class="band">
+      <div class="wordmark"><span class="diamond"></span>SINAICORE</div>
+      <div class="side">FIBC · TYPE C LINER<br />SIDE PANEL 1 / 4</div>
+      <i class="stripe"></i>
+    </div>
+
+    <div class="hero">
+      <p class="arabic">ملح سيناء</p>
+      <div class="sub">REFINED SEA SALT · BULK / FIBC</div>
+
+      <div class="weight">
+        <span class="num">1000</span>
+        <span class="unit"><b>KG</b><span>كيلوجرام صافي</span></span>
+      </div>
+
+      <div class="grid">
+        <div><b>SWL 1000</b><span>الحمولة الآمنة (كجم)</span></div>
+        <div><b>5:1</b><span>معامل الأمان</span></div>
+        <div><b>90×90×110</b><span>الأبعاد (سم)</span></div>
+      </div>
+
+      <div class="pictos">
+        <div class="picto">
+          <div class="glyph loops"></div>
+          <span>أربع حلقات رفع<br />مقوّاة بخياطة رباعية</span>
+        </div>
+        <div class="picto">
+          <div class="glyph spout"></div>
+          <span>فتحة تعبئة علوية 50 سم<br />وصمام تفريغ سفلي</span>
+        </div>
+        <div class="picto">
+          <div class="glyph cloth"></div>
+          <span>قماش PP منسوج 160 جم/م²<br />مثبَّت ضد الأشعة فوق البنفسجية</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="data">
+      <div><span>LINER</span><b>PE 100 µm</b><em>TYPE C · FOOD GRADE</em></div>
+      <div><span>UV</span><b>STABILISED</b><em>200 KLY</em></div>
+      <div><span>PRINT</span><b>6 COLOURS</b><em>FLEXO · WATER INK</em></div>
+      <div><span>LOT</span><b>SC-08</b><em>2026 / 03</em></div>
+    </div>
+
+    <div class="cert">
+      <div class="seal"></div>
+      <p>ISO 22000 · HACCP · HALAL · FOOD CONTACT APPROVED</p>
+      <b>29°N / 32°E · NORTH SINAI · EGYPT</b>
+    </div>
+
+    <div class="foot">
+      <p>من سيناء إلى كل مصنع</p>
+      <div class="mono">PRODUCT OF EGYPT · LOT SC-08<br />REV 08 · NET 1000 KG</div>
+    </div>
+  </div>
+
+  <div class="marks" aria-hidden="true">
+    <i class="v" style="left:8mm;top:0"></i><i class="v" style="left:8mm;bottom:0"></i>
+    <i class="v" style="right:8mm;top:0"></i><i class="v" style="right:8mm;bottom:0"></i>
+    <i class="h" style="top:8mm;left:0"></i><i class="h" style="top:8mm;right:0"></i>
+    <i class="h" style="bottom:8mm;left:0"></i><i class="h" style="bottom:8mm;right:0"></i>
+  </div>
+  <div class="slug">
+    <span><b>SINAICORE</b> · 1000 KG FIBC — SIDE PANEL</span>
+    <span>TRIM 900 × 1100 mm · BLEED 10 mm · CMYK · 4 PANELS + TOP SKIRT</span>
+    <span>REV 08 / SC-08</span>
+  </div>
+</div>
+</body>
+</html>

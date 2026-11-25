@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<title>SinaiCore — 50 kg sack / front panel</title>
+<link rel="stylesheet" href="./tokens.css" />
+<style>
+  @page { size: 570mm 920mm; margin: 0; }
+  @media print { html, body { background: #fff; } }
+  /* 570 × 920 mm sheet, 10 mm bleed, trim 550 × 900 mm */
+  .sheet { width: 570mm; height: 920mm; }
+  .art { left: 10mm; top: 10mm; width: 550mm; height: 900mm; display: flex; flex-direction: column; }
+
+  .band-top {
+    height: 146mm;
+    flex: none;
+    background: var(--teal-900);
+    color: var(--paper);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 7mm;
+    position: relative;
+  }
+  .band-top .meta {
+    font-family: var(--mono);
+    font-size: 4.6mm;
+    letter-spacing: 0.34em;
+    color: #9fc3bd;
+  }
+  .wordmark {
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 30mm;
+    letter-spacing: 0.16em;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    gap: 7mm;
+  }
+  .diamond {
+    width: 12mm;
+    height: 12mm;
+    background: var(--clay);
+    transform: rotate(45deg);
+    flex: none;
+  }
+  .band-top .rule { position: absolute; left: 0; right: 0; bottom: 0; height: 3mm; background: var(--clay); }
+
+  .lockup { padding: 24mm 34mm 0; text-align: center; }
+  .lockup h1 {
+    font-family: var(--amiri);
+    font-weight: 700;
+    font-size: 76mm;
+    line-height: 1.1;
+    margin: 0;
+    padding-bottom: 20mm;
+    letter-spacing: -0.01em;
+  }
+  .lockup .latin {
+    font-family: var(--mono);
+    font-size: 6.2mm;
+    letter-spacing: 0.3em;
+    color: var(--muted);
+    margin-top: 6mm;
+  }
+  .lockup .rule {
+    width: 150mm;
+    height: 0.6mm;
+    background: var(--hair);
+    margin: 10mm auto 0;
+  }
+
+  /* three-step process strip fills the soft middle of the bag */
+  .process {
+    margin: 22mm 34mm 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-top: 0.3mm solid var(--hair);
+  }
+  .process > div {
+    padding: 12mm 6mm;
+    display: flex;
+    flex-direction: column;
+    gap: 4mm;
+    border-left: 0.3mm solid var(--hair);
+  }
+  .process > div:last-child { border-left: 0; }
+  .process b { font-family: var(--mono); font-size: 5mm; color: var(--clay); letter-spacing: 0.2em; }
+  .process span { font-size: 10mm; color: var(--ink); }
+  .process em {
+    font-family: var(--mono);
+    font-style: normal;
+    font-size: 4.4mm;
+    letter-spacing: 0.16em;
+    color: var(--muted);
+  }
+
+  .weight {
+    margin: 22mm 34mm 0;
+    background: var(--clay);
+    color: #fff8ee;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12mm 18mm;
+  }
+  .weight .num {
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 132mm;
+    line-height: 0.8;
+    letter-spacing: -0.04em;
+  }
+  .weight .unit {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4mm;
+    text-align: left;
+  }
+  .weight .unit b {
+    font-family: var(--mono);
+    font-size: 26mm;
+    letter-spacing: 0.14em;
+    font-weight: 500;
+  }
+  .weight .unit span {
+    font-size: 11mm;
+    color: #ffe6d2;
+  }
+
+  .specs {
+    margin: 20mm 34mm 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 0.6mm solid var(--teal-900);
+    border-bottom: 0.6mm solid var(--teal-900);
+  }
+  .specs > div {
+    padding: 9mm 6mm;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6mm;
+    border-bottom: 0.3mm solid var(--hair);
+  }
+  .specs > div:nth-last-child(-n + 2) { border-bottom: 0; }
+  .specs > div:nth-child(odd) { border-left: 0.3mm solid var(--hair); padding-left: 10mm; }
+  .specs b {
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 9.4mm;
+    direction: ltr;
+  }
+  .specs span { font-size: 6.6mm; color: var(--muted); }
+
+  /* seal band: certification + coordinates, printed in the soft lower third */
+  .seal {
+    margin: auto 34mm 0;
+    background: var(--sand);
+    border-top: 0.3mm solid var(--hair);
+    border-bottom: 0.3mm solid var(--hair);
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    align-items: center;
+  }
+  .seal > div { padding: 11mm 10mm; border-left: 0.3mm solid var(--hair); }
+  .seal > div:last-child { border-left: 0; }
+  .seal span { display: block; font-family: var(--mono); font-size: 4.2mm; letter-spacing: 0.2em; color: var(--muted); }
+  .seal b { display: block; font-size: 9mm; font-weight: 600; margin-top: 3mm; color: var(--teal-900); }
+  .seal em {
+    display: block;
+    font-family: var(--mono);
+    font-style: normal;
+    font-size: 5mm;
+    letter-spacing: 0.14em;
+    color: var(--ink);
+    margin-top: 3mm;
+  }
+
+  .foot-row {
+    margin-top: 14mm;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0 34mm 12mm;
+    gap: 14mm;
+  }
+  .barcode { display: flex; flex-direction: column; gap: 2mm; }
+  .barcode .code {
+    font-family: var(--mono);
+    font-size: 4.4mm;
+    letter-spacing: 0.22em;
+    color: var(--ink);
+  }
+  .foot-note {
+    text-align: left;
+    font-size: 6.4mm;
+    line-height: 1.5;
+    color: var(--muted);
+    max-width: 150mm;
+  }
+  .foot-note b { color: var(--ink); font-weight: 600; }
+
+  .band-bottom {
+    flex: none;
+    height: 88mm;
+    background: var(--teal-900);
+    color: var(--paper);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 6mm;
+    position: relative;
+  }
+  .band-bottom p {
+    margin: 0;
+    font-family: var(--amiri);
+    font-size: 24mm;
+    line-height: 1;
+  }
+  .band-bottom .mono {
+    font-size: 4.6mm;
+    letter-spacing: 0.28em;
+    color: #9fc3bd;
+  }
+
+  /* vertical rail on the flat side of the bag */
+  .rail {
+    position: absolute;
+    right: 0;
+    top: 146mm;
+    bottom: 88mm;
+    width: 24mm;
+    background: var(--sand);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-left: 0.4mm solid var(--hair);
+  }
+  .rail span {
+    writing-mode: vertical-rl;
+    font-size: 5.8mm;
+    letter-spacing: 0.1em;
+    color: var(--teal-700);
+  }
+
+  .dieline { position: absolute; inset: 0; pointer-events: none; }
+  .dieline i {
+    position: absolute;
+    background: none;
+    border-color: rgba(31, 111, 112, 0.55);
+    border-style: dashed;
+    border-width: 0.35mm;
+  }
+  .dieline .sew { left: 0; right: 0; top: 46mm; height: 0; border-width: 0.35mm 0 0 0; }
+  .dieline .fold-l { top: 0; bottom: 0; left: 70mm; width: 0; border-width: 0 0 0 0.35mm; }
+  .dieline .fold-r { top: 0; bottom: 0; right: 70mm; width: 0; border-width: 0 0.35mm 0 0; }
+
+  /* ?trim → capture only the artwork, centred on a 0.77 field so the face
+     mapping of the 3D sack keeps the design's proportions */
+  html.trim .sheet { width: 696mm; height: 900mm; }
+  html.trim .art { left: 73mm; top: 0; }
+  html.trim .marks,
+  html.trim .slug { display: none; }
+  html.trim body { background: #f4f1e8; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="art">
+    <div class="band-top">
+      <span class="meta">SINAI, EGYPT · EST. 2026</span>
+      <div class="wordmark"><span class="diamond"></span>SINAICORE</div>
+      <i class="rule"></i>
+    </div>
+
+    <div class="lockup">
+      <h1>ملح سيناء</h1>
+      <div class="latin">REFINED SEA SALT · FOOD GRADE</div>
+      <div class="rule"></div>
+    </div>
+
+    <div class="weight">
+      <span class="num">50</span>
+      <span class="unit"><b>KG</b><span>كيلوجرام</span></span>
+    </div>
+
+    <div class="specs">
+      <div><b>99.5%</b><span>نقاء NaCl</span></div>
+      <div><b>0.18%</b><span>الرطوبة</span></div>
+      <div><b>MEDIUM</b><span>حجم الحبيبة</span></div>
+      <div><b>SC-08</b><span>رقم اللوط</span></div>
+    </div>
+
+    <div class="process">
+      <div><b>01</b><span>تبخير شمسي</span><em>SUN EVAPORATION</em></div>
+      <div><b>02</b><span>غسل وتجفيف</span><em>WASH &amp; DRY</em></div>
+      <div><b>03</b><span>تصنيف ثلاثي</span><em>3-SIEVE SORT</em></div>
+    </div>
+
+    <div class="seal">
+      <div><span>CERTIFIED</span><b>ISO 22000 · HACCP</b><em>HALAL · FOOD GRADE</em></div>
+      <div><span>ORIGIN</span><b>29°N / 32°E</b><em>NORTH SINAI</em></div>
+      <div><span>TRACE</span><b>LOT SC-08</b><em>REV 08 · 2026</em></div>
+    </div>
+
+    <div class="foot-row">
+      <div class="barcode">
+        <div class="bars" id="bars"></div>
+        <span class="code">8 691234 500081</span>
+      </div>
+      <div class="foot-note">
+        <b>خياطة مزدوجة</b> أعلى الشيكارة مع بطانة بولي إيثيلين 60 ميكرون.<br />
+        يُحفظ بعيداً عن الرطوبة · غير صالح للاستخدام بعد فتحه وختمه.
+      </div>
+    </div>
+
+    <div class="band-bottom">
+      <p>من سيناء إلى كل مائدة</p>
+      <span class="mono">PRODUCT OF EGYPT · NET 50 KG · REV 08</span>
+    </div>
+
+    <div class="rail"><span>٥٠ كجم · ملح طعام مُكرَّر</span></div>
+
+    <div class="dieline">
+      <i class="sew"></i>
+      <i class="fold-l"></i>
+      <i class="fold-r"></i>
+    </div>
+  </div>
+
+  <div class="marks" aria-hidden="true">
+    <i class="v" style="left:8mm;top:0"></i><i class="v" style="left:8mm;bottom:0"></i>
+    <i class="v" style="right:8mm;top:0"></i><i class="v" style="right:8mm;bottom:0"></i>
+    <i class="h" style="top:8mm;left:0"></i><i class="h" style="top:8mm;right:0"></i>
+    <i class="h" style="bottom:8mm;left:0"></i><i class="h" style="bottom:8mm;right:0"></i>
+  </div>
+  <div class="slug">
+    <span><b>SINAICORE</b> · 50 KG WOVEN PP SACK — FRONT PANEL</span>
+    <span>TRIM 550 × 900 mm · BLEED 10 mm · CMY K · DIELINE IN CYAN</span>
+    <span>REV 08 / SC-08</span>
+  </div>
+</div>
+<script>
+  if (new URLSearchParams(location.search).has('trim')) {
+    document.documentElement.classList.add('trim')
+  }
+  const bars = document.getElementById('bars')
+  const code = '101100111010011001101100100110101011001011010011'
+  for (const bit of code) {
+    const span = document.createElement('span')
+    span.style.width = bit === '1' ? '1.1mm' : '0.55mm'
+    bars.appendChild(span)
+  }
+</script>
+</body>
+</html>
