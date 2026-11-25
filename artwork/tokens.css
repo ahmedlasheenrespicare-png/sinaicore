@@ -43,6 +43,11 @@
   font-weight: 700;
 }
 @font-face {
+  font-family: 'Print Serif';
+  src: url('../node_modules/@fontsource/playfair-display/files/playfair-display-latin-900-normal.woff2') format('woff2');
+  font-weight: 900;
+}
+@font-face {
   font-family: 'Print Sans';
   src: url('../node_modules/@fontsource/montserrat/files/montserrat-latin-400-normal.woff2') format('woff2');
   font-weight: 400;
@@ -51,6 +56,11 @@
   font-family: 'Print Sans';
   src: url('../node_modules/@fontsource/montserrat/files/montserrat-latin-500-normal.woff2') format('woff2');
   font-weight: 500;
+}
+@font-face {
+  font-family: 'Print Sans';
+  src: url('../node_modules/@fontsource/montserrat/files/montserrat-latin-600-normal.woff2') format('woff2');
+  font-weight: 600;
 }
 @font-face {
   font-family: 'Print Sans';

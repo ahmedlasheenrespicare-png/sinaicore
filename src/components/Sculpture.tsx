@@ -582,12 +582,12 @@ function useSackTexture() {
           return
         }
         loaded.colorSpace = THREE.SRGBColorSpace
-        /* the face is small on screen; a crisp linear filter reads better than
-           a deep mip chain, especially on software rasterisers */
-        loaded.minFilter = THREE.LinearFilter
+        /* The panel carries small type, so it needs a mip chain plus
+           anisotropy — without them the print smears into the fabric. */
         loaded.magFilter = THREE.LinearFilter
-        loaded.generateMipmaps = false
-        loaded.anisotropy = 1
+        loaded.minFilter = THREE.LinearMipmapLinearFilter
+        loaded.generateMipmaps = true
+        loaded.anisotropy = 8
         setTexture(loaded)
       },
       undefined,

@@ -12,7 +12,7 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.toneMapping = THREE.NeutralToneMapping
-renderer.toneMappingExposure = 0.88
+renderer.toneMappingExposure = 0.82
 renderer.shadowMap.enabled = true
 renderer.shadowMap.type = THREE.PCFSoftShadowMap
 document.body.appendChild(renderer.domElement)
@@ -21,7 +21,7 @@ const scene = new THREE.Scene()
 scene.background = null
 
 const camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 100)
-camera.position.set(1.55, 0.55, 5.2)
+camera.position.set(0.62, 0.42, 5.15)
 
 /* A studio box gives the PP sheen something to reflect without shipping an HDRI. */
 const pmrem = new THREE.PMREMGenerator(renderer)
@@ -110,24 +110,24 @@ loader
 
     const printed = new THREE.MeshPhysicalMaterial({
       map: texture,
-      color: '#f3f4f5',
+      color: '#ffffff',
       vertexColors: true,
       bumpMap: weave,
       bumpScale: 0.045,
       normalMap: crumple,
       normalScale: new THREE.Vector2(0.5, 0.5),
       roughnessMap: weave,
-      roughness: 0.95,
+      roughness: 1,
       metalness: 0,
-      // Woven PP has a dry, cloth-like sheen at grazing angles; without it the
-      // white bag reads as painted plastic.
-      sheen: 0.22,
-      sheenRoughness: 0.9,
+      // Ink is matte: any specular here would lift the navy towards grey and
+      // wash the print out under a bright key light.
+      sheen: 0.08,
+      sheenRoughness: 0.95,
       sheenColor: new THREE.Color('#ffffff'),
-      envMapIntensity: 0.24,
+      envMapIntensity: 0.12,
     })
     const fabric = new THREE.MeshPhysicalMaterial({
-      color: '#f3f4f5',
+      color: '#ffffff',
       vertexColors: true,
       bumpMap: weave,
       bumpScale: 0.045,

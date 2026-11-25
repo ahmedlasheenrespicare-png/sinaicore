@@ -580,8 +580,10 @@ function buildSack() {
   // UVs so the artwork wraps the front panel without seaming the sides.
   const cols = 24
   const rows = 22
-  const t0 = 0.075
-  const t1 = 0.94
+  // The print runs nearly the whole face: the sack's margins are its own,
+  // baked into the artwork, so the panel hugs the fabric top and bottom.
+  const t0 = 0.025
+  const t1 = 0.985
   const spread = 0.98
   const panelPoint = (c, r) => {
     const s = (c / cols) * 2 - 1
