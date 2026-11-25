@@ -45,6 +45,16 @@ const jobs = [
   // One-colour version: the sack in the reference photography is printed in a
   // single blue on white, so the mark is re-inked rather than tinted.
   {
+    // Full-colour mark for the printed panel: straight from the brand asset,
+    // upscaled so the print stays clean.
+    source: 'sinaicore-mark-source.png',
+    target: 'sinaicore-mark-colour.png',
+    floor: 0.02,
+    cropTop: 0.6,
+    scale: 3,
+    blackKey: true,
+  },
+  {
     source: 'sinaicore-mark-source.png',
     target: 'sinaicore-mark-mono.png',
     floor: 0.06,

@@ -578,12 +578,14 @@ function buildSack() {
 
   // Printed face: its own shell floating 5 mm proud of the body, with upright
   // UVs so the artwork wraps the front panel without seaming the sides.
-  const cols = 24
-  const rows = 22
+  const cols = 32
+  const rows = 40
   // The print runs nearly the whole face: the sack's margins are its own,
   // baked into the artwork, so the panel hugs the fabric top and bottom.
-  const t0 = 0.025
-  const t1 = 0.985
+  // Stops just short of the shoulders: past t ≈ 0.95 the body gathers into
+  // the welt and the panel would dip under it and get clipped.
+  const t0 = 0.03
+  const t1 = 0.945
   const spread = 0.98
   const panelPoint = (c, r) => {
     const s = (c / cols) * 2 - 1
@@ -591,8 +593,11 @@ function buildSack() {
     const theta = Math.PI / 2 + s * spread
     const surface = sackSurface(theta, t)
     const normal = sackNormal(theta, t)
+    // The panel is a chord between rows, so it has to stand further off the
+    // body where the shoulder curves hard or the fabric pokes through it.
+    const lift = 0.006 + 0.026 * THREE.MathUtils.smoothstep(t, 0.8, 0.94)
     return {
-      point: V(surface.x + normal.x * 0.006, bottom + t * height, surface.z + normal.z * 0.006),
+      point: V(surface.x + normal.x * lift, bottom + t * height, surface.z + normal.z * lift),
       // u runs against +x: the panel faces +z, so an upright viewer reads the
       // artwork left-to-right only if u is mirrored relative to the surface.
       uv: [1 - c / cols, r / rows],
@@ -638,7 +643,7 @@ function bakeOcclusion(geometry, bottom, height, strength) {
     shade += 0.22 * crease * (1 - Math.abs(t - 0.5) * 0.5)
     shade += 0.3 * Math.exp(-Math.pow(t / 0.07, 2))
     shade += 0.16 * Math.exp(-Math.pow((t - 0.9) / 0.06, 2))
-    shade += 0.5 * THREE.MathUtils.clamp((t - 0.93) / 0.07, 0, 1)
+    shade += 0.34 * THREE.MathUtils.clamp((t - 0.962) / 0.038, 0, 1)
     shade += 0.05 * (0.5 + 0.5 * Math.sin(9 * Math.atan2(z, x) + 11 * t))
     const ao = THREE.MathUtils.clamp(1 - shade * strength, 0.5, 1)
     colors.push(ao, ao, ao)

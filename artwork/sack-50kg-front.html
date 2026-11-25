@@ -11,8 +11,14 @@
   /* Traced from the reference photograph of the real sack: white woven PP
      printed in one blue. Sizes below are read off the photo against the
      550 × 900 mm trim, so the face maps 1:1 onto the 3D sack. */
+  /* Colours lifted straight off the site's own logo lockup: the copper
+     mountain, the silver crystals and the two blues of the wave, with the
+     wordmark split brown/blue exactly like the brand mark. */
   :root {
-    --ink-blue: #06357f;
+    --ink-blue: #14528c;
+    --logo-brown: #7a4f33;
+    --logo-blue: #2f6494;
+    --logo-steel: #6f7b85;
     --bag-white: #f8f9fb;
   }
 
@@ -39,9 +45,16 @@
     line-height: 0.94;
     letter-spacing: -0.02em;
     white-space: nowrap;
+    font-style: normal;
   }
+  /* The brand lockup sets "Sinai" in copper and "Core" in blue, the C a step
+     larger than the rest. */
+  .word em { font-style: normal; color: var(--logo-brown); margin-right: 0.01em; }
+  .word b { font-weight: 800; color: var(--logo-blue); font-size: 1.05em; margin-right: -0.03em; }
+  .word i { font-style: normal; color: var(--logo-blue); }
   .tagline {
     margin-top: 7mm;
+    color: var(--logo-steel);
     font-family: 'Print Sans', Arial, sans-serif;
     font-weight: 500;
     font-size: 18.5mm;
@@ -144,7 +157,7 @@
     position: absolute;
     top: 0; bottom: 0; width: 60mm;
     pointer-events: none;
-    background: linear-gradient(to right, rgba(10, 59, 140, 0.03), rgba(10, 59, 140, 0));
+    background: linear-gradient(to right, rgba(20, 82, 140, 0.03), rgba(20, 82, 140, 0));
   }
   .fold.l { left: 0; }
   .fold.r { right: 0; transform: scaleX(-1); }
@@ -175,9 +188,9 @@
     <i class="fold l"></i>
     <i class="fold r"></i>
 
-    <img class="mark" src="./brand/sinaicore-mark-mono.png" alt="SinaiCore" />
+    <img class="mark" src="./brand/sinaicore-mark-colour.png" alt="SinaiCore" />
 
-    <div class="word">SinaiCore</div>
+    <div class="word"><em>Sinai</em><b>C</b><i>ore</i></div>
     <div class="tagline">At the Core of Quality and Purity</div>
     <div class="rule"></div>
 
@@ -244,8 +257,8 @@
   </div>
   <div class="slug">
     <span><b>SINAICORE</b> · 50 KG WOVEN PP SACK — FRONT PANEL</span>
-    <span>TRIM 550 × 900 mm · BLEED 10 mm · 1 COLOUR (PANTONE 2945 C) · DIELINE IN CYAN</span>
-    <span>REV 10 / SC-08</span>
+    <span>TRIM 550 × 900 mm · BLEED 10 mm · 4 COLOUR (PANTONE 7579 C · 2945 C · 7545 C) · DIELINE IN CYAN</span>
+    <span>REV 11 / SC-08</span>
   </div>
 </div>
 <script>
