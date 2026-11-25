@@ -30,7 +30,7 @@ npm run viewer   # معاينة خاصة للمجسم على بورت 5174
 | --- | --- | --- |
 | `public/models/salt-crystal.glb` | 2.9 kB | بلورة هاليت بنمو «hopper» (أوجه متدرّجة) وحواف مشطوفة وبذرتين صغيرتين |
 | `public/models/container.glb` | 15.1 kB | حاوية 20 قدم: تضليع شبه منحرف حقيقي، زوايا مصبوبة، قضبان إغلاق، وبابان كعقدتين `door-left` / `door-right` |
-| `public/models/sack.glb` | 25.1 kB | شيكارة 50 كجم مجسّمة: 55×95×25 سم نسبياً، خصر مضغوط وفوهة مخيطة، طيّات جوانب، قاعدة متفتحة، ووجه مطبوع كسطح منفصل بـUV مستقيمة |
+| `public/models/sack.glb` | 25.3 kB | شيكارة 50 كجم مجسّمة كصورة المرجع: 55×95×25 سم، رول علوي مجمّع بـ17 غرزة، أكتاف مدوّرة، طيّات جوانب، قاعدة عريضة، ووجه مطبوع كسطح منفصل بـUV مستقيمة |
 
 كلاهما مضغوط بـ Draco (`KHR_draco_mesh_compression`) ويُعاد توليده بالأمر:
 
@@ -74,7 +74,7 @@ npm run models
 
 | الملف | المقاس | الاستخدام |
 | --- | --- | --- |
-| `deliverables/bag-artwork/sack-50kg-front.pdf` | 570×920 مم (trim 550×900 + بليد 10) | طباعة 1:1 |
+| `deliverables/bag-artwork/sack-50kg-front.pdf` | 570×920 مم (trim 550×900 + بليد 10) | طباعة 1:1 — لون واحد (Pantone 2945 C) على ورق أبيض |
 | `deliverables/bag-artwork/sack-50kg-front.png` | 144 dpi | معاينة / أرشيف |
 | `deliverables/bag-artwork/sack-50kg-back.pdf` | نفس المقاس | الوجه الخلفي (شهادة التحليل والتداول) |
 | `deliverables/bag-artwork/jumbo-1000kg.pdf` | 920×1120 مم | جانب شيكارة الجامبو 1000 كجم |
@@ -100,6 +100,16 @@ npm run brand       # يقصّ شعار الموقع من خلفيته السو�
 
 كلمة `SINAICORE` والشعار النصّي `AT THE CORE OF QUALITY AND PURITY` مكتوبان
 بخط لا بصورة، فيفضلان حادّين في الطباعة بأي مقاس.
+
+**الوجه الأمامي على صورة المرجع:** التصميم الأمامي مأخوذ من صورة الشيكارة في موقع
+سينا كور — شيكارة PP بيضاء بطبعة **أزرق واحد** في المنتصف: العلامة، ثم `SinaiCore`
+ثم التاجلاين، ثم `VACUUM REFINED / IODIZED / FOOD GRADE TABLE SALT`، ثم أربع أيقونات
+(NATURAL SOURCE · HIGH PURITY · FOOD GRADE · QUALITY ASSURED)، ثم `NET WEIGHT 50 kg`،
+ثم `PRODUCT OF EGYPT` و`www.sinaicore.com`.
+
+نسخة العلامة للطبعة أحادية اللون: `artwork/brand/sinaicore-mark-mono.png` — تُشتق
+في `npm run brand` من تغطية الحبر (أقل قناة لونية تحت الأبيض) مع منحنى تباين،
+فالأوجه البيضاء تبقى ورق غير مطبوع.
 
 **بيانات العبوة المطبوعة:**
 

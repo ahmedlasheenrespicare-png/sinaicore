@@ -391,7 +391,8 @@ function creaseAt(theta) {
 /** Point on the bag's skin. `theta` runs around the bag, `t` bottom → top. */
 function sackSurface(theta, t) {
   const base = sackProfile(t)
-  const n = 3.4
+  // Rounded shoulders: the section relaxes towards a circle as it nears the roll.
+  const n = 3.4 - 1.25 * smooth(THREE.MathUtils.clamp((t - 0.72) / 0.28, 0, 1))
   const cos = Math.cos(theta)
   const sin = Math.sin(theta)
 
@@ -399,12 +400,12 @@ function sackSurface(theta, t) {
   const settle = Math.exp(-Math.pow(t / 0.12, 2))
   // A soft horizontal fold where the shoulders take the weight.
   const shoulder = Math.exp(-Math.pow((t - 0.86) / 0.075, 2))
-  const w = base.w * (1 + 0.04 * settle) * (1 - 0.012 * shoulder)
-  const d = base.d * (1 + 0.02 * settle) * (1 - 0.03 * shoulder)
+  const w = base.w * (1 + 0.055 * settle) * (1 - 0.012 * shoulder)
+  const d = base.d * (1 + 0.03 * settle) * (1 - 0.03 * shoulder)
 
   // The fabric tucks under itself where the bag sits, so the base is rounder
   // than the widest cross-section.
-  const toe = 0.94 + 0.06 * smooth(THREE.MathUtils.clamp(t / 0.09, 0, 1))
+  const toe = 0.975 + 0.025 * smooth(THREE.MathUtils.clamp(t / 0.12, 0, 1))
   // Gusset folds fade out at the base and under the shoulder, where the fabric
   // is gathered instead.
   const creaseWindow =
@@ -476,19 +477,21 @@ function buildSack() {
 
   // Sealed mouth: the bag is pinched flat and stitched, so the top two rings
   // collapse into a thin slab.
-  // The sewn mouth is narrower than the shoulder and drifts with the lean, so
-  // it reads as a stitched flap rather than a shelf on top of the bag.
+  // The reference sack is closed with a narrow gathered roll, not a wide flat
+  // flap: the fabric pinches, rolls over itself and is stitched along the top.
   const leant = 0.035 * Math.sin(Math.PI * 1.15) - 0.012
   const mouth = [
-    [height / 2 + 0.004, 0.563, 0.059, 0],
-    [height / 2 + 0.05, 0.538, 0.041, 0.35],
-    [height / 2 + 0.1, 0.524, 0.033, 0.7],
-    [height / 2 + 0.135, 0.504, 0.028, 1],
+    [height / 2 + 0.002, 0.556, 0.07, 0],
+    [height / 2 + 0.016, 0.548, 0.058, 0.3],
+    [height / 2 + 0.032, 0.534, 0.05, 0.65],
+    [height / 2 + 0.04, 0.522, 0.046, 1],
   ]
   const mouthPoint = (j, band, offset = 0) => {
     const theta = (j / segments) * Math.PI * 2
     const [, w, d, drift] = mouth[band]
-    const n = 3.1
+    // Same section exponent as the shoulder, so the roll never steps out past
+    // the body at the corners.
+    const n = 2.15
     const cos = Math.cos(theta)
     const sin = Math.sin(theta)
     return V(
@@ -511,8 +514,8 @@ function buildSack() {
 
   // Stitch dashes: two rows of short ribs along the sealed flap.
   for (const side of [-1, 1]) {
-    for (let k = -9; k <= 9; k++) {
-      addBox(body, [0.03, 0.007, 0.009], [k * 0.05 + leant, height / 2 + 0.085, side * 0.036])
+    for (let k = -8; k <= 8; k++) {
+      addBox(body, [0.026, 0.006, 0.008], [k * 0.06 + leant, height / 2 + 0.03, side * 0.05])
     }
   }
 

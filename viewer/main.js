@@ -12,7 +12,7 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.toneMapping = THREE.ACESFilmicToneMapping
-renderer.toneMappingExposure = 1.02
+renderer.toneMappingExposure = 0.88
 renderer.shadowMap.enabled = true
 renderer.shadowMap.type = THREE.PCFSoftShadowMap
 document.body.appendChild(renderer.domElement)
@@ -26,9 +26,9 @@ camera.position.set(1.9, 0.4, 5.7)
 /* A studio box gives the PP sheen something to reflect without shipping an HDRI. */
 const pmrem = new THREE.PMREMGenerator(renderer)
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
-scene.environmentIntensity = 0.55
+scene.environmentIntensity = 0.34
 
-const key = new THREE.DirectionalLight('#fff4e2', 3.1)
+const key = new THREE.DirectionalLight('#fff4e2', 2.2)
 key.position.set(2.9, 6.4, 4.2)
 key.castShadow = true
 key.shadow.mapSize.set(2048, 2048)
@@ -46,7 +46,7 @@ const rim = new THREE.DirectionalLight('#bfe3dd', 1.15)
 rim.position.set(-4.4, 2.4, -3.2)
 scene.add(rim)
 
-const fill = new THREE.HemisphereLight('#fffaf0', '#b7ae99', 0.9)
+const fill = new THREE.HemisphereLight('#fffaf0', '#b7ae99', 0.6)
 scene.add(fill)
 
 /* Soft contact shadow under the bag, cooled towards the paper of the site. */
@@ -94,14 +94,14 @@ loader
 
     const printed = new THREE.MeshStandardMaterial({
       map: texture,
-      color: '#ded7c6',
+      color: '#ffffff',
       vertexColors: true,
       roughness: 0.92,
       metalness: 0,
-      envMapIntensity: 0.3,
+      envMapIntensity: 0.24,
     })
     const fabric = new THREE.MeshStandardMaterial({
-      color: '#cfc7b1',
+      color: '#f1eee5',
       vertexColors: true,
       roughness: 0.96,
       metalness: 0,

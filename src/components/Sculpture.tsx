@@ -620,19 +620,22 @@ function SackAsset({ scale = 1, position = [0, 0, 0], texture }: SackProps) {
     const clone = gltf.scene.clone(true)
     /* The baked environment is bright enough to clip cream paper to white, so
        the print is pulled back with a tint and a low env contribution. */
+    /* The story's key light is brighter than the study rig, so the paper base
+       is pulled down a touch to keep the white bag from clipping (and with it
+       the blue). */
     const printed = new THREE.MeshStandardMaterial({
       map: texture,
-      color: '#ded7c6',
+      color: '#d6d0c3',
       vertexColors: true,
       bumpMap: maps.weave,
       bumpScale: 0.024,
       roughnessMap: maps.weave,
-      roughness: 0.92,
+      roughness: 0.95,
       metalness: 0,
-      envMapIntensity: 0.3,
+      envMapIntensity: 0.24,
     })
     const fabric = new THREE.MeshStandardMaterial({
-      color: '#cfc7b1',
+      color: '#d1cabd',
       vertexColors: true,
       envMapIntensity: 0.38,
       bumpMap: maps.weave,
