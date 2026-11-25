@@ -29,15 +29,27 @@
     letter-spacing: 0.34em;
     color: #9fc3bd;
   }
+  /* the real brand lockup: the site's mark, set beside typeset letterforms so
+     the wordmark stays vector-crisp at press size */
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12mm;
+  }
+  .brand img { height: 50mm; width: auto; display: block; }
+  .brand-type { display: flex; flex-direction: column; gap: 4mm; }
   .wordmark {
     font-family: var(--mono);
     font-weight: 500;
-    font-size: 30mm;
+    font-size: 26mm;
     letter-spacing: 0.16em;
     line-height: 1;
-    display: flex;
-    align-items: center;
-    gap: 7mm;
+  }
+  .tagline {
+    font-family: var(--mono);
+    font-size: 4.8mm;
+    letter-spacing: 0.3em;
+    color: #9fc3bd;
   }
   .diamond {
     width: 12mm;
@@ -156,6 +168,37 @@
   }
   .specs span { font-size: 6.6mm; color: var(--muted); }
 
+  /* claim in the soft middle of the bag */
+  .claim {
+    margin: 30mm auto 12mm;
+    text-align: center;
+    max-width: 400mm;
+  }
+  .claim i {
+    display: block;
+    width: 40mm;
+    height: 1.2mm;
+    background: var(--clay);
+    margin: 0 auto 12mm;
+  }
+  .claim p {
+    margin: 0;
+    font-family: var(--amiri);
+    font-size: 20mm;
+    line-height: 1.35;
+    color: var(--teal-900);
+  }
+  .claim em {
+    direction: ltr;
+    display: block;
+    margin-top: 8mm;
+    font-family: var(--mono);
+    font-style: normal;
+    font-size: 4.8mm;
+    letter-spacing: 0.24em;
+    color: var(--muted);
+  }
+
   /* seal band: certification + coordinates, printed in the soft lower third */
   .seal {
     margin: auto 34mm 0;
@@ -195,6 +238,7 @@
     letter-spacing: 0.22em;
     color: var(--ink);
   }
+  .barcode .web { color: var(--muted); letter-spacing: 0.26em; }
   .foot-note {
     text-align: left;
     font-size: 6.4mm;
@@ -203,6 +247,12 @@
     max-width: 150mm;
   }
   .foot-note b { color: var(--ink); font-weight: 600; }
+  .foot-note .small {
+    font-family: var(--mono);
+    font-size: 4.4mm;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+  }
 
   .band-bottom {
     flex: none;
@@ -273,8 +323,14 @@
 <div class="sheet">
   <div class="art">
     <div class="band-top">
-      <span class="meta">SINAI, EGYPT · EST. 2026</span>
-      <div class="wordmark"><span class="diamond"></span>SINAICORE</div>
+      <span class="meta">PREMIUM INDUSTRIAL SALT · SINAI, EGYPT · EST. 2026</span>
+      <div class="brand">
+        <img src="./brand/sinaicore-mark.png" alt="SinaiCore" />
+        <div class="brand-type">
+          <div class="wordmark">SINAICORE</div>
+          <div class="tagline">AT THE CORE OF QUALITY AND PURITY</div>
+        </div>
+      </div>
       <i class="rule"></i>
     </div>
 
@@ -302,6 +358,12 @@
       <div><b>03</b><span>تصنيف ثلاثي</span><em>3-SIEVE SORT</em></div>
     </div>
 
+    <div class="claim">
+      <i></i>
+      <p>ملح بحري طبيعي · بلا إضافات ولا مواد مانعة للتكتل</p>
+      <em>100% NATURAL SEA SALT · NO ADDITIVES · NO ANTICAKING AGENTS</em>
+    </div>
+
     <div class="seal">
       <div><span>CERTIFIED</span><b>ISO 22000 · HACCP</b><em>HALAL · FOOD GRADE</em></div>
       <div><span>ORIGIN</span><b>29°N / 32°E</b><em>NORTH SINAI</em></div>
@@ -312,10 +374,12 @@
       <div class="barcode">
         <div class="bars" id="bars"></div>
         <span class="code">8 691234 500081</span>
+        <span class="code web">SINAICORE.COM</span>
       </div>
       <div class="foot-note">
         <b>خياطة مزدوجة</b> أعلى الشيكارة مع بطانة بولي إيثيلين 60 ميكرون.<br />
-        يُحفظ بعيداً عن الرطوبة · غير صالح للاستخدام بعد فتحه وختمه.
+        يُحفظ بعيداً عن الرطوبة · غير صالح للاستخدام بعد فتحه وختمه.<br />
+        <span class="small">MADE IN EGYPT · PP 5 · NET 50 KG</span>
       </div>
     </div>
 

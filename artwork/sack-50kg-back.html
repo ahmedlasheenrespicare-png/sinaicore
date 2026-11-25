@@ -196,6 +196,42 @@
     color: var(--muted);
   }
 
+  .brand { display: flex; align-items: center; gap: 8mm; }
+  .brand .mark { height: 38mm; width: auto; display: block; }
+  .brand .wordmark {
+    font-family: var(--mono);
+    font-size: 17mm;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    color: var(--paper);
+  }
+
+  .contact {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 0.3mm solid var(--hair);
+    border-bottom: 0.3mm solid var(--hair);
+    margin: 6mm 0 0;
+  }
+  .contact span {
+    direction: ltr;
+    padding: 6mm 8mm;
+    font-family: var(--mono);
+    font-size: 4.6mm;
+    letter-spacing: 0.16em;
+    color: var(--ink);
+    border-left: 0.3mm solid var(--hair);
+  }
+  .contact span:last-child { border-left: 0; }
+  .contact b {
+    direction: ltr;
+    display: block;
+    margin-bottom: 2mm;
+    font-weight: 400;
+    color: var(--muted);
+    letter-spacing: 0.24em;
+  }
+
   .foot {
     margin-top: auto;
     flex: none;
@@ -225,7 +261,10 @@
 <div class="sheet">
   <div class="art">
     <div class="head">
-      <div class="wordmark"><span class="diamond"></span>SINAICORE</div>
+      <div class="brand">
+        <img class="mark" src="./brand/sinaicore-mark.png" alt="SinaiCore" />
+        <span class="wordmark">SINAICORE</span>
+      </div>
       <div class="tag">PACKAGING / SPECIFICATION · LOT SC-08</div>
     </div>
 
@@ -307,6 +346,13 @@
         <div><i class="glyph cross"></i><b>NO HOOK</b><span>لا خطّاف ولا أداة<br />حادة عند الفتح</span></div>
       </div>
     </section>
+
+    <div class="contact">
+      <span><b>SITE</b> SINAICORE.COM</span>
+      <span><b>EMAIL</b> INFO@SINAICORE.COM</span>
+      <span><b>TEL</b> +20 110 753 9914</span>
+      <span><b>ORIGIN</b> MADE IN EGYPT</span>
+    </div>
 
     <div class="foot">
       <span class="mono">SINAICORE · PRODUCT OF EGYPT · 50 KG NET</span>
