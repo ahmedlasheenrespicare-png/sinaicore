@@ -382,37 +382,45 @@ function FallbackCrystal() {
   )
 }
 
+function crystalMaterial() {
+  return new THREE.MeshPhysicalMaterial({
+    color: '#cdeee8',
+    transmission: transmissionFor(1),
+    roughness: 0.07,
+    metalness: 0,
+    ior: 1.544,
+    thickness: 2.1,
+    clearcoat: 1,
+    clearcoatRoughness: 0.02,
+    iridescence: 0.28,
+    iridescenceIOR: 1.31,
+    envMapIntensity: 2.2,
+    attenuationColor: new THREE.Color('#79c3b9'),
+    attenuationDistance: 3.5,
+    ...glassExtras(0.8),
+  })
+}
+
+/** The authored halite: stepped "hopper" faces, chamfered edges and two small
+ *  satellite grains, all in one Draco mesh (~2.7 kB) built by `npm run models`. */
 function DracoCrystal() {
   const gltf = useGLTF('/models/salt-crystal.glb', '/draco/')
-  const geometry = useMemo(() => {
-    let found: THREE.BufferGeometry | undefined
-    gltf.scene.traverse((object) => {
-      if ((object as THREE.Mesh).isMesh && !found) found = (object as THREE.Mesh).geometry
+
+  const object = useMemo(() => {
+    const clone = gltf.scene.clone(true)
+    clone.traverse((node) => {
+      const mesh = node as THREE.Mesh
+      if (!mesh.isMesh) return
+      mesh.material = crystalMaterial()
+      mesh.castShadow = true
+      mesh.frustumCulled = false
     })
-    return found ?? new THREE.BoxGeometry(1, 1, 1)
+    return clone
   }, [gltf])
 
-  return (
-    <mesh geometry={geometry} scale={1.75}>
-      <meshPhysicalMaterial
-        color="#cdeee8"
-        transmission={transmissionFor(1)}
-        roughness={0.07}
-        metalness={0}
-        ior={1.544}
-        thickness={2.1}
-        clearcoat={1}
-        clearcoatRoughness={0.02}
-        iridescence={0.28}
-        iridescenceIOR={1.31}
-        envMapIntensity={2.2}
-        attenuationColor="#79c3b9"
-        attenuationDistance={3.5}
-        {...glassExtras(0.8)}
-      />
-      <Edges threshold={12} color="#1c5a56" scale={1.004} />
-    </mesh>
-  )
+  /* A fixed three-quarter tilt: dead-on the hopper faces are parallel to the
+     camera and the grain reads as a flat plate, however good the shading is. */
+  return <primitive object={object} scale={1.42} rotation={[0.34, 0.62, 0.11]} />
 }
 
 class AssetBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, { failed: boolean }> {
@@ -621,17 +629,75 @@ function Sack({ scale = 1, position = [0, 0, 0] as [number, number, number], tex
   )
 }
 
+type ContainerProps = {
+  closed?: number | { value: number }
+  showSacks?: boolean
+  scale?: number
+  texture: THREE.Texture
+}
+
+/** The authored 20 ft box: trapezoid corrugation, cast corner fittings, locking
+ *  bars and two door leaves exported as named nodes, so a single rotation.y per
+ *  leaf swings them open. Draco mesh, ~15 kB. */
+function ContainerAsset({ closed = 1, showSacks = true, scale = 1, texture }: ContainerProps) {
+  const gltf = useGLTF('/models/container.glb', '/draco/')
+
+  const object = useMemo(() => {
+    const clone = gltf.scene.clone(true)
+    clone.traverse((node) => {
+      const mesh = node as THREE.Mesh
+      if (!mesh.isMesh) return
+      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+      materials.forEach((material) => {
+        const standard = material as THREE.MeshStandardMaterial
+        standard.envMapIntensity = 0.9
+        standard.side = THREE.FrontSide
+      })
+      mesh.castShadow = true
+      mesh.receiveShadow = true
+    })
+    return clone
+  }, [gltf])
+
+  const leaves = useMemo(
+    () => ({
+      left: object.getObjectByName('door-left'),
+      right: object.getObjectByName('door-right'),
+    }),
+    [object],
+  )
+
+  useFrame(() => {
+    const c = clamp(typeof closed === 'number' ? closed : closed.value)
+    const open = (1 - c) * 1.32
+    if (leaves.left) leaves.left.rotation.y = -open
+    if (leaves.right) leaves.right.rotation.y = open
+  })
+
+  return (
+    <group scale={scale}>
+      <primitive object={object} />
+      {showSacks && (
+        <group position={[0, -0.72, -0.35]}>
+          {[-1.5, -0.5, 0.5, 1.5].map((x) => (
+            <Sack key={x} position={[x, 0, 0]} scale={0.46} texture={texture} />
+          ))}
+          {[-1, 0, 1].map((x) => (
+            <Sack key={x} position={[x, 0.87, -0.1]} scale={0.46} texture={texture} />
+          ))}
+        </group>
+      )}
+    </group>
+  )
+}
+
+/** Procedural stand-in: used only if the GLB cannot be fetched or decoded. */
 function ShippingContainer({
   closed = 1,
   showSacks = true,
   scale = 1,
   texture,
-}: {
-  closed?: number | { value: number }
-  showSacks?: boolean
-  scale?: number
-  texture: THREE.Texture
-}) {
+}: ContainerProps) {
   const leftDoor = useRef<THREE.Group>(null!)
   const rightDoor = useRef<THREE.Group>(null!)
   const ribs = useMemo(() => Array.from({ length: 24 }, (_, i) => i), [])
@@ -809,7 +875,11 @@ function AnalysisPhase() {
   return (
     <group ref={group}>
       <group scale={0.78} position={[-0.85, -0.2, -0.2]}>
-        <ShippingContainer closed={doors} texture={sackTexture} />
+        <AssetBoundary fallback={<ShippingContainer closed={doors} texture={sackTexture} />}>
+          <Suspense fallback={<ShippingContainer closed={doors} texture={sackTexture} />}>
+            <ContainerAsset closed={doors} texture={sackTexture} />
+          </Suspense>
+        </AssetBoundary>
       </group>
       <mesh ref={scan} position={[0, -1.5, 1.3]}>
         <planeGeometry args={[3.6, 0.012]} />

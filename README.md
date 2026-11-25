@@ -12,9 +12,41 @@ npm install
 npm run dev      # http://localhost:5173
 npm run build
 npm run assets   # بلورة GLB/Draco + خرائط KTX2
-npm run models   # البلورة فقط
+npm run models   # البلورة + حاوية الشحن
 npm run textures # خرائط السطح فقط
 ```
+
+## المجسمات (3D assets)
+
+مجلدان فقط في المشهد يحملان هندسة جاهزة، والباقي يُبنى إجرائياً:
+
+| الملف | الحجم | المحتوى |
+| --- | --- | --- |
+| `public/models/salt-crystal.glb` | 2.9 kB | بلورة هاليت بنمو «hopper» (أوجه متدرّجة) وحواف مشطوفة وبذرتين صغيرتين |
+| `public/models/container.glb` | 15.3 kB | حاوية 20 قدم: تضليع شبه منحرف حقيقي، زوايا مصبوبة، قضبان إغلاق، وبابان كعقدتين `door-left` / `door-right` |
+
+كلاهما مضغوط بـ Draco (`KHR_draco_mesh_compression`) ويُعاد توليده بالأمر:
+
+```bash
+npm run models
+```
+
+السكربت `scripts/build-models.mjs` يكتب الهندسة من الصفر (لا أصول خارجية ولا
+تراخيص طرف ثالث). الخامات معرّفة داخل GLB بأسماء دلالية —
+`ContainerPaint`, `ContainerFrame`, `ContainerDoor`, `ContainerFloor`,
+`ContainerCastings`, `Crystal` — والمشهد يضبط `envMapIntensity` والظلال عليها.
+
+**استبدالها بمجسم جاهز** (Sketchfab / Poly Haven): نزّل الـGLB (يفضّل CC0)،
+ضع الملف بنفس الاسم في `public/models/`، واحتفظ بنقطتين:
+
+1. البابان يجب أن يكونا عقدتين اسمهما `door-left` و`door-right` ومحورهما عند
+   المفصلة، لأن حركة الفتح تعتمد على `rotation.y` لكل عقدة.
+2. مرّر الملف على `npx gltf-transform optimize in.glb out.glb --compress draco`
+   ليظل الحجم في حدود بضع عشرات الكيلوبايتات.
+
+الحاويات في المشهد تقبل العرض الافتراضي: لو فشل تحميل أي ملف يعود المكوّن
+تلقائياً إلى نسخة إجرائية (`ShippingContainer` / `FallbackCrystal`) فلا تظهر
+شاشة فارغة.
 
 ## تصميم الشيكارة (Bag artwork)
 
@@ -22,7 +54,7 @@ npm run textures # خرائط السطح فقط
 
 | الملف | المقاس | الاستخدام |
 | --- | --- | --- |
-| `deliverables/bag-artwork/sack-50kg-front.pdf` | 570×920 مم (ترim 550×900 + بليد 10) | طباعة 1:1 |
+| `deliverables/bag-artwork/sack-50kg-front.pdf` | 570×920 مم (trim 550×900 + بليد 10) | طباعة 1:1 |
 | `deliverables/bag-artwork/sack-50kg-front.png` | 144 dpi | معاينة / أرشيف |
 | `deliverables/bag-artwork/sack-50kg-back.pdf` | نفس المقاس | الوجه الخلفي (شهادة التحليل والتداول) |
 | `deliverables/bag-artwork/jumbo-1000kg.pdf` | 920×1120 مم | جانب شيكارة الجامبو 1000 كجم |

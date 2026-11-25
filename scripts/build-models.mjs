@@ -1,15 +1,22 @@
 /**
- * Generates the single 3D asset used by the story: a faceted halite crystal
- * exported as GLB with KHR_draco_mesh_compression. Run with `npm run models`.
+ * Authors the two hero meshes of the story as Draco-compressed GLB files:
  *
- * Everything else in the scene is procedural geometry, so there is no other
- * mesh payload to download. The decoder is copied from three.js into
- * public/draco so no external CDN is required at runtime.
+ *   1. salt-crystal.glb — a halite crystal with the natural "hopper" habit:
+ *      stepped faces, chamfered edges, sized to the 1×1×1 unit the scene scales.
+ *   2. container.glb    — a weathered 20 ft steel box with real trapezoid
+ *      corrugation, cast corner fittings, locking bars and two door leaves
+ *      exported as named nodes so the scroll animation can swing them open.
+ *
+ * Both are generated procedurally instead of being downloaded, so the repo
+ * carries no third-party licence, but the numbers below are deliberately
+ * faithful to the real thing (container: 6.06 × 2.44 × 2.59 m at 1:1.26).
+ * Run with `npm run models`.
  */
-import { mkdir, copyFile } from 'node:fs/promises'
+import { mkdir, copyFile, stat } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import * as THREE from 'three'
+import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js'
 import { Document, NodeIO } from '@gltf-transform/core'
 import { KHRDracoMeshCompression } from '@gltf-transform/extensions'
 import draco3d from 'draco3dgltf'
@@ -26,74 +33,407 @@ for (const file of ['draco_decoder.js', 'draco_decoder.wasm', 'draco_wasm_wrappe
   await copyFile(path.join(dracoSource, file), path.join(dracoDir, file))
 }
 
-// A slightly chamfered cubic crystal — the natural habit of halite.
-const geometry = new THREE.BoxGeometry(1, 1, 1, 5, 5, 5)
-const position = geometry.attributes.position
-const v = new THREE.Vector3()
-for (let i = 0; i < position.count; i++) {
-  v.fromBufferAttribute(position, i)
-  const clamped = v.clone()
-  clamped.x = THREE.MathUtils.clamp(clamped.x, -0.41, 0.41)
-  clamped.y = THREE.MathUtils.clamp(clamped.y, -0.41, 0.41)
-  clamped.z = THREE.MathUtils.clamp(clamped.z, -0.41, 0.41)
-  v.lerp(clamped, 0.3)
-  v.multiplyScalar(1.06)
-  position.setXYZ(i, v.x, v.y, v.z)
+/* -------------------------------------------------------------------------- */
+/*  A tiny triangle soup builder — everything below feeds into one of these    */
+/* -------------------------------------------------------------------------- */
+const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z)
+
+class Soup {
+  constructor() {
+    this.points = []
+    this.uvs = []
+  }
+
+  /** Counter-clockwise winding = the face looks at you. */
+  tri(a, b, c, ua = [0, 0], ub = [0, 0], uc = [0, 0]) {
+    this.points.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z)
+    this.uvs.push(ua[0], ua[1], ub[0], ub[1], uc[0], uc[1])
+  }
+
+  quad(a, b, c, d, flip = false, uv = [[0, 0], [1, 0], [1, 1], [0, 1]]) {
+    if (flip) {
+      this.tri(a, d, c, uv[0], uv[3], uv[2])
+      this.tri(a, c, b, uv[0], uv[2], uv[1])
+    } else {
+      this.tri(a, b, c, uv[0], uv[1], uv[2])
+      this.tri(a, c, d, uv[0], uv[2], uv[3])
+    }
+  }
+
+  geometry() {
+    const geometry = new THREE.BufferGeometry()
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(this.points, 3))
+    geometry.setAttribute('uv', new THREE.Float32BufferAttribute(this.uvs, 2))
+    // Flat shading: every triangle keeps its own normal, which is exactly what
+    // corrugated steel and faceted halite want.
+    geometry.computeVertexNormals()
+    // Draco only touches indexed meshes; welding identical position/normal/uv
+    // triples keeps the flat shading intact and shrinks the payload tenfold.
+    return mergeVertices(geometry, 1e-5)
+  }
 }
-geometry.computeVertexNormals()
 
-const document = new Document()
-const buffer = document.createBuffer()
-const positions = document
-  .createAccessor('POSITION')
-  .setType('VEC3')
-  .setArray(new Float32Array(geometry.attributes.position.array))
-  .setBuffer(buffer)
-const normals = document
-  .createAccessor('NORMAL')
-  .setType('VEC3')
-  .setArray(new Float32Array(geometry.attributes.normal.array))
-  .setBuffer(buffer)
-const indices = document
-  .createAccessor('INDICES')
-  .setType('SCALAR')
-  .setArray(new Uint16Array(geometry.index.array))
-  .setBuffer(buffer)
+function appendGeometry(soup, geometry) {
+  const nonIndexed = geometry.index ? geometry.toNonIndexed() : geometry
+  const position = nonIndexed.attributes.position
+  const uv = nonIndexed.attributes.uv
+  for (let i = 0; i < position.count; i += 3) {
+    const p = [0, 1, 2].map((k) => {
+      const index = i + k
+      return V(position.getX(index), position.getY(index), position.getZ(index))
+    })
+    const t = [0, 1, 2].map((k) => {
+      const index = i + k
+      return uv ? [uv.getX(index), uv.getY(index)] : [0, 0]
+    })
+    soup.tri(p[0], p[1], p[2], t[0], t[1], t[2])
+  }
+}
 
-const material = document
-  .createMaterial('Crystal')
-  .setBaseColorFactor([0.96, 1, 0.99, 1])
-  .setMetallicFactor(0)
-  .setRoughnessFactor(0.06)
+function addBox(soup, size, center, rot = V()) {
+  const geometry = new THREE.BoxGeometry(size[0], size[1], size[2])
+  geometry.rotateX(rot.x)
+  geometry.rotateY(rot.y)
+  geometry.rotateZ(rot.z)
+  geometry.translate(center[0], center[1], center[2])
+  appendGeometry(soup, geometry)
+}
 
-const primitive = document
-  .createPrimitive()
-  .setAttribute('POSITION', positions)
-  .setAttribute('NORMAL', normals)
-  .setIndices(indices)
-  .setMaterial(material)
+function addCylinder(soup, radius, height, center, axis = 'y') {
+  const geometry = new THREE.CylinderGeometry(radius, radius, height, 12, 1)
+  if (axis === 'z') geometry.rotateX(Math.PI / 2)
+  if (axis === 'x') geometry.rotateZ(Math.PI / 2)
+  geometry.translate(center[0], center[1], center[2])
+  appendGeometry(soup, geometry)
+}
 
-const mesh = document.createMesh('SaltCrystal').addPrimitive(primitive)
-const node = document.createNode('SaltCrystal').setMesh(mesh)
-document.createScene('Scene').addChild(node)
+/**
+ * One trapezoid-corrugated sheet, closed into a shell of `thickness` so it reads
+ * correctly from both sides — you can see the inside of this container.
+ * `u`/`v` are the in-plane axes, the sheet bulges along u × v (or the opposite
+ * when `flip` is set).
+ */
+function corrugatedSheet(
+  soup,
+  { length, height, origin, u, v, pitch = 0.16, depth = 0.045, thickness = 0.014, flip = false, ribRatio = 0.22 },
+) {
+  const n = new THREE.Vector3().crossVectors(u, v).normalize()
+  const point = (t, z, w) =>
+    new THREE.Vector3().copy(origin).addScaledVector(u, t).addScaledVector(v, w).addScaledVector(n, z)
 
-document
-  .createExtension(KHRDracoMeshCompression)
-  .setRequired(true)
-  .setEncoderOptions({
-    method: 'edgebreaker',
-    encodeSpeed: 5,
-    decodeSpeed: 5,
-    quantizationBits: 14,
+  const segments = Math.max(1, Math.round(length / pitch))
+  const step = length / segments
+  const profile = []
+  for (let i = 0; i < segments; i++) {
+    const t = -length / 2 + i * step
+    profile.push(
+      [t, 0],
+      [t + step * ribRatio, depth],
+      [t + step * (1 - ribRatio), depth],
+      [t + step, 0],
+    )
+  }
+
+  const half = height / 2
+  const outer = profile.map(([t, z]) => [point(t, z, -half), point(t, z, half)])
+  const inner = profile.map(([t, z]) => [point(t, z - thickness, -half), point(t, z - thickness, half)])
+
+  for (let i = 0; i < profile.length - 1; i++) {
+    // outer skin
+    soup.quad(outer[i][0], outer[i + 1][0], outer[i + 1][1], outer[i][1], flip)
+    // inner skin, wound the other way
+    soup.quad(inner[i][0], inner[i + 1][0], inner[i + 1][1], inner[i][1], !flip)
+    // bottom and top fold between the skins
+    soup.quad(outer[i][0], inner[i][0], inner[i + 1][0], outer[i + 1][0], !flip)
+    soup.quad(outer[i][1], inner[i][1], inner[i + 1][1], outer[i + 1][1], flip)
+  }
+  // the two open ends of the profile
+  soup.quad(outer[0][0], outer[0][1], inner[0][1], inner[0][0], flip)
+  soup.quad(
+    outer[outer.length - 1][0],
+    outer[outer.length - 1][1],
+    inner[inner.length - 1][1],
+    inner[inner.length - 1][0],
+    !flip,
+  )
+}
+
+/* -------------------------------------------------------------------------- */
+/*  1 — Halite: a cube whose faces sink into stepped "hopper" terraces         */
+/* -------------------------------------------------------------------------- */
+function buildCrystal() {
+  const geometry = new THREE.BoxGeometry(1, 1, 1, 9, 9, 9).toNonIndexed()
+  const position = geometry.attributes.position
+  const vertex = V()
+  const CHAMFER = 0.086
+  const EDGE = 0.5 - CHAMFER
+  const STEPS = 3
+  const RECESS = 0.095
+
+  for (let i = 0; i < position.count; i++) {
+    vertex.fromBufferAttribute(position, i)
+
+    // Hopper growth: the middle of every face is a shallower shelf, so the
+    // surface steps inwards in quantised terraces from rim to centre.
+    const axis = Math.abs(vertex.x) > Math.abs(vertex.y)
+      ? (Math.abs(vertex.x) > Math.abs(vertex.z) ? 'x' : 'z')
+      : (Math.abs(vertex.y) > Math.abs(vertex.z) ? 'y' : 'z')
+    const others = ['x', 'y', 'z'].filter((key) => key !== axis)
+    const edge = Math.max(Math.abs(vertex[others[0]]), Math.abs(vertex[others[1]])) / 0.5
+    const level = Math.min(1, Math.round((1 - THREE.MathUtils.clamp(edge, 0, 1)) * STEPS) / STEPS)
+    vertex[axis] -= Math.sign(vertex[axis]) * level * RECESS
+
+    // Chamfered edges and corners — halite cleaves but it never has a knife edge.
+    vertex.x = THREE.MathUtils.clamp(vertex.x, -EDGE, EDGE)
+    vertex.y = THREE.MathUtils.clamp(vertex.y, -EDGE, EDGE)
+    vertex.z = THREE.MathUtils.clamp(vertex.z, -EDGE, EDGE)
+
+    position.setXYZ(i, vertex.x, vertex.y, vertex.z)
+  }
+
+  geometry.deleteAttribute('uv')
+  geometry.computeVertexNormals()
+
+  // A few tiny satellite crystals so the single grain still reads as a crystal
+  // that grew, not one that was milled.
+  const soup = new Soup()
+  appendGeometry(soup, geometry)
+  const satellites = [
+    { size: 0.19, at: [0.42, -0.3, 0.26], turn: 0.6 },
+    { size: 0.13, at: [-0.36, 0.34, 0.3], turn: -0.35 },
+  ]
+  for (const satellite of satellites) {
+    const small = new THREE.BoxGeometry(satellite.size, satellite.size, satellite.size, 3, 3, 3).toNonIndexed()
+    const smallPosition = small.attributes.position
+    const v = V()
+    for (let i = 0; i < smallPosition.count; i++) {
+      v.fromBufferAttribute(smallPosition, i)
+      const limit = satellite.size * 0.42
+      v.x = THREE.MathUtils.clamp(v.x, -limit, limit)
+      v.y = THREE.MathUtils.clamp(v.y, -limit, limit)
+      v.z = THREE.MathUtils.clamp(v.z, -limit, limit)
+      smallPosition.setXYZ(i, v.x, v.y, v.z)
+    }
+    small.deleteAttribute('uv')
+    small.rotateY(satellite.turn)
+    small.rotateZ(satellite.turn * 0.4)
+    small.translate(...satellite.at)
+    small.computeVertexNormals()
+    appendGeometry(soup, small)
+  }
+
+  return [
+    { name: 'SaltCrystal', geometry: soup.geometry(), material: 'Crystal' },
+  ]
+}
+
+/* -------------------------------------------------------------------------- */
+/*  2 — 20 ft box: corrugated shell, cast fittings, doors on named nodes       */
+/* -------------------------------------------------------------------------- */
+const BOX = { length: 4.8, height: 3.1, depth: 2.7 }
+const HALF_L = BOX.length / 2
+const HALF_H = BOX.height / 2
+const HALF_D = BOX.depth / 2
+
+function buildContainer() {
+  const shell = new Soup()
+  const frame = new Soup()
+  const floor = new Soup()
+  const castings = new Soup()
+
+  // Back wall (z = -depth) and both ends (x = ±length).
+  corrugatedSheet(shell, {
+    length: BOX.length - 0.16,
+    height: BOX.height - 0.1,
+    origin: V(0, 0, -HALF_D + 0.02),
+    u: V(-1, 0, 0),
+    v: V(0, 1, 0),
+    depth: 0.05,
+    pitch: 0.17,
+  })
+  for (const side of [-1, 1]) {
+    corrugatedSheet(shell, {
+      length: BOX.depth - 0.16,
+      height: BOX.height - 0.1,
+      origin: V(side * (HALF_L - 0.02), 0, 0),
+      u: V(0, 0, side),
+      v: V(0, 1, 0),
+      depth: 0.05,
+      pitch: 0.15,
+      flip: side > 0,
+    })
+  }
+  // Roof: shallow ribs running across the width.
+  corrugatedSheet(shell, {
+    length: BOX.length - 0.16,
+    height: BOX.depth - 0.16,
+    origin: V(0, HALF_H - 0.02, 0),
+    u: V(1, 0, 0),
+    v: V(0, 0, -1),
+    depth: 0.022,
+    pitch: 0.52,
+    ribRatio: 0.34,
   })
 
-const io = new NodeIO()
-  .registerExtensions([KHRDracoMeshCompression])
-  .registerDependencies({
-    'draco3d.encoder': await draco3d.createEncoderModule(),
-    'draco3d.decoder': await draco3d.createDecoderModule(),
+  // Floor plate and the forklift rails under it.
+  addBox(floor, [BOX.length - 0.24, 0.045, BOX.depth - 0.24], [0, -HALF_H + 0.08, 0])
+
+  // Perimeter frame: corner posts, top and bottom rails.
+  for (const x of [-1, 1]) {
+    for (const z of [-1, 1]) {
+      addBox(frame, [0.15, BOX.height, 0.15], [x * (HALF_L - 0.05), 0, z * (HALF_D - 0.05)])
+      for (const y of [-1, 1]) {
+        addBox(castings, [0.24, 0.22, 0.26], [x * (HALF_L - 0.02), y * (HALF_H - 0.11), z * (HALF_D - 0.02)])
+      }
+    }
+  }
+  for (const y of [-1, 1]) {
+    for (const z of [-1, 1]) {
+      // Deeper than the corrugation so the sheet's cut edge never shows as a
+      // sawtooth along the top and bottom of the box.
+      addBox(frame, [BOX.length - 0.1, 0.16, 0.22], [0, y * (HALF_H - 0.08), z * (HALF_D - 0.11)])
+    }
+    for (const x of [-1, 1]) {
+      addBox(frame, [0.12, 0.14, BOX.depth - 0.1], [x * (HALF_L - 0.06), y * (HALF_H - 0.07), 0])
+    }
+  }
+
+  // Each leaf is authored around its own hinge, which sits at the node origin:
+  // the left leaf grows along +x, the right leaf along -x, so a single
+  // rotation.y on the node swings them open like real double doors.
+  const doors = [-1, 1].map((side) => {
+    const door = new Soup()
+    const width = HALF_L - 0.1
+    corrugatedSheet(door, {
+      length: width,
+      height: BOX.height - 0.24,
+      origin: V((-side * width) / 2, 0, 0),
+      u: V(-side, 0, 0),
+      v: V(0, 1, 0),
+      depth: 0.042,
+      pitch: 0.19,
+      flip: side > 0,
+    })
+    // Two locking bars per leaf, with a cam at the sill and a handle at eye level.
+    for (const fraction of [0.28, 0.74]) {
+      const x = -side * width * fraction
+      addCylinder(door, 0.021, BOX.height - 0.44, [x, 0, 0.075])
+      addBox(door, [0.1, 0.06, 0.05], [x, -HALF_H + 0.42, 0.1])
+      addBox(door, [0.06, 0.05, 0.11], [x, 0.34, 0.13])
+    }
+    // Hinges on the pivot edge.
+    for (const y of [-0.9, 0, 0.9]) {
+      addBox(door, [0.06, 0.14, 0.12], [-side * 0.04, y, 0.02])
+    }
+    return { side, soup: door }
   })
 
-const target = path.join(outDir, 'salt-crystal.glb')
-await io.write(target, document)
-console.log(`Wrote ${path.relative(root, target)} (Draco-compressed GLB)`)
+  return [
+    { name: 'container-shell', geometry: shell.geometry(), material: 'ContainerPaint' },
+    { name: 'container-frame', geometry: frame.geometry(), material: 'ContainerFrame' },
+    { name: 'container-floor', geometry: floor.geometry(), material: 'ContainerFloor' },
+    { name: 'container-castings', geometry: castings.geometry(), material: 'ContainerCastings' },
+    ...doors.map(({ side, soup }) => ({
+      name: side < 0 ? 'door-left' : 'door-right',
+      geometry: soup.geometry(),
+      material: 'ContainerDoor',
+      translation: [side * (HALF_L - 0.02), 0, HALF_D + 0.06],
+    })),
+  ]
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Export                                                                    */
+/* -------------------------------------------------------------------------- */
+/* glTF baseColorFactor is linear, so every palette entry is converted from the
+   sRGB hex the editorial art direction actually specifies. */
+const linear = (color) => {
+  const c = new THREE.Color(color)
+  return [c.r, c.g, c.b, 1]
+}
+
+const MATERIALS = {
+  Crystal: { color: linear('#f5fffd'), metallic: 0, roughness: 0.06 },
+  ContainerPaint: { color: linear('#17484c'), metallic: 0.5, roughness: 0.58 },
+  ContainerFrame: { color: linear('#28656a'), metallic: 0.62, roughness: 0.48 },
+  ContainerDoor: { color: linear('#1b565b'), metallic: 0.58, roughness: 0.5 },
+  ContainerFloor: { color: linear('#6b5a44'), metallic: 0.05, roughness: 0.94 },
+  ContainerCastings: { color: linear('#3f4a4a'), metallic: 0.72, roughness: 0.52 },
+}
+
+async function writeGlb(nodes, file, label) {
+  const document = new Document()
+  const buffer = document.createBuffer()
+  const materials = new Map()
+
+  for (const node of nodes) {
+    const geometry = node.geometry
+    const material =
+      materials.get(node.material) ??
+      (() => {
+        const spec = MATERIALS[node.material]
+        const created = document
+          .createMaterial(node.material)
+          .setBaseColorFactor(spec.color)
+          .setMetallicFactor(spec.metallic)
+          .setRoughnessFactor(spec.roughness)
+        materials.set(node.material, created)
+        return created
+      })()
+
+    const position = document
+      .createAccessor()
+      .setType('VEC3')
+      .setArray(new Float32Array(geometry.attributes.position.array))
+      .setBuffer(buffer)
+    const normal = document
+      .createAccessor()
+      .setType('VEC3')
+      .setArray(new Float32Array(geometry.attributes.normal.array))
+      .setBuffer(buffer)
+    const uv = document
+      .createAccessor()
+      .setType('VEC2')
+      .setArray(new Float32Array(geometry.attributes.uv.array))
+      .setBuffer(buffer)
+    const indices = document
+      .createAccessor()
+      .setType('SCALAR')
+      .setArray(new Uint32Array(geometry.index.array))
+      .setBuffer(buffer)
+
+    const primitive = document
+      .createPrimitive()
+      .setAttribute('POSITION', position)
+      .setAttribute('NORMAL', normal)
+      .setAttribute('TEXCOORD_0', uv)
+      .setIndices(indices)
+      .setMaterial(material)
+
+    const mesh = document.createMesh(node.name).addPrimitive(primitive)
+    const object = document.createNode(node.name).setMesh(mesh)
+    if (node.translation) object.setTranslation(node.translation)
+    document.createScene('Scene').addChild(object)
+  }
+
+  document
+    .createExtension(KHRDracoMeshCompression)
+    .setRequired(true)
+    .setEncoderOptions({ method: 'edgebreaker', encodeSpeed: 5, decodeSpeed: 5, quantizationBits: 14 })
+
+  const io = new NodeIO()
+    .registerExtensions([KHRDracoMeshCompression])
+    .registerDependencies({
+      'draco3d.encoder': await draco3d.createEncoderModule(),
+      'draco3d.decoder': await draco3d.createDecoderModule(),
+    })
+
+  const target = path.join(outDir, file)
+  await io.write(target, document)
+  const { size } = await stat(target)
+  console.log(`${label.padEnd(18)} ${(size / 1024).toFixed(1).padStart(6)} kB  →  ${path.relative(root, target)}`)
+}
+
+await writeGlb(buildCrystal(), 'salt-crystal.glb', 'salt-crystal')
+await writeGlb(buildContainer(), 'container.glb', 'container')
+console.log('Draco decoder copied to public/draco')
