@@ -8,6 +8,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
+import { CSS2DObject, CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js'
 
 const status = document.getElementById('status')
 const stage = document.getElementById('stage-canvas')
@@ -20,6 +21,12 @@ renderer.toneMappingExposure = 0.82
 renderer.shadowMap.enabled = true
 renderer.shadowMap.type = THREE.PCFSoftShadowMap
 stage.appendChild(renderer.domElement)
+
+/* The annotations are real DOM, so they stay crisp at any zoom. */
+const labelRenderer = new CSS2DRenderer()
+labelRenderer.setSize(stage.clientWidth, stage.clientHeight)
+labelRenderer.domElement.className = 'labels'
+stage.appendChild(labelRenderer.domElement)
 
 const scene = new THREE.Scene()
 scene.background = null
@@ -90,6 +97,8 @@ const sack = new THREE.Group()
 scene.add(sack)
 
 let model = null
+let annotatedTablet = null
+let otherTablets = []
 
 loader
   .loadAsync(`/models/sack.glb?${stamp}`)
@@ -184,6 +193,9 @@ loader
       return seed / 4294967296
     }
     const FLOOR = -1.075
+    /* 25 : 11 is the real die. The mesh is authored Ø 2 units, so its height is
+       squashed to 0.88 to keep the annotation lines honest. */
+    const TABLET_SQUASH = 0.88
     const tablets = new THREE.Group()
     const spots = [
       [-0.98, 1.62],
@@ -205,7 +217,7 @@ loader
       tablet.castShadow = true
       tablet.receiveShadow = true
       const scale = 0.115 + rnd() * 0.02
-      tablet.scale.setScalar(scale)
+      tablet.scale.set(scale, scale * TABLET_SQUASH, scale)
       // Most tablets lie on their face; a couple stand on the rim.
       const onEdge = rnd() > 0.72
       tablet.rotation.set(
@@ -213,8 +225,13 @@ loader
         rnd() * Math.PI * 2,
         (rnd() - 0.5) * 0.12,
       )
-      tablet.position.set(x, FLOOR + (onEdge ? scale * 0.5 : scale * 0.5), z)
+      // Rest the disc exactly on the floor, whatever its pose.
+      tablet.position.set(x, 0, z)
+      tablet.updateMatrixWorld(true)
+      const box = new THREE.Box3().setFromObject(tablet)
+      tablet.position.y = FLOOR - box.min.y
       tablets.add(tablet)
+      if (x === -0.28 && z === 1.86) annotatedTablet = tablet
     }
     // A small stack, so the pile has depth like the reference shot.
     for (let i = 0; i < 3; i++) {
@@ -228,6 +245,9 @@ loader
       tablets.add(tablet)
     }
     scene.add(tablets)
+
+    /* The tablet that carries the drawing, plus its two hotspots. */
+    if (annotatedTablet) buildAnnotations(annotatedTablet)
   })
   .catch((error) => {
     console.error(error)
@@ -254,6 +274,219 @@ fetch(`/artwork/sack-50kg-texture.png?${stamp}`, { method: 'HEAD' })
   .catch(() => {})
 
 
+
+/* --------------------------------------------------------------------------
+ * 3D annotations — dimension lines and hotspots drawn on the tablet itself.
+ * Everything lives in a world-space group anchored on one disc, so the labels
+ * track it while the camera orbits.
+ * -------------------------------------------------------------------------- */
+const INK = 0xc97942
+const HOTSPOT_COPY = {
+  dissolve: {
+    kicker: 'Dissolution · brine tank',
+    title: 'Slow Dissolving',
+    short: 'Slow<br />Dissolving',
+    body: 'Pressed at high density, the tablet offers a small surface to the brine, so it dissolves over weeks instead of hours. The brine stays at a steady saturation between refills.',
+    arabic: 'كبس عالي يقلّل سطح التلامس، فيذوب القرص على مدى أسابيع لا ساعات.',
+    rows: [
+      ['Solubility', 'Slow dissolving'],
+      ['Hardness', 'High (compression)'],
+      ['Dosing', 'Uniform 25 mm'],
+    ],
+  },
+  bridging: {
+    kicker: 'Handling · salt bed',
+    title: 'Prevents Salt Bridging',
+    short: 'Prevents<br />Salt bridging',
+    body: 'The tablet keeps its own shape instead of fusing into a crust, so no salt bridges form over the tank outlet and the brine keeps flowing without being broken up by hand.',
+    arabic: 'القرص لا يلتحم في كتلة واحدة، فلا تتكوّن جسور ملح تسدّ مخرج الخزان.',
+    rows: [
+      ['Appearance', 'Compressed tablets'],
+      ['Form', 'Self-supporting disc'],
+      ['Result', 'No caking'],
+    ],
+  },
+}
+
+let annotationRoot = null
+const hotspotButtons = new Map()
+
+function textLabel(value, caption, modifier = '') {
+  const el = document.createElement('div')
+  el.className = `dim${modifier ? ` ${modifier}` : ''}`
+  el.innerHTML = `<strong>${value}</strong><span>${caption}</span>`
+  return el
+}
+
+function buildAnnotations(tablet) {
+  const centre = tablet.getWorldPosition(new THREE.Vector3())
+  const box = new THREE.Box3().setFromObject(tablet)
+  const radius = Math.max(box.max.x - box.min.x, box.max.z - box.min.z) / 2
+  const half = (box.max.y - box.min.y) / 2
+
+  const root = new THREE.Group()
+  root.position.set(centre.x, centre.y, centre.z)
+  scene.add(root)
+  annotationRoot = root
+
+  const barMaterial = new THREE.MeshBasicMaterial({ color: INK, transparent: true, opacity: 0.92 })
+  const leaderMaterial = new THREE.MeshBasicMaterial({ color: INK, transparent: true, opacity: 0.5 })
+  const up = new THREE.Vector3(0, 1, 0)
+  const a = new THREE.Vector3()
+  const b = new THREE.Vector3()
+
+  /* Hairline bars read at any zoom, unlike 1 px GL lines. */
+  const bar = (x1, y1, z1, x2, y2, z2, thickness = 0.0016, material = barMaterial) => {
+    a.set(x1, y1, z1)
+    b.set(x2, y2, z2)
+    const length = a.distanceTo(b)
+    if (!length) return
+    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(thickness, thickness, length, 6), material)
+    mesh.position.copy(a).add(b).multiplyScalar(0.5)
+    mesh.quaternion.setFromUnitVectors(up, b.clone().sub(a).normalize())
+    root.add(mesh)
+  }
+
+  const gap = radius * 0.34
+  const tick = radius * 0.1
+
+  /* Diameter, floating just above the pressed face. */
+  const dimY = half + gap * 0.8
+  bar(-radius, dimY, 0, radius, dimY, 0)
+  bar(-radius, half, 0, -radius, dimY + tick, 0, 0.0012)
+  bar(radius, half, 0, radius, dimY + tick, 0, 0.0012)
+  bar(-radius, dimY - tick, 0, -radius, dimY + tick, 0)
+  bar(radius, dimY - tick, 0, radius, dimY + tick, 0)
+
+  /* Thickness, measured off the rim. */
+  const thickX = radius + gap
+  bar(thickX, -half, 0, thickX, half, 0)
+  bar(radius, half, 0, thickX + tick, half, 0, 0.0012)
+  bar(radius, -half, 0, thickX + tick, -half, 0, 0.0012)
+  bar(thickX - tick, half, 0, thickX + tick, half, 0)
+  bar(thickX - tick, -half, 0, thickX + tick, -half, 0)
+
+  const attach = (el, x, y, z) => {
+    const object = new CSS2DObject(el)
+    object.position.set(x, y, z)
+    root.add(object)
+    return object
+  }
+
+  attach(textLabel('Ø 25 mm', 'DIAMETER'), 0, dimY + radius * 0.3, 0)
+  attach(textLabel('11 mm', 'THICKNESS'), thickX + radius * 0.5, half * 0.55, 0)
+  attach(textLabel('~15 g', 'NET MASS', 'dim--mass'), -radius * 1.5, half * 0.55, 0)
+  bar(-radius * 1.42, half * 0.42, 0, -radius * 1.02, half * 0.1, 0, 0.0011, leaderMaterial)
+
+  /* Two hotspots around the disc, with leader lines back to the rim. */
+  const spots = [
+    ['dissolve', radius * 1.8, radius * 0.9],
+    ['bridging', -radius * 1.8, radius * 0.9],
+  ]
+  for (const [id, x, y] of spots) {
+    const copy = HOTSPOT_COPY[id]
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.className = 'hotspot'
+    button.setAttribute('aria-expanded', 'false')
+    button.setAttribute('aria-label', `${copy.title} — open the specification`)
+    button.innerHTML = `<span class="dot" aria-hidden="true"></span><span>${copy.short}</span>`
+    button.addEventListener('click', () => toggleHotspot(id))
+    const object = new CSS2DObject(button)
+    object.position.set(x, y, 0)
+    root.add(object)
+    hotspotButtons.set(id, button)
+    bar(x * 0.42, y * 0.3, 0, x, y - radius * 0.16, 0, 0.0011, leaderMaterial)
+  }
+
+  root.visible = false
+
+  /* The drawing needs one disc, not a pile: the scat marks stand aside while
+     the dimensions are up, and come back for the packaging view. */
+  otherTablets = tablet.parent.children.filter((child) => child !== tablet)
+
+  /* The close-up camera frames the annotated disc, not the pile. */
+  VIEWS.tablet.target.set(centre.x, centre.y + 0.008, centre.z)
+  VIEWS.tablet.pos.set(centre.x + 0.46, centre.y + 0.62, centre.z + 1.62)
+}
+
+/* --------------------------------------------------------------------------
+ * The hotspot card: one open at a time, Escape closes, focus is returned.
+ * -------------------------------------------------------------------------- */
+const card = document.getElementById('hs-card')
+const cardParts = {
+  kicker: document.getElementById('hs-kicker'),
+  title: document.getElementById('hs-title'),
+  body: document.getElementById('hs-body'),
+  arabic: document.getElementById('hs-ar'),
+  rows: document.getElementById('hs-rows'),
+}
+const closeButton = document.getElementById('hs-close')
+let openHotspotId = null
+
+/* Opening a card would cover the drawing, so the camera lifts the disc clear. */
+const panForCard = (open) => {
+  if (!annotatedTablet || !annotationRoot?.visible) return
+  const centre = annotatedTablet.getWorldPosition(new THREE.Vector3())
+  goal = {
+    pos: camera.position.clone(),
+    target: new THREE.Vector3(centre.x, centre.y + (open ? -0.15 : 0.01), centre.z),
+    min: 0.55,
+  }
+}
+
+function closeHotspot() {
+  if (!openHotspotId) return
+  const button = hotspotButtons.get(openHotspotId)
+  button?.classList.remove('is-on')
+  button?.setAttribute('aria-expanded', 'false')
+  button?.focus({ preventScroll: true })
+  openHotspotId = null
+  card.hidden = true
+  panForCard(false)
+}
+
+function toggleHotspot(id) {
+  const wasOpen = openHotspotId === id
+  closeHotspot()
+  if (wasOpen) return
+  const copy = HOTSPOT_COPY[id]
+  if (!copy) return
+  cardParts.kicker.textContent = copy.kicker
+  cardParts.title.textContent = copy.title
+  cardParts.body.textContent = copy.body
+  cardParts.arabic.textContent = copy.arabic
+  cardParts.rows.innerHTML = copy.rows
+    .map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`)
+    .join('')
+  card.hidden = false
+  const button = hotspotButtons.get(id)
+  button?.classList.add('is-on')
+  button?.setAttribute('aria-expanded', 'true')
+  openHotspotId = id
+  panForCard(true)
+  closeButton.focus({ preventScroll: true })
+}
+
+closeButton?.addEventListener('click', closeHotspot)
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') closeHotspot()
+})
+
+/* While the drawing is up the bag steps back, so the hairlines stay readable. */
+const ghostSack = (on) => {
+  if (model) model.visible = !on
+  floor.material.opacity = on ? 0.13 : 0.22
+  for (const child of otherTablets) child.visible = !on
+  if (annotatedTablet) annotatedTablet.visible = true
+}
+
+const annotate = (on) => {
+  if (annotationRoot) annotationRoot.visible = on
+  ghostSack(on)
+  if (!on) closeHotspot()
+}
+
 /* --------------------------------------------------------------------------
  * Camera presets — the two products the sheet talks about: the 50 kg bag and
  * the pressed tablet itself.
@@ -277,6 +510,8 @@ const flyTo = (name) => {
   const view = VIEWS[name]
   if (!view) return
   goal = view
+  annotate(name === 'tablet')
+  if (hint) hint.textContent = HINTS[name] ?? HINTS.bag
   controls.minDistance = view.min
   controls.autoRotate = false
   viewButtons.forEach((button) => {
@@ -284,6 +519,11 @@ const flyTo = (name) => {
     button.classList.toggle('is-on', on)
     button.setAttribute('aria-pressed', String(on))
   })
+}
+const hint = document.getElementById('stage-hint')
+const HINTS = {
+  bag: 'Drag to orbit · scroll to zoom',
+  tablet: 'Tap a hotspot · drag to orbit',
 }
 viewButtons.forEach((button) => button.addEventListener('click', () => flyTo(button.dataset.view)))
 
@@ -365,15 +605,35 @@ function tick() {
     model.rotation.z = Math.sin(t * 0.45) * 0.012
   }
   if (goal) {
-    camera.position.lerp(goal.pos, 0.08)
-    controls.target.lerp(goal.target, 0.08)
+    camera.position.lerp(goal.pos, 0.14)
+    controls.target.lerp(goal.target, 0.14)
     if (camera.position.distanceTo(goal.pos) < 0.01) goal = null
   }
   controls.update()
   renderer.render(scene, camera)
+  labelRenderer.render(scene, camera)
   requestAnimationFrame(tick)
 }
 tick()
+
+/* Small hook for the visual checks: jump the camera to its goal at once. */
+if (import.meta.env.DEV) {
+  window.__viewer = {
+    snap: () => {
+      if (!goal) return false
+      camera.position.copy(goal.pos)
+      controls.target.copy(goal.target)
+      controls.update()
+      goal = null
+      return true
+    },
+    state: () => ({
+      annotated: Boolean(annotationRoot?.visible),
+      tabletsShown: otherTablets.filter((child) => child.visible).length,
+      bagShown: model?.visible ?? null,
+    }),
+  }
+}
 
 /* Pause the turntable while the visitor is handling the bag. */
 renderer.domElement.addEventListener('pointerdown', () => (controls.autoRotate = false))
@@ -388,4 +648,8 @@ const resize = () => {
   renderer.setSize(width, height)
 }
 new ResizeObserver(resize).observe(stage)
-window.addEventListener('resize', resize)
+window.addEventListener('resize', () => {
+  resize()
+  labelRenderer.setSize(stage.clientWidth, stage.clientHeight)
+})
+labelRenderer.setSize(stage.clientWidth, stage.clientHeight)
