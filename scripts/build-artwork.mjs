@@ -93,11 +93,24 @@ for (const sheet of sheets) {
   await page.close()
 }
 
-/* Web texture: the trim box only (no marks, no slug) for the 3D sack material. */
-{
+/* Web textures: the trim box only (no marks, no slug) for the 3D sack material.
+   One press sheet, one texture per product in the line. */
+const webTextures = [
+  { file: 'sack-50kg-texture.png', query: '', label: 'tablets · 50 kg' },
+  { file: 'sack-refined-50kg.png', query: '&product=refined&weight=50 kg', label: 'refined · 50 kg' },
+  {
+    file: 'sack-washed-1t.png',
+    query: '&product=washed&weight=1000 kg',
+    label: 'washed · 1 MT',
+  },
+  { file: 'sack-rock-1t.png', query: '&product=rock&weight=1000 kg', label: 'rock · 1 MT' },
+  { file: 'sack-road-1t.png', query: '&product=road&weight=1000 kg', label: 'road · 1 MT' },
+]
+
+for (const texture of webTextures) {
   const page = await browser.newPage()
   await page.goto(
-    `${pathToFileURL(path.join(root, 'artwork', 'sack-50kg-front.html')).href}?trim`,
+    `${pathToFileURL(path.join(root, 'artwork', 'sack-50kg-front.html')).href}?trim${texture.query}`,
     { waitUntil: 'load' },
   )
   await page.evaluate(() => document.fonts.ready)
@@ -108,8 +121,8 @@ for (const sheet of sheets) {
     deviceScaleFactor: 0.8,
   })
   await new Promise((resolve) => setTimeout(resolve, 300))
-  await page.screenshot({ path: path.join(webDir, 'sack-50kg-texture.png'), type: 'png' })
-  console.log('public/artwork/sack-50kg-texture.png  (~1850 px trim texture)')
+  await page.screenshot({ path: path.join(webDir, texture.file), type: 'png' })
+  console.log(`public/artwork/${texture.file.padEnd(26)} (${texture.label})`)
   await page.close()
 }
 
