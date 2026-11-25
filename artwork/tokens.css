@@ -1,0 +1,156 @@
+/* SinaiCore print tokens — shared by every bag artwork file.
+   Sizes are in millimetres so the PDF is 1:1 with the physical panel. */
+
+@font-face {
+  font-family: 'Amiri Print';
+  src: url('../node_modules/@fontsource/amiri/files/amiri-arabic-400-normal.woff2') format('woff2');
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'Amiri Print';
+  src: url('../node_modules/@fontsource/amiri/files/amiri-arabic-700-normal.woff2') format('woff2');
+  font-weight: 700;
+}
+@font-face {
+  font-family: 'Plex Arabic';
+  src: url('../node_modules/@fontsource/ibm-plex-sans-arabic/files/ibm-plex-sans-arabic-arabic-300-normal.woff2') format('woff2');
+  font-weight: 300;
+}
+@font-face {
+  font-family: 'Plex Arabic';
+  src: url('../node_modules/@fontsource/ibm-plex-sans-arabic/files/ibm-plex-sans-arabic-arabic-400-normal.woff2') format('woff2');
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'Plex Arabic';
+  src: url('../node_modules/@fontsource/ibm-plex-sans-arabic/files/ibm-plex-sans-arabic-arabic-600-normal.woff2') format('woff2');
+  font-weight: 600;
+}
+@font-face {
+  font-family: 'Mono Print';
+  src: url('../node_modules/@fontsource/dm-mono/files/dm-mono-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'Mono Print';
+  src: url('../node_modules/@fontsource/dm-mono/files/dm-mono-latin-500-normal.woff2') format('woff2');
+  font-weight: 500;
+}
+
+@font-face {
+  font-family: 'Print Serif';
+  src: url('../node_modules/@fontsource/playfair-display/files/playfair-display-latin-700-normal.woff2') format('woff2');
+  font-weight: 700;
+}
+@font-face {
+  font-family: 'Print Serif';
+  src: url('../node_modules/@fontsource/playfair-display/files/playfair-display-latin-900-normal.woff2') format('woff2');
+  font-weight: 900;
+}
+@font-face {
+  font-family: 'Print Sans';
+  src: url('../node_modules/@fontsource/montserrat/files/montserrat-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'Print Sans';
+  src: url('../node_modules/@fontsource/montserrat/files/montserrat-latin-500-normal.woff2') format('woff2');
+  font-weight: 500;
+}
+@font-face {
+  font-family: 'Print Sans';
+  src: url('../node_modules/@fontsource/montserrat/files/montserrat-latin-600-normal.woff2') format('woff2');
+  font-weight: 600;
+}
+@font-face {
+  font-family: 'Print Sans';
+  src: url('../node_modules/@fontsource/montserrat/files/montserrat-latin-700-normal.woff2') format('woff2');
+  font-weight: 700;
+}
+@font-face {
+  font-family: 'Print Sans';
+  src: url('../node_modules/@fontsource/montserrat/files/montserrat-latin-800-normal.woff2') format('woff2');
+  font-weight: 800;
+}
+
+:root {
+  --teal-900: #0d3d41;
+  --teal-700: #17595c;
+  --teal-600: #1f6f70;
+  --clay: #c97942;
+  --clay-deep: #a75f30;
+  --paper: #f4f1e8;
+  --sand: #e7e1d1;
+  --ink: #18211f;
+  --muted: #6c7a74;
+  --hair: rgba(24, 33, 31, 0.35);
+  --amiri: 'Amiri Print', serif;
+  --plex: 'Plex Arabic', sans-serif;
+  --mono: 'Mono Print', monospace;
+}
+
+* { box-sizing: border-box; }
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #b9b4a6;
+  font-family: var(--plex);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+/* One physical sheet: the page is the bleed box, .art is the trim box. */
+.sheet {
+  position: relative;
+  margin: 0 auto;
+  background: var(--paper);
+  overflow: hidden;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.art {
+  position: absolute;
+  overflow: hidden;
+  background: var(--paper);
+}
+
+/* crop marks, drawn just outside the trim box */
+.marks i {
+  position: absolute;
+  background: #111;
+  opacity: 0.75;
+}
+.marks i.v { width: 0.2mm; height: 8mm; }
+.marks i.h { height: 0.2mm; width: 8mm; }
+
+/* print furniture strip along the bottom bleed */
+.slug {
+  position: absolute;
+  left: 10mm;
+  right: 10mm;
+  bottom: 2.2mm;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 2.6mm;
+  letter-spacing: 0.08em;
+  color: #3a423f;
+  direction: ltr;
+}
+
+.slug b { font-weight: 500; }
+
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5mm;
+  height: 11mm;
+}
+.bars span { background: var(--ink); height: 100%; }
+
+.mono { font-family: var(--mono); direction: ltr; }
+.rtl { direction: rtl; }
