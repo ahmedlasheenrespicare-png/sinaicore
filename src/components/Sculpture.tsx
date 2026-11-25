@@ -710,6 +710,69 @@ function Sack(props: SackProps) {
   )
 }
 
+
+/** Pressed water-softening tablets spilled in front of the sack, the way the
+ *  product is shot: a scoop of discs on the floor, some stacked. */
+const TABLET_SPOTS: Array<[number, number, number]> = [
+  [-0.98, 0.98, 0.2],
+  [-0.72, 0.72, 0.5],
+  [-0.46, 1.12, 0.7],
+  [-0.18, 0.8, 0.3],
+  [0.14, 1.06, 0.6],
+  [0.46, 0.76, 0.25],
+  [0.76, 1.02, 0.55],
+  [1.02, 0.74, 0.35],
+  [-0.6, 0.5, 0.45],
+  [0.28, 0.48, 0.6],
+]
+
+function Tablets() {
+  const maps = useSurfaceMaps()
+  const gltf = useGLTF('/models/tablet.glb', '/draco/')
+
+  const group = useMemo(() => {
+    const source = gltf.scene.getObjectByProperty('isMesh', true) as THREE.Mesh | undefined
+    const wrapper = new THREE.Group()
+    if (!source) return wrapper
+    const material = new THREE.MeshStandardMaterial({
+      color: '#f6f3ea',
+      roughness: 0.74,
+      metalness: 0,
+      bumpMap: maps.weave,
+      bumpScale: 0.02,
+      envMapIntensity: 0.4,
+    })
+    let seed = 20261125
+    const rnd = () => {
+      seed = (seed * 1664525 + 1013904223) % 4294967296
+      return seed / 4294967296
+    }
+    for (const [x, z, tilt] of TABLET_SPOTS) {
+      const tablet = new THREE.Mesh(source.geometry, material)
+      tablet.castShadow = true
+      tablet.receiveShadow = true
+      const size = 0.086 + rnd() * 0.016
+      tablet.scale.setScalar(size)
+      tablet.rotation.set(tilt * 0.12, rnd() * Math.PI * 2, (rnd() - 0.5) * 0.14)
+      tablet.position.set(x, -1.045 + size * 0.5, z)
+      wrapper.add(tablet)
+    }
+    // A short stack, so the pile has some height.
+    for (let i = 0; i < 3; i++) {
+      const tablet = new THREE.Mesh(source.geometry, material)
+      tablet.castShadow = true
+      tablet.receiveShadow = true
+      tablet.scale.setScalar(0.09)
+      tablet.rotation.set(0.02 * i, 0.5 + i * 0.4, 0.01)
+      tablet.position.set(-0.3 + i * 0.012, -1.045 + 0.047 + i * 0.09, 1.28 + i * 0.01)
+      wrapper.add(tablet)
+    }
+    return wrapper
+  }, [gltf, maps])
+
+  return <primitive object={group} />
+}
+
 type ContainerProps = {
   closed?: number | { value: number }
   showSacks?: boolean
@@ -873,6 +936,11 @@ function PackPhase() {
         <Sack texture={texture} position={[0, 0, 0]} scale={1} />
         <Sack texture={texture} position={[0.2, 0.02, -0.12]} scale={1} />
       </group>
+      <AssetBoundary fallback={null}>
+        <Suspense fallback={null}>
+          <Tablets />
+        </Suspense>
+      </AssetBoundary>
     </group>
   )
 }

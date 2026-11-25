@@ -21,7 +21,7 @@ const scene = new THREE.Scene()
 scene.background = null
 
 const camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 100)
-camera.position.set(0.62, 0.42, 5.15)
+camera.position.set(0.8, 1.06, 6.45)
 
 /* A studio box gives the PP sheen something to reflect without shipping an HDRI. */
 const pmrem = new THREE.PMREMGenerator(renderer)
@@ -62,7 +62,7 @@ floor.receiveShadow = true
 scene.add(floor)
 
 const controls = new OrbitControls(camera, renderer.domElement)
-controls.target.set(0, 0.06, 0)
+controls.target.set(0, -0.24, 0.18)
 controls.enableDamping = true
 controls.dampingFactor = 0.07
 controls.enablePan = false
@@ -151,6 +151,79 @@ loader
     })
     sack.add(model)
     status.dataset.state = 'ready'
+
+    /* The tablets the sacks are sold for, spilled in front of the bag like the
+       product shot: pressed salt discs, a few on their face, a few on edge. */
+    const tabletGltf = await loader.loadAsync(`/models/tablet.glb?${stamp}`)
+    const tabletMesh = tabletGltf.scene.getObjectByProperty('isMesh', true)
+    // Pressed salt: matte, granular, with a faint chalky sheen. The grain map
+    // is the same salt-detail texture the crystal chapters use.
+    const grain = await new THREE.TextureLoader().loadAsync(`/textures/salt-detail.png?${stamp}`)
+    grain.wrapS = grain.wrapT = THREE.RepeatWrapping
+    grain.repeat.set(3, 3)
+    const tabletMaterial = new THREE.MeshPhysicalMaterial({
+      color: '#f7f5ee',
+      roughness: 0.74,
+      metalness: 0,
+      bumpMap: grain,
+      bumpScale: 0.03,
+      sheen: 0.4,
+      sheenRoughness: 0.62,
+      sheenColor: new THREE.Color('#fffdf7'),
+      envMapIntensity: 0.45,
+    })
+
+    // Deterministic scatter so the study looks the same every time.
+    let seed = 20261125
+    const rnd = () => {
+      seed = (seed * 1664525 + 1013904223) % 4294967296
+      return seed / 4294967296
+    }
+    const FLOOR = -1.075
+    const tablets = new THREE.Group()
+    const spots = [
+      [-0.98, 1.62],
+      [-0.62, 1.3],
+      [-0.28, 1.86],
+      [0.02, 1.4],
+      [0.44, 1.78],
+      [0.84, 1.42],
+      [1.2, 1.9],
+      [-0.8, 0.98],
+      [0.24, 1.02],
+      [-0.04, 2.22],
+      [0.64, 1.04],
+      [-1.3, 1.34],
+    ]
+    for (const [x, z] of spots) {
+      const tablet = tabletMesh.clone()
+      tablet.material = tabletMaterial
+      tablet.castShadow = true
+      tablet.receiveShadow = true
+      const scale = 0.115 + rnd() * 0.02
+      tablet.scale.setScalar(scale)
+      // Most tablets lie on their face; a couple stand on the rim.
+      const onEdge = rnd() > 0.72
+      tablet.rotation.set(
+        onEdge ? Math.PI / 2 - 0.12 : (rnd() - 0.5) * 0.08,
+        rnd() * Math.PI * 2,
+        (rnd() - 0.5) * 0.12,
+      )
+      tablet.position.set(x, FLOOR + (onEdge ? scale * 0.5 : scale * 0.5), z)
+      tablets.add(tablet)
+    }
+    // A small stack, so the pile has depth like the reference shot.
+    for (let i = 0; i < 3; i++) {
+      const tablet = tabletMesh.clone()
+      tablet.material = tabletMaterial
+      tablet.castShadow = true
+      tablet.receiveShadow = true
+      tablet.scale.setScalar(0.118)
+      tablet.rotation.set(Math.PI / 2 - 0.04, 0.4 + i * 0.5, 0.02 * (i - 1))
+      tablet.position.set(-0.36 + i * 0.015, FLOOR + 0.07 + (i === 2 ? 0.11 : 0), 1.96 - i * 0.01)
+      tablets.add(tablet)
+    }
+    scene.add(tablets)
   })
   .catch((error) => {
     console.error(error)

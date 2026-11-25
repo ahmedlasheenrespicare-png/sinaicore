@@ -651,6 +651,73 @@ function bakeOcclusion(geometry, bottom, height, strength) {
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
 }
 
+
+/* -------------------------------------------------------------------------- */
+/*  4 — A pressed water-softening salt tablet                                 */
+/* -------------------------------------------------------------------------- */
+/* A real tablet is pressed salt: a squat cylinder with a wide chamfer, a
+   slightly dished face and an imperfect rim. Modelled as a lathe so the
+   highlight rolls where the die pressed it. */
+const TABLET_SEGMENTS = 44
+const TABLET_PROFILE = [
+  [0.0, 0.478],
+  [0.3, 0.492],
+  [0.62, 0.5],
+  [0.8, 0.494],
+  [0.9, 0.472],
+  [0.965, 0.43],
+  [0.995, 0.372],
+  [1.0, 0.3],
+  [1.0, -0.3],
+  [0.995, -0.372],
+  [0.965, -0.43],
+  [0.9, -0.472],
+  [0.8, -0.494],
+  [0.62, -0.5],
+  [0.3, -0.492],
+  [0.0, -0.478],
+]
+
+function buildTablet() {
+  const soup = new Soup()
+  const ring = (band, j) => {
+    const [radius, height] = TABLET_PROFILE[band]
+    const theta = (j / TABLET_SEGMENTS) * Math.PI * 2
+    // A pressed tablet is never perfectly round or flat.
+    const wobble = 1 + 0.006 * Math.sin(3 * theta + 1.1) + 0.004 * Math.sin(7 * theta - 0.4)
+    const r = radius * wobble
+    const y =
+      height +
+      0.004 * Math.sin(4 * theta + band * 0.7) * (radius > 0.85 ? 1 : 0.35) +
+      0.002 * Math.cos(2 * theta)
+    const squash = 1 + 0.012 * Math.cos(2 * theta)
+    return V(r * Math.cos(theta) * squash, y, r * Math.sin(theta))
+  }
+
+  for (let band = 0; band < TABLET_PROFILE.length - 1; band++) {
+    for (let j = 0; j < TABLET_SEGMENTS; j++) {
+      const jj = j + 1
+      soup.quad(ring(band, j), ring(band, jj), ring(band + 1, jj), ring(band + 1, j), false, [
+        [j / TABLET_SEGMENTS, band / TABLET_PROFILE.length],
+        [jj / TABLET_SEGMENTS, band / TABLET_PROFILE.length],
+        [jj / TABLET_SEGMENTS, (band + 1) / TABLET_PROFILE.length],
+        [j / TABLET_SEGMENTS, (band + 1) / TABLET_PROFILE.length],
+      ])
+    }
+  }
+
+  // Flat-ish faces, fanned from the axis so the dish still shades.
+  const top = V(0, TABLET_PROFILE[0][1], 0)
+  const bottom = V(0, TABLET_PROFILE[TABLET_PROFILE.length - 1][1], 0)
+  for (let j = 0; j < TABLET_SEGMENTS; j++) {
+    const jj = j + 1
+    soup.tri(top, ring(0, j), ring(0, jj))
+    soup.tri(bottom, ring(TABLET_PROFILE.length - 1, jj), ring(TABLET_PROFILE.length - 1, j))
+  }
+
+  return [{ name: 'salt-tablet', geometry: soup.geometry(true), material: 'SaltTablet' }]
+}
+
 /* -------------------------------------------------------------------------- */
 /*  Export                                                                    */
 /* -------------------------------------------------------------------------- */
@@ -670,6 +737,7 @@ const MATERIALS = {
   ContainerCastings: { color: linear('#3f4a4a'), metallic: 0.72, roughness: 0.52 },
   SackBody: { color: linear('#e0d9c6'), metallic: 0, roughness: 0.92 },
   SackPrint: { color: linear('#ffffff'), metallic: 0, roughness: 0.86 },
+  SaltTablet: { color: linear('#fbfaf5'), metallic: 0, roughness: 0.62 },
 }
 
 async function writeGlb(nodes, file, label) {
@@ -757,4 +825,5 @@ async function writeGlb(nodes, file, label) {
 await writeGlb(buildCrystal(), 'salt-crystal.glb', 'salt-crystal')
 await writeGlb(buildContainer(), 'container.glb', 'container')
 await writeGlb(buildSack(), 'sack.glb', 'sack')
+await writeGlb(buildTablet(), 'tablet.glb', 'salt-tablet')
 console.log('Draco decoder copied to public/draco')
