@@ -24,7 +24,7 @@ import { MeshoptSimplifier } from 'meshoptimizer'
 import sharp from 'sharp'
 
 const ROOT = path.resolve(import.meta.dirname, '..')
-const SRC = '/tmp/ph/out'
+const SRC = '/tmp/ph/raw'
 const OUT = path.join(ROOT, 'public', 'models', 'real')
 fs.mkdirSync(OUT, { recursive: true })
 
@@ -34,10 +34,24 @@ const io = new NodeIO().registerExtensions(KHRONOS_EXTENSIONS)
    boulder keeps more detail because it is the hero of the analysis act; the
    wide coast pieces are background and can lose a lot. */
 const JOBS = [
+  /* ground: photographic coastline scans, large, simplified hard */
   { src: 'boulder_01', out: 'rock-boulder', tris: 0.28 },
   { src: 'coast_rocks_01', out: 'rock-coast', tris: 0.10 },
   { src: 'coast_land_rocks_02', out: 'rock-land', tris: 0.08 },
   { src: 'coast_line_01', out: 'rock-shore', tris: 0.08 },
+
+  /* props: real objects from a real place. The barrel, the jerrycan-like
+     container, the steel jug, the spade and the crate are the industrial
+     vocabulary a salt exporter actually uses — photographed, not modelled,
+     so their albedo carries rust, chipped paint and work marks. */
+  { src: 'Barrel_01', out: 'prop-barrel', tris: 1 },
+  { src: 'industrial_pastic_container', out: 'prop-container', tris: 1 },
+  { src: 'metal_jug', out: 'prop-jug', tris: 1 },
+  { src: 'rusted_spade_01', out: 'prop-spade', tris: 1 },
+  { src: 'wooden_crate_01', out: 'prop-crate', tris: 1 },
+  { src: 'cement_bag', out: 'prop-sack', tris: 1 },
+  { src: 'wooden_bucket_01', out: 'prop-bucket', tris: 1 },
+  { src: 'plastic_container', out: 'prop-tub', tris: 1 },
 ]
 
 for (const job of JOBS) {
@@ -54,7 +68,9 @@ for (const job of JOBS) {
   await doc.transform(
     weld(),
     dedup(),
-    simplify({ simplifier: MeshoptSimplifier, ratio: job.tris, error: 0.002 }),
+    ...(job.tris < 1
+      ? [simplify({ simplifier: MeshoptSimplifier, ratio: job.tris, error: 0.002 })]
+      : []),
     prune(),
     resample(),
     textureCompress({ encoder: sharp, targetFormat: 'jpeg', resize: [1024, 1024] }),

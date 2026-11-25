@@ -1,17 +1,31 @@
-Rock scans — Poly Haven (https://polyhaven.com), released under CC0 1.0.
+Real photographic assets — Poly Haven (https://polyhaven.com), CC0 1.0.
+Mirror: github.com/zuujis-cc0 (several model repositories).
 
-Source mirrors: github.com/zuujis-cc0/polyhaven-models-nature
-Assets used (1k texture set each):
-
+Ground (scanned coastline rock)
   boulder_01            -> rock-boulder.glb
   coast_rocks_01        -> rock-coast.glb
   coast_land_rocks_02   -> rock-land.glb
   coast_line_01         -> rock-shore.glb
 
-Processed by scripts/build-real-models.mjs: weld, dedup, meshopt simplify,
-prune, and 1024px JPEG re-encode, then embedded as GLB. Original scans are
-66k–1291k triangles; the shipped files are 43k–103k, 1.6–3.2 MB each.
+Props (photographed objects)
+  Barrel_01                  -> prop-barrel.glb     (rust, warning label)
+  industrial_pastic_container-> prop-container.glb  (hard-wearing industrial tub)
+  metal_jug                  -> prop-jug.glb        (steel milk jug, stamped)
+  rusted_spade_01            -> prop-spade.glb      (rusted shovel)
+  wooden_crate_01            -> prop-crate.glb
+  cement_bag                 -> prop-sack.glb       (printed 25 kg sack)
+  wooden_bucket_01           -> prop-bucket.glb
+  plastic_container          -> prop-tub.glb
 
-CC0 places these in the public domain: no attribution is required. It is
-given here anyway, because which rock a product stands on is part of how the
-page reads.
+All processed by scripts/build-real-models.mjs: weld, dedup, meshopt
+simplify (ground only — the props are already light), prune, 1024 px JPEG
+re-encode, embedded as GLB.
+
+What these carry that our authored meshes do not: baked albedo, normal and
+AO/roughness maps. Rust, chipped paint and work marks are in the pixels, not
+painted on — which is the whole difference between a plate that reads as a
+photograph and one that reads as a render.
+
+CC0 places these in the public domain: attribution is not required. It is
+given here anyway, because which objects stand beside a product, and which
+rock it stands on, is part of how the page reads.

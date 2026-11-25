@@ -31,6 +31,8 @@ export type Product = {
   id: string
   /* the scene reads this to pick which GLB to show */
   model: 'crystal' | 'jar' | 'bag' | 'sack' | 'globe'
+  /* a real photographed object from /models/real, shown with the grade */
+  prop: string
   kicker: string
   title: string
   latin: string
@@ -45,6 +47,7 @@ export const products: Product[] = [
   {
     id: 'refined',
     model: 'crystal',
+    prop: 'jug',
     kicker: 'المتوفر الآن',
     title: 'المكرر الفاخر',
     latin: 'Refined · Premium',
@@ -62,6 +65,7 @@ export const products: Product[] = [
   {
     id: 'washed',
     model: 'bag',
+    prop: 'barrel',
     kicker: 'المتوفر الآن',
     title: 'المغسول الصناعي',
     latin: 'Washed · Industrial',
@@ -79,6 +83,7 @@ export const products: Product[] = [
   {
     id: 'deicing',
     model: 'sack',
+    prop: 'spade',
     kicker: 'شتاء ٢٠٢٦',
     title: 'إذابة الجليد',
     latin: 'De-icing · Winter',

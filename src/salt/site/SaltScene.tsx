@@ -159,6 +159,21 @@ const FILES: Record<string, string> = {
   globe: '/models/globe.glb',
 }
 
+/* The photographed props. Each is a real object from the Poly Haven scans —
+   the rust and chipped paint are in the albedo, not painted on. They sit on
+   the scanned bed beside the grade, so every act shows two real things: the
+   ground and the object the trade actually uses. */
+const PROPS: Record<string, string> = {
+  jug: '/models/real/prop-jug.glb',
+  barrel: '/models/real/prop-barrel.glb',
+  spade: '/models/real/prop-spade.glb',
+  container: '/models/real/prop-container.glb',
+  crate: '/models/real/prop-crate.glb',
+  sack: '/models/real/prop-sack.glb',
+  bucket: '/models/real/prop-bucket.glb',
+  tub: '/models/real/prop-tub.glb',
+}
+
 const TERRAIN: Record<string, string> = {
   refined: '/models/real/rock-boulder.glb',
   washed: '/models/real/rock-coast.glb',
@@ -167,10 +182,15 @@ const TERRAIN: Record<string, string> = {
 }
 
 /* Each product's own scale and lift, measured from its bounds. */
-/* Vertical placement. Every model is normalised to sit with its base at y=0,
-   so the only lift needed is to put that base on the shadow plane — one
-   number for all of them, rather than five that drift apart. */
-const BASE_Y = -0.86
+/* The diorama's ground. Everything in a slot — product, scanned bed, prop —
+   places relative to this one number. Each part having its own offset is how
+   the three drifted apart: a per-model fit changes the base, and every
+   constant downstream has to be re-tuned by hand. */
+const GROUND = -0.95
+
+/* products are normalised with their base at y=0, so their lift is just the
+   ground itself */
+const BASE_Y = GROUND
 
 /* Each asset has a different natural aspect: the crystal cluster is wide and
    low, the FIBC is tall and narrow. Normalising by the bounding sphere makes
@@ -180,7 +200,7 @@ const BASE_Y = -0.86
    wide than tall. */
 const FIT: Record<string, number> = {
   crystal: 1.32,
-  bag: 1.6,
+  bag: 1.15,
   sack: 1.5,
   jar: 1.35,
   globe: 1.5,
@@ -249,7 +269,10 @@ function Terrain({ file, y = 0 }: { file: string; y?: number }) {
        centring it and letting the caller place the slab is what makes the
        bed read as ground the product stands on. */
     inner.position.set(-centre.x, -centre.y, -centre.z)
-    const k = 3.6 / Math.max(size.x, size.z)
+    /* A plinth, not scenery. At 3.6 the scan was wider and taller than the
+       product it was meant to support and swallowed it; 1.9 reads as a slab
+       the object rests on. */
+    const k = 1.9 / Math.max(size.x, size.z)
     g.scale.setScalar(k)
     inner.traverse((o) => {
       const mesh = o as THREE.Mesh
@@ -260,6 +283,40 @@ function Terrain({ file, y = 0 }: { file: string; y?: number }) {
     return g
   }, [scene, file])
   return <primitive object={obj} position={[0, y, 0]} />
+}
+
+/* A photographed prop. Its materials come with the file and are used as-is:
+   overriding them would throw away the only thing this asset has that ours
+   do not — real surface detail. */
+function Prop({ name, scale = 1, x = 0, z = 0 }: { name: string; scale?: number; x?: number; z?: number }) {
+  const { scene } = useGLTF(PROPS[name] ?? PROPS.jug)
+  const obj = useMemo(() => {
+    const inner = scene.clone(true)
+    const probe = new THREE.Group()
+    probe.add(inner)
+    probe.updateMatrixWorld(true)
+    const box = new THREE.Box3().setFromObject(probe)
+    const size = new THREE.Vector3()
+    box.getSize(size)
+    probe.remove(inner)
+    const g = new THREE.Group()
+    const holder = new THREE.Group()
+    holder.add(inner)
+    /* sit the base on the group origin so the caller only has to decide the
+       ground height and how big the object should read */
+    inner.position.set(-(box.min.x + size.x / 2), -box.min.y, -(box.min.z + size.z / 2))
+    const k = scale / Math.max(size.y, 0.001)
+    holder.scale.setScalar(k)
+    g.add(holder)
+    inner.traverse((o) => {
+      const mesh = o as THREE.Mesh
+      if (!mesh.isMesh) return
+      mesh.castShadow = true
+      mesh.receiveShadow = true
+    })
+    return g
+  }, [scene, name, scale])
+  return <primitive object={obj} position={[x, 0, z]} />
 }
 
 function Carousel() {
@@ -278,7 +335,17 @@ function Carousel() {
          enough that they never appear at the edge of a wide frame */
       /* RTL page: the copy holds the right-hand 46vw, so the product lives
          on the left. Mirroring the axis is the whole difference. */
-      group.current.position.x = shown.current * 7.5 - (wide() ? 1.45 : 0)
+      /* wider spacing than the first version: each slot is now a diorama of
+         product + bed + prop, so slots must not overlap mid-transition */
+      /* the diorama must clear the copy column, which starts at 54vw; at
+         -1.62 the prop drifted under the text and the frosted plate smeared
+         it. -2.05 puts the whole group in the left half. */
+      /* The camera sits at x=-1.75, which slides the world to the right of
+         the frame. To put the diorama in the LEFT half, the group moves right
+         too — the same sign as the camera's x, not the opposite. Every
+         previous value here had the sign backwards, which is why the plate
+         kept jumping between the copy and the frame edge. */
+      group.current.position.x = shown.current * 8.2 + (wide() ? 0.35 : 0)
       group.current.rotation.y = saltScene.turn * 0.5 + Math.sin(t * 0.22) * 0.05
     }
     if (wrap.current) {
@@ -305,12 +372,20 @@ function Carousel() {
     <group ref={wrap}>
       <group ref={group}>
         {products.map((p, i) => (
-          <group key={p.id} position={[i * -7.5, 0, 0]}>
+          <group key={p.id} position={[i * -8.2, 0, 0]}>
             <Suspense fallback={null}>
               {/* the scanned bed sits a hair below the product's base, and is
                   wider than it, so the shadow lands on rock not on nothing */}
-              <Terrain file={p.id} y={-1.02} />
+              <Terrain file={p.id} y={GROUND + 0.16} />
               <Model file={p.model} id={p.id} />
+              {/* The real object stands *behind* the grade, offset left, on
+                  the same bed. Forward and right is where a second object
+                  belongs in a product photograph — but the copy column starts
+                  at 54vw, and anything there is smeared by the frosted plate.
+                  Behind keeps both objects inside the free half. */}
+              <group position={[-0.7, GROUND + 0.14, -0.4]}>
+                <Prop name={p.prop} scale={0.8} />
+              </group>
             </Suspense>
           </group>
         ))}
@@ -350,7 +425,10 @@ export default function SaltScene() {
       /* 9.2 units back at 30°: the vertical frustum is ±2.47 at the origin,
          which fits a 2.5-unit product with room for the shadow. At 6.2 the
          bag's own height overflowed the frame. */
-      camera={{ position: [-1.6, 0.42, 7.4], fov: 32, near: 0.5, far: 50 }}
+      /* wider than the single-object plate needed: the diorama is product +
+         prop + bed, roughly twice the footprint, and at 7.4 the prop was
+         clipped by the frame edge. */
+      camera={{ position: [-1.75, 0.48, 8.8], fov: 32, near: 0.5, far: 50 }}
       onCreated={({ gl }) => {
         gl.setClearAlpha(0)
         gl.toneMapping = THREE.ACESFilmicToneMapping
