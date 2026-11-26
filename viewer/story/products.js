@@ -73,6 +73,15 @@ export const PRODUCTS = {
         L('Industrial resin beds', 'أسرّة راتنج صناعية'),
       ],
     },
+    range: {
+      badge: L('Food grade', 'درجة غذائية'),
+      accent: '#12403c',
+      uses: [
+        L('Water softening', 'تنعيم المياه'),
+        L('Power plants', 'محطات الطاقة'),
+        L('Hotels and hospitals', 'فنادق ومستشفيات'),
+      ],
+    },
     specs: [
       { label: L('Form', 'الشكل'), value: L('Compressed tablet', 'قرص مضغوط') },
       { label: L('Diameter', 'القطر'), value: L('25 mm', '25 مم') },
@@ -141,6 +150,15 @@ export const PRODUCTS = {
         L('Chlor-alkali plants', 'مصانع الكلور القلوي'),
         L('Textile dyeing', 'صباغة المنسوجات'),
         L('Detergents', 'المنظفات'),
+      ],
+    },
+    range: {
+      badge: L('Food grade', 'درجة غذائية'),
+      accent: '#1f6b5e',
+      uses: [
+        L('Table salt', 'ملح المائدة'),
+        L('Bakery', 'مخبوزات'),
+        L('Dairy', 'ألبان'),
       ],
     },
     specs: [
@@ -213,6 +231,15 @@ export const PRODUCTS = {
         L('Export bulk', 'تصدير سائب'),
       ],
     },
+    range: {
+      badge: L('Industrial', 'صناعي'),
+      accent: '#2f6f86',
+      uses: [
+        L('Chlor-alkali', 'الكلور والقلويات'),
+        L('Detergents', 'منظفات'),
+        L('Textiles', 'منسوجات'),
+      ],
+    },
     specs: [
       { label: L('Form', 'الشكل'), value: L('Washed crystal', 'بلورة مغسولة') },
       { label: L('Grain size', 'مقاس الحبيبة'), value: L('1 – 4 mm', '1 – 4 مم') },
@@ -283,6 +310,15 @@ export const PRODUCTS = {
         L('Export bulk', 'تصدير سائب'),
       ],
     },
+    range: {
+      badge: L('Industrial', 'صناعي'),
+      accent: '#8a5a34',
+      uses: [
+        L('Water treatment', 'معالجة المياه'),
+        L('Ice control', 'مكافحة الجليد'),
+        L('Construction', 'إنشاءات'),
+      ],
+    },
     specs: [
       { label: L('Form', 'الشكل'), value: L('Rock crystal', 'بلورة صخرية') },
       { label: L('Grain size', 'مقاس الحبيبة'), value: L('3 – 10 mm', '3 – 10 مم') },
@@ -351,6 +387,15 @@ export const PRODUCTS = {
         L('Airport runways', 'مدارج المطارات'),
         L('Municipal depots', 'مخازن البلديات'),
         L('Industrial yards', 'أفنية المصانع'),
+      ],
+    },
+    range: {
+      badge: L('Winter grade', 'درجة شتوية'),
+      accent: '#3f5a6b',
+      uses: [
+        L('Roads', 'طرق'),
+        L('Runways', 'مدارج'),
+        L('Docks', 'أرصفة'),
       ],
     },
     specs: [

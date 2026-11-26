@@ -73,6 +73,7 @@ function setLanguage(next, { store = true } = {}) {
   applyProductCopy()
   renderSwitcher()
   renderChapters()
+  renderRange()
   applyAnnotationCopy()
   if (openHotspotId) renderHotspotCopy(openHotspotId)
 
@@ -1043,11 +1044,10 @@ const computeProgress = () => {
 
 const onScroll = () => {
   // The magazine is print: the 3D chrome steps out of its way.
-  if (mag.section) {
-    document.body.classList.toggle(
-      'is-editorial',
-      mag.section.getBoundingClientRect().top < window.innerHeight * 0.45,
-    )
+  const paper = [rangeEls.section, mag.section].filter(Boolean)
+  if (paper.length) {
+    const top = Math.min(...paper.map((element) => element.getBoundingClientRect().top))
+    document.body.classList.toggle('is-paper', top < window.innerHeight * 0.45)
   }
   if (lockedProgress !== null) return
   targetProgress = computeProgress()
@@ -1518,6 +1518,123 @@ copyEls.switcher?.addEventListener('click', (event) => {
 })
 
 copyEls.specOpen?.addEventListener('click', openSpecSheet)
+
+/* -------------------------------------------------------------------------- */
+/*  The range — five products, one screen each                               */
+/* -------------------------------------------------------------------------- */
+/*  One sticky sack, five panels scrolling past it. The sack changes when a    */
+/*  panel takes the middle of the screen; the text column alternates sides so  */
+/*  the two never sit on top of each other.                                   */
+/* -------------------------------------------------------------------------- */
+const rangeEls = {
+  section: document.getElementById('range'),
+  stage: document.getElementById('range-stage'),
+  sacks: document.getElementById('range-sacks'),
+  panels: document.getElementById('range-panels'),
+  eyebrow: document.getElementById('range-eyebrow'),
+  title: document.getElementById('range-title'),
+  lede: document.getElementById('range-lede'),
+  index: document.getElementById('range-index'),
+  total: document.getElementById('range-total'),
+}
+
+const RANGE_COPY = {
+  eyebrow: L('The range · Sinai, Egypt', 'خط الإنتاج · سيناء، مصر'),
+  title: L('Five salts, one plant.', 'خمسة أملاح، مصنع واحد.'),
+  lede: L(
+    'The same pans, five ways out: tablets for brine, refined for the table, washed and rock for industry, road salt for winter.',
+    'نفس الأحواض، وخمسة طرق للخروج: أقراص للمحاليل، ومكرّر للمائدة، ومغسول وصخري للصناعة، وملح طرق للشتاء.',
+  ),
+}
+
+const RANGE_SIDE = ['right', 'left', 'right', 'left', 'right']
+
+/* English letters rise one by one; Arabic words are never broken. */
+function rangeTitle(heading, text) {
+  heading.textContent = ''
+  if (lang === 'ar') {
+    heading.textContent = text
+    return
+  }
+  let index = 0
+  text.split(' ').forEach((word, position, words) => {
+    const wrap = document.createElement('span')
+    wrap.className = 'rw'
+    for (const char of word) {
+      const letter = document.createElement('span')
+      letter.className = 'rl'
+      letter.style.setProperty('--i', index++)
+      letter.textContent = char
+      wrap.appendChild(letter)
+    }
+    heading.appendChild(wrap)
+    if (position < words.length - 1) heading.appendChild(document.createTextNode(' '))
+  })
+}
+
+function renderRange() {
+  if (!rangeEls.panels) return
+  const arabic = lang === 'ar'
+  const pick2 = (value) => (arabic ? value.ar : value.en)
+
+  rangeEls.eyebrow.textContent = pick2(RANGE_COPY.eyebrow)
+  rangeEls.title.textContent = pick2(RANGE_COPY.title)
+  rangeEls.lede.textContent = pick2(RANGE_COPY.lede)
+  rangeEls.total.textContent = String(PRODUCT_ORDER.length).padStart(2, '0')
+
+  rangeObserver.disconnect()
+  rangeEls.sacks.innerHTML = PRODUCT_ORDER.map(
+    (id, index) =>
+      `<img src="${BASE}artwork/still-${id}.webp" alt="" ${index === 0 ? 'class="is-on"' : ''} loading="lazy" decoding="async" width="765" height="1100" />`,
+  ).join('')
+
+  rangeEls.panels.innerHTML = PRODUCT_ORDER.map((id, index) => {
+    const product = PRODUCTS[id]
+    return `
+      <article class="rpanel" data-index="${index}" data-product="${id}" data-side="${RANGE_SIDE[index]}" style="--accent:${product.range.accent}">
+        <div class="rpanel__inner">
+          <span class="rpanel__chip">${pick2(product.pack.title)}</span>
+          <p class="rpanel__eyebrow"><span dir="ltr">NaCl ${product.purity.value}</span></p>
+          <h2 class="rpanel__title"></h2>
+          <p class="rpanel__spec"><span dir="ltr">${pick2(product.close.title)} mm</span></p>
+          <p class="rpanel__line">${pick2(product.hero.line)}</p>
+          <ul class="rpanel__uses">${product.range.uses.map((use) => `<li>${pick2(use)}</li>`).join('')}</ul>
+        </div>
+      </article>`
+  }).join('')
+
+  rangeEls.panels.querySelectorAll('.rpanel').forEach((panel) => {
+    const product = PRODUCTS[panel.dataset.product]
+    rangeTitle(panel.querySelector('.rpanel__title'), pick2(product.name))
+    rangeObserver.observe(panel)
+  })
+
+  setRangeActive(0)
+}
+
+function setRangeActive(index) {
+  if (!rangeEls.sacks) return
+  rangeEls.stage.dataset.side = RANGE_SIDE[index] || 'right'
+  rangeEls.index.textContent = String(index + 1).padStart(2, '0')
+  rangeEls.sacks.querySelectorAll('img').forEach((img, position) => {
+    img.classList.toggle('is-on', position === index)
+  })
+  rangeEls.section.style.setProperty(
+    '--clay',
+    PRODUCTS[PRODUCT_ORDER[index]].range.accent,
+  )
+}
+
+const rangeObserver = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return
+      entry.target.classList.add('is-in')
+      setRangeActive(Number(entry.target.dataset.index))
+    })
+  },
+  { rootMargin: '-45% 0px -45% 0px', threshold: 0 },
+)
 
 /* -------------------------------------------------------------------------- */
 /*  The salt flats — the editorial half, rendered from the chapter list       */
