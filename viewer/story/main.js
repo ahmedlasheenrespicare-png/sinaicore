@@ -1230,34 +1230,6 @@ window.addEventListener('pointerup', endDrag)
 window.addEventListener('pointercancel', endDrag)
 
 /* -------------------------------------------------------------------------- */
-/*  Pointer dot                                                               */
-/* -------------------------------------------------------------------------- */
-const cursorEl = document.getElementById('cursor')
-if (cursorEl && window.matchMedia('(hover: hover)').matches) {
-  let cx = window.innerWidth / 2
-  let cy = window.innerHeight / 2
-  let tx = cx
-  let ty = cy
-  window.addEventListener(
-    'pointermove',
-    (event) => {
-      tx = event.clientX
-      ty = event.clientY
-      const over = event.target instanceof Element && !!event.target.closest('a, button, .hotspot')
-      cursorEl.classList.toggle('is-over', over)
-    },
-    { passive: true },
-  )
-  const follow = () => {
-    cx += (tx - cx) * 0.22
-    cy += (ty - cy) * 0.22
-    cursorEl.style.transform = `translate(${cx}px, ${cy}px) translate(-50%, -50%)`
-    requestAnimationFrame(follow)
-  }
-  follow()
-}
-
-/* -------------------------------------------------------------------------- */
 /*  Frame loop                                                                */
 /* -------------------------------------------------------------------------- */
 const clock = new THREE.Clock()
@@ -1549,6 +1521,19 @@ const RANGE_COPY = {
 
 const RANGE_SIDE = ['right', 'left', 'right', 'left', 'right']
 
+const RANGE_END = {
+  eyebrow: L('Sinai · Egypt', 'سيناء · مصر'),
+  title: L('One plant. Five salts.', 'مصنع واحد. خمسة أملاح.'),
+  line: L(
+    'Fifty-kilo sacks or one-tonne jumbos, printed to your grade and shipped from El-Arish.',
+    'شكاير خمسين كيلو أو جامبو طن، مطبوعة على مقاسك، ومشحونة من العريش.',
+  ),
+  call: L('Call the plant', 'اتصل بالمصنع'),
+  whatsapp: L('WhatsApp', 'واتساب'),
+  flats: L('See the flats', 'شوف الملاحة'),
+  foot: L('El-Arish · North Sinai · +20 110 753 9914', 'العريش · شمال سيناء · ‎+20 110 753 9914'),
+}
+
 /* English letters rise one by one; Arabic words are never broken. */
 function rangeTitle(heading, text) {
   heading.textContent = ''
@@ -1583,6 +1568,8 @@ function renderRange() {
   rangeEls.total.textContent = String(PRODUCT_ORDER.length).padStart(2, '0')
 
   rangeObserver.disconnect()
+  rangeNear.disconnect()
+  rangeEndObserver.disconnect()
   rangeEls.sacks.innerHTML = PRODUCT_ORDER.map(
     (id, index) =>
       `<img src="${BASE}artwork/still-${id}.webp" alt="" ${index === 0 ? 'class="is-on"' : ''} loading="lazy" decoding="async" width="765" height="1100" />`,
@@ -1603,10 +1590,36 @@ function renderRange() {
       </article>`
   }).join('')
 
+  rangeEls.panels.insertAdjacentHTML(
+    'beforeend',
+    `
+    <div class="rend">
+      <div class="rend__inner">
+        <p class="eyebrow">${pick2(RANGE_END.eyebrow)}</p>
+        <h2 class="rend__title">${pick2(RANGE_END.title)}</h2>
+        <p class="rend__line">${pick2(RANGE_END.line)}</p>
+        <div class="rend__cta">
+          <a href="tel:+201107539914">${pick2(RANGE_END.call)}<span aria-hidden="true">→</span></a>
+          <a href="https://wa.me/201107539914" target="_blank" rel="noopener">${pick2(RANGE_END.whatsapp)}</a>
+          <a href="#mag" data-goto-flats>${pick2(RANGE_END.flats)}</a>
+        </div>
+        <p class="rend__foot">${pick2(RANGE_END.foot)}</p>
+      </div>
+    </div>`,
+  )
+
+  rangeEndObserver.observe(rangeEls.panels.querySelector('.rend'))
+
+  rangeEls.panels.querySelector('[data-goto-flats]')?.addEventListener('click', (event) => {
+    event.preventDefault()
+    mag.section?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
+  })
+
   rangeEls.panels.querySelectorAll('.rpanel').forEach((panel) => {
     const product = PRODUCTS[panel.dataset.product]
     rangeTitle(panel.querySelector('.rpanel__title'), pick2(product.name))
     rangeObserver.observe(panel)
+    rangeNear.observe(panel)
   })
 
   setRangeActive(0)
@@ -1619,10 +1632,9 @@ function setRangeActive(index) {
   rangeEls.sacks.querySelectorAll('img').forEach((img, position) => {
     img.classList.toggle('is-on', position === index)
   })
-  rangeEls.section.style.setProperty(
-    '--clay',
-    PRODUCTS[PRODUCT_ORDER[index]].range.accent,
-  )
+  const accent = PRODUCTS[PRODUCT_ORDER[index]].range.accent
+  rangeEls.section.style.setProperty('--clay', accent)
+  rangeEls.stage.style.setProperty('--glow', `${accent}2b`)
 }
 
 const rangeObserver = new IntersectionObserver(
@@ -1635,6 +1647,76 @@ const rangeObserver = new IntersectionObserver(
   },
   { rootMargin: '-45% 0px -45% 0px', threshold: 0 },
 )
+
+/* The closing panel takes over the tally. */
+const rangeEndObserver = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => rangeEls.section.classList.toggle('is-end', entry.isIntersecting))
+  },
+  { threshold: 0.35 },
+)
+
+/* Copy steps back as its product leaves the middle of the screen. */
+const rangeNear = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => entry.target.classList.toggle('is-near', entry.isIntersecting))
+  },
+  { rootMargin: '-38% 0px -38% 0px', threshold: 0 },
+)
+
+/* -------------------------------------------------------------------------- */
+/*  Cursor — a clay dot with a ring that lags a beat behind                   */
+/* -------------------------------------------------------------------------- */
+const cursorEl = document.getElementById('cursor')
+
+if (cursorEl && !window.matchMedia('(pointer: coarse)').matches) {
+  const dot = cursorEl.querySelector('.cursor__dot')
+  const ring = cursorEl.querySelector('.cursor__ring')
+  let pointerX = window.innerWidth / 2
+  let pointerY = window.innerHeight / 2
+  let ringX = pointerX
+  let ringY = pointerY
+  let seen = false
+
+  window.addEventListener(
+    'pointermove',
+    (event) => {
+      pointerX = event.clientX
+      pointerY = event.clientY
+      if (!seen) {
+        seen = true
+        ringX = pointerX
+        ringY = pointerY
+        cursorEl.classList.add('is-on')
+      }
+    },
+    { passive: true },
+  )
+
+  const interactive = 'a, button, [data-cursor], .rpanel__chip, .rend__cta a'
+  window.addEventListener(
+    'pointerover',
+    (event) => {
+      const target = event.target instanceof Element ? event.target.closest(interactive) : null
+      cursorEl.classList.toggle('is-hot', Boolean(target))
+    },
+    { passive: true },
+  )
+
+  document.addEventListener('pointerleave', () => {
+    cursorEl.classList.remove('is-on')
+    seen = false
+  })
+
+  const drawCursor = () => {
+    ringX += (pointerX - ringX) * 0.16
+    ringY += (pointerY - ringY) * 0.16
+    dot.style.transform = `translate3d(${pointerX}px, ${pointerY}px, 0)`
+    ring.style.transform = `translate3d(${ringX}px, ${ringY}px, 0)`
+    requestAnimationFrame(drawCursor)
+  }
+  requestAnimationFrame(drawCursor)
+}
 
 /* -------------------------------------------------------------------------- */
 /*  The salt flats — the editorial half, rendered from the chapter list       */
